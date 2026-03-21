@@ -186,6 +186,8 @@ export class MapController {
       zoomControlOptions: {
         position: google.maps.ControlPosition.RIGHT_CENTER,
       },
+      // Crosshair cursor signals to the user that the map is clickable to place points
+      draggableCursor: "crosshair",
     });
 
     this.clickListener = this.map.addListener(
@@ -609,13 +611,21 @@ export class MapController {
   getAllPolygonsForExport(): PolygonExportData[] {
     return this.polygons
       .filter((p) => p.isClosed)
-      .map((p) => {
-        const segments = p.waypoints
-          .filter((w) => w.segment !== null)
-          .map((w) => w.segment!);
-        if (p.closingSegment) segments.push(p.closingSegment);
-        return { name: p.name, color: p.color, segments };
-      });
+      .map((p) => this.buildExportData(p));
+  }
+
+  getPolygonForExport(id: string): PolygonExportData | null {
+    const poly = this.polygons.find((p) => p.id === id);
+    if (!poly || !poly.isClosed) return null;
+    return this.buildExportData(poly);
+  }
+
+  private buildExportData(poly: PolygonData): PolygonExportData {
+    const segments = poly.waypoints
+      .filter((w) => w.segment !== null)
+      .map((w) => w.segment!);
+    if (poly.closingSegment) segments.push(poly.closingSegment);
+    return { name: poly.name, color: poly.color, segments };
   }
 
   // ─── Snap / magnet tool ────────────────────────────────────────────────────

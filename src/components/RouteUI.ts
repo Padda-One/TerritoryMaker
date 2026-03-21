@@ -390,6 +390,28 @@ export class RouteUI {
       badge.style.cssText = `font-size:0.68rem;padding:2px 5px;border-radius:3px;background:${poly.isClosed ? "rgba(0,229,160,0.15)" : "rgba(129,140,248,0.15)"};color:${poly.isClosed ? "#00e5a0" : "#818cf8"};flex-shrink:0;`;
       badge.textContent = poly.isClosed ? "Fermé" : "En cours";
 
+      // Per-polygon KML download (only when closed)
+      if (poly.isClosed) {
+        const kmlBtn = document.createElement("button");
+        kmlBtn.className = "btn-icon";
+        kmlBtn.title = "Télécharger KML";
+        kmlBtn.style.cssText = "font-size:0.75rem;padding:2px 4px;flex-shrink:0;";
+        kmlBtn.textContent = "⬇";
+        kmlBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const data = this.mapController?.getPolygonForExport(poly.id);
+          if (data) downloadKml(buildKmlMulti([data]));
+        });
+        row.appendChild(dot);
+        row.appendChild(name);
+        row.appendChild(badge);
+        row.appendChild(kmlBtn);
+      } else {
+        row.appendChild(dot);
+        row.appendChild(name);
+        row.appendChild(badge);
+      }
+
       // Delete button
       const delBtn = document.createElement("button");
       delBtn.className = "btn-icon";
@@ -401,9 +423,6 @@ export class RouteUI {
         this.mapController?.deletePolygon(poly.id);
       });
 
-      row.appendChild(dot);
-      row.appendChild(name);
-      row.appendChild(badge);
       row.appendChild(delBtn);
 
       // Click row to select polygon
