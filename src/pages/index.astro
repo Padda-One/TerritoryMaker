@@ -1,0 +1,253 @@
+---
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Tracez un territoire sur Google Maps en combinant segments routiers et lignes droites, puis exportez en KML." />
+    <title>Territory Maker</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+
+  <body class="flex h-screen overflow-hidden" style="background-color:#0f1117;color:#e2e8f0;">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <aside
+      style="width:288px;min-width:288px;background:#1a1d27;border-right:1px solid #2d3148;"
+      class="flex flex-col h-full overflow-y-auto"
+    >
+      <!-- Header -->
+      <div style="padding:16px 16px 12px;border-bottom:1px solid #2d3148;">
+        <div class="flex items-center gap-2">
+          <img src="/favicon.svg" width="24" height="24" alt="" />
+          <h1 style="font-size:1rem;font-weight:700;color:#e2e8f0;margin:0;">Territory Maker</h1>
+        </div>
+        <p style="font-size:0.72rem;color:#64748b;margin:4px 0 0;">Tracez · Exportez · KML</p>
+      </div>
+
+      <!-- ─── API KEY PANEL ───────────────────────────────────────────────── -->
+      <div id="key-panel" style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+        <div>
+          <h2 style="font-size:0.85rem;font-weight:600;color:#e2e8f0;margin:0 0 6px;">
+            Clé Google Maps API
+          </h2>
+          <p style="font-size:0.75rem;color:#94a3b8;margin:0 0 12px;line-height:1.5;">
+            Nécessite l'activation de <strong>Maps JavaScript API</strong> et
+            <strong>Directions API</strong> dans Google Cloud Console.
+          </p>
+
+          <form id="key-form" style="display:flex;flex-direction:column;gap:8px;">
+            <input
+              id="key-input"
+              type="password"
+              class="input-dark"
+              placeholder="AIza…"
+              autocomplete="off"
+              spellcheck="false"
+              required
+            />
+            <button type="submit" class="btn btn-primary" style="width:100%;">
+              Charger la carte
+            </button>
+          </form>
+        </div>
+
+        <!-- Security notice -->
+        <div class="notice-box">
+          <div style="display:flex;gap:6px;align-items:flex-start;">
+            <span style="font-size:1rem;flex-shrink:0;">🔒</span>
+            <div>
+              <strong style="color:#e2e8f0;font-size:0.78rem;">Stockage local chiffré</strong>
+              <p style="margin:4px 0 0;font-size:0.73rem;">
+                Ta clé reste sur ton appareil, chiffrée localement (AES-GCM 256 bits).
+                Elle n'est jamais envoyée à nos serveurs.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Domain restriction notice -->
+        <div class="notice-box" style="border-color:rgba(251,191,36,0.25);background:rgba(251,191,36,0.06);">
+          <div style="display:flex;gap:6px;align-items:flex-start;">
+            <span style="font-size:1rem;flex-shrink:0;">⚠️</span>
+            <div>
+              <strong style="color:#fbbf24;font-size:0.78rem;">Restreins ta clé API</strong>
+              <p style="margin:4px 0 0;font-size:0.73rem;color:#94a3b8;">
+                Restreins ta clé à ton domaine dans
+                <a
+                  href="https://console.cloud.google.com/apis/credentials"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="color:#818cf8;"
+                >Google Cloud Console</a>
+                pour éviter tout usage non autorisé.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /#key-panel -->
+
+      <!-- ─── MAP PANEL (hidden until map loads) ─────────────────────────── -->
+      <div id="map-panel" class="hidden" style="display:flex;flex-direction:column;gap:0;height:100%;">
+
+        <!-- Transport mode -->
+        <div style="padding:12px 16px;border-bottom:1px solid #2d3148;">
+          <p style="font-size:0.72rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">
+            Mode de transport (segments route)
+          </p>
+          <div style="display:flex;gap:6px;">
+            <button id="btn-transport-driving" class="transport-btn active" title="Voiture">
+              🚗 Voiture
+            </button>
+            <button id="btn-transport-walking" class="transport-btn" title="À pied">
+              🚶 Pied
+            </button>
+            <button id="btn-transport-bicycling" class="transport-btn" title="Vélo">
+              🚴 Vélo
+            </button>
+          </div>
+        </div>
+
+        <!-- Waypoints list -->
+        <div style="padding:12px 16px;border-bottom:1px solid #2d3148;flex:1;overflow-y:auto;min-height:100px;">
+          <p style="font-size:0.72rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 8px;">
+            Points de passage
+          </p>
+          <div id="waypoint-list" style="display:flex;flex-direction:column;gap:4px;">
+            <p style="font-size:0.75rem;color:#64748b;font-style:italic;text-align:center;padding:8px 0;">
+              Clique sur la carte pour ajouter des points
+            </p>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="padding:12px 16px;border-bottom:1px solid #2d3148;display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;">
+            <button id="btn-undo" class="btn btn-secondary" style="flex:1;" disabled>
+              ↩ Supprimer dernier
+            </button>
+            <button id="btn-clear" class="btn btn-danger" disabled>
+              🗑
+            </button>
+          </div>
+          <button id="btn-export-kml" class="btn btn-blue" style="width:100%;" disabled>
+            📄 Exporter KML
+          </button>
+        </div>
+
+        <!-- KML export panel (collapsible) -->
+        <div id="kml-panel" class="hidden" style="padding:12px 16px;border-bottom:1px solid #2d3148;display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <p style="font-size:0.72rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0;">
+              KML Polygon
+            </p>
+            <button id="btn-kml-close" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:1rem;padding:0;line-height:1;">×</button>
+          </div>
+          <div id="kml-stats" style="font-size:0.72rem;color:#94a3b8;"></div>
+          <textarea
+            id="kml-output"
+            class="kml-textarea"
+            rows="8"
+            readonly
+            spellcheck="false"
+          ></textarea>
+          <div style="display:flex;gap:6px;">
+            <button id="btn-kml-copy" class="btn btn-secondary" style="flex:1;font-size:0.78rem;">
+              📋 Copier
+            </button>
+            <button id="btn-kml-download" class="btn btn-primary" style="flex:1;font-size:0.78rem;">
+              ⬇ Télécharger .kml
+            </button>
+          </div>
+        </div>
+
+        <!-- Forget key -->
+        <div style="padding:12px 16px;margin-top:auto;">
+          <button id="btn-forget-key" class="btn btn-danger" style="width:100%;font-size:0.78rem;">
+            🗝 Oublier la clé API
+          </button>
+        </div>
+
+      </div><!-- /#map-panel -->
+
+    </aside><!-- /aside -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MAP AREA
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <main class="relative flex-1" style="overflow:hidden;">
+
+      <!-- Segment mode toggle — floats at top-center of map -->
+      <div
+        style="position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:10;"
+      >
+        <div class="toggle-pill" id="segment-toggle">
+          <button id="btn-mode-route" class="toggle-pill-btn active-route">
+            🛣 Trajet
+          </button>
+          <button id="btn-mode-straight" class="toggle-pill-btn inactive">
+            ✈ Vol d'oiseau
+          </button>
+        </div>
+      </div>
+
+      <!-- Map loading overlay -->
+      <div id="map-loading" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p style="font-size:0.85rem;color:#94a3b8;margin:0;">Chargement de la carte…</p>
+      </div>
+
+      <!-- Hint overlay (shown until first waypoint) -->
+      <div
+        id="map-hint"
+        style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:5;pointer-events:none;"
+      >
+        <div style="background:rgba(26,29,39,0.85);border:1px solid #2d3148;border-radius:8px;padding:8px 16px;font-size:0.78rem;color:#94a3b8;white-space:nowrap;backdrop-filter:blur(4px);">
+          Clique sur la carte pour placer un point de passage
+        </div>
+      </div>
+
+      <!-- Google Maps container -->
+      <div id="map" style="height:100%;width:100%;"></div>
+
+    </main>
+
+  </body>
+</html>
+
+<script>
+  import { RouteUI } from "../components/RouteUI.ts";
+
+  const ui = new RouteUI();
+  ui.init().catch(console.error);
+
+  // Hide the hint after first interaction
+  const mapHint = document.getElementById("map-hint");
+  if (mapHint) {
+    const mapEl = document.getElementById("map");
+    mapEl?.addEventListener("click", () => {
+      mapHint.style.display = "none";
+    }, { once: true });
+  }
+
+  // Ensure the map-panel's hidden class is properly handled
+  // (Astro processes this at build time but the display:flex is inline)
+  const mapPanel = document.getElementById("map-panel");
+  if (mapPanel) {
+    const observer = new MutationObserver(() => {
+      if (mapPanel.classList.contains("hidden")) {
+        mapPanel.style.display = "none";
+      } else {
+        mapPanel.style.display = "flex";
+      }
+    });
+    observer.observe(mapPanel, { attributes: true, attributeFilter: ["class"] });
+  }
+</script>
