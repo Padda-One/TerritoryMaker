@@ -21,13 +21,22 @@
 
 - [Node.js](https://nodejs.org/) 18 or later
 - A Google Maps API key with **Maps JavaScript API** and **Directions API** enabled
+- [`safe-npm`](https://github.com/kevinslin/safe-npm) — recommended to protect against supply-chain attacks
+
+### Install safe-npm (one-time, global)
+
+```bash
+npm install -g @dendronhq/safe-npm
+```
+
+> **What is safe-npm?** It is a security wrapper around `npm install` that only installs package versions that have been publicly available for at least 90 days. This prevents your project from being hit by freshly published malicious packages — a common supply-chain attack vector.
 
 ### Install & run
 
 ```bash
 git clone https://github.com/your-org/territory-maker.git
 cd territory-maker
-npm install
+safe-npm install
 npm run dev
 ```
 
@@ -58,6 +67,7 @@ Territory Maker is a fully static site (Astro SSG) and deploys to Cloudflare Pag
    |---|---|
    | **Framework preset** | None (or Astro) |
    | **Build command** | `npm run build` |
+   | **Install command** | `npm install -g @dendronhq/safe-npm && safe-npm install` |
    | **Build output directory** | `dist` |
    | **Node.js version** | 18 (or later) |
 
@@ -133,6 +143,7 @@ public/
 | Routing | Google Directions API |
 | Crypto | Web Crypto API (built-in browser API) |
 | Bundler | Vite (via Astro) |
+| Package install | [`safe-npm`](https://github.com/kevinslin/safe-npm) (`@dendronhq/safe-npm`) |
 | Deployment | Cloudflare Pages (static) |
 
 ---
