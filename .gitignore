@@ -28,3 +28,17 @@ yarn-error.log*
 # Package manager lock files (keep package-lock.json)
 yarn.lock
 pnpm-lock.yaml
+
+# Local/session files
+.mcp.json
+CONTEXT.md
+.claude/settings.local.json
+
+# Cloudflare / Wrangler
+.wrangler/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Vite/Astro cache
+.cache/

@@ -91,13 +91,19 @@ function createMarkerIcon(label: string, isFirst: boolean): google.maps.Icon {
 export class MapController {
   private map: google.maps.Map | null = null;
   private internalWaypoints: WaypointInternal[] = [];
-  private travelMode: google.maps.TravelMode = google.maps.TravelMode.DRIVING;
+  private travelMode = "DRIVING" as google.maps.TravelMode;
   private clickListener: google.maps.MapsEventListener | null = null;
+
+  // Polygon closure state
+  private isClosed = false;
+  private closingPolyline: google.maps.Polyline | null = null;
+  private fillPolygon: google.maps.Polygon | null = null;
 
   // Callbacks wired up by RouteUI
   public onWaypointsChanged: ((waypoints: Waypoint[], segments: ResolvedSegment[]) => void) | null = null;
   public onError: ((message: string) => void) | null = null;
   public onLoadingChange: ((loading: boolean) => void) | null = null;
+  public onClosedChanged: ((closed: boolean) => void) | null = null;
 
   // ─── Map initialisation ─────────────────────────────────────────────────────
 
@@ -135,6 +141,7 @@ export class MapController {
   public currentMode: SegmentMode = "route";
 
   private async handleMapClick(latLng: google.maps.LatLng): Promise<void> {
+    if (this.isClosed) return;
     const label = String.fromCharCode(65 + this.internalWaypoints.length); // A, B, C…
     const waypoint: Waypoint = {
       lat: latLng.lat(),
@@ -149,7 +156,7 @@ export class MapController {
   // ─── Add waypoint ───────────────────────────────────────────────────────────
 
   async addWaypoint(waypoint: Waypoint): Promise<void> {
-    if (!this.map) return;
+    if (!this.map || this.isClosed) return;
 
     const isFirst = this.internalWaypoints.length === 0;
     const marker = new google.maps.Marker({
@@ -158,6 +165,17 @@ export class MapController {
       icon: createMarkerIcon(waypoint.label, isFirst),
       zIndex: 10,
     });
+
+    // Make the first marker clickable to close the polygon
+    if (isFirst) {
+      marker.addListener("click", () => {
+        if (this.internalWaypoints.length >= 3 && !this.isClosed) {
+          this.closePolygon().catch((err) => {
+            this.onError?.(err instanceof Error ? err.message : "Erreur lors de la fermeture du polygone.");
+          });
+        }
+      });
+    }
 
     let segment: ResolvedSegment | null = null;
     let polyline: google.maps.Polyline | null = null;
@@ -193,6 +211,63 @@ export class MapController {
     this.notifyChange();
   }
 
+  // ─── Polygon closure ────────────────────────────────────────────────────────
+
+  private async closePolygon(): Promise<void> {
+    if (!this.map || this.internalWaypoints.length < 3) return;
+
+    const first = this.internalWaypoints[0]!;
+    const last = this.internalWaypoints[this.internalWaypoints.length - 1]!;
+
+    const closingFrom: Waypoint = { lat: last.lat, lng: last.lng, label: last.label, segmentMode: last.segmentMode };
+    const closingTo: Waypoint = { lat: first.lat, lng: first.lng, label: first.label, segmentMode: this.currentMode };
+
+    this.onLoadingChange?.(true);
+    try {
+      const segment = await resolveSegment(closingFrom, closingTo, this.travelMode);
+      this.closingPolyline = this.drawSegment(segment);
+
+      // Build the full polygon path from all segments + closing segment
+      const path: google.maps.LatLng[] = [];
+      for (let i = 0; i < this.internalWaypoints.length; i++) {
+        const wp = this.internalWaypoints[i]!;
+        if (wp.segment) {
+          const start = path.length === 0 ? 0 : 1;
+          for (let j = start; j < wp.segment.path.length; j++) path.push(wp.segment.path[j]!);
+        } else {
+          // First waypoint — just its position
+          path.push(new google.maps.LatLng(wp.lat, wp.lng));
+        }
+      }
+      for (let j = 1; j < segment.path.length; j++) path.push(segment.path[j]!);
+
+      this.fillPolygon = new google.maps.Polygon({
+        paths: path,
+        map: this.map,
+        fillColor: "#00e5a0",
+        fillOpacity: 0.15,
+        strokeWeight: 0,
+        zIndex: 0,
+      });
+
+      this.isClosed = true;
+      this.onClosedChanged?.(true);
+      this.notifyChange();
+    } finally {
+      this.onLoadingChange?.(false);
+    }
+  }
+
+  private openPolygon(): void {
+    this.closingPolyline?.setMap(null);
+    this.closingPolyline = null;
+    this.fillPolygon?.setMap(null);
+    this.fillPolygon = null;
+    this.isClosed = false;
+    this.onClosedChanged?.(false);
+    this.notifyChange();
+  }
+
   // ─── Draw polyline ──────────────────────────────────────────────────────────
 
   private drawSegment(segment: ResolvedSegment): google.maps.Polyline {
@@ -213,6 +288,11 @@ export class MapController {
   // ─── Remove last waypoint ───────────────────────────────────────────────────
 
   removeLastWaypoint(): void {
+    if (this.isClosed) {
+      this.openPolygon();
+      return;
+    }
+
     const last = this.internalWaypoints.pop();
     if (!last) return;
 
@@ -225,6 +305,15 @@ export class MapController {
   // ─── Clear all ──────────────────────────────────────────────────────────────
 
   clearAll(): void {
+    this.closingPolyline?.setMap(null);
+    this.closingPolyline = null;
+    this.fillPolygon?.setMap(null);
+    this.fillPolygon = null;
+    if (this.isClosed) {
+      this.isClosed = false;
+      this.onClosedChanged?.(false);
+    }
+
     for (const wp of this.internalWaypoints) {
       wp.marker.setMap(null);
       wp.polyline?.setMap(null);
@@ -255,9 +344,17 @@ export class MapController {
   }
 
   getSegments(): ResolvedSegment[] {
-    return this.internalWaypoints
+    const segments = this.internalWaypoints
       .filter((w) => w.segment !== null)
       .map((w) => w.segment!);
+    // Include the closing segment so KML export captures the full polygon
+    if (this.isClosed && this.closingPolyline) {
+      const closingPath = (this.closingPolyline.getPath().getArray() as google.maps.LatLng[]);
+      if (closingPath.length > 0) {
+        segments.push({ mode: this.currentMode, path: closingPath });
+      }
+    }
+    return segments;
   }
 
   getWaypointCount(): number {
@@ -279,6 +376,30 @@ export class MapController {
     }
     this.clearAll();
     this.map = null;
+  }
+
+  get closed(): boolean {
+    return this.isClosed;
+  }
+
+  // ─── Map theme ──────────────────────────────────────────────────────────────
+
+  setMapTheme(theme: "dark" | "light" | "satellite" | "terrain"): void {
+    if (!this.map) return;
+    switch (theme) {
+      case "dark":
+        this.map.setOptions({ styles: DARK_MAP_STYLES, mapTypeId: "roadmap" });
+        break;
+      case "light":
+        this.map.setOptions({ styles: [], mapTypeId: "roadmap" });
+        break;
+      case "satellite":
+        this.map.setOptions({ styles: [], mapTypeId: "satellite" });
+        break;
+      case "terrain":
+        this.map.setOptions({ styles: [], mapTypeId: "terrain" });
+        break;
+    }
   }
 }
 
@@ -304,15 +425,35 @@ export function loadGoogleMapsScript(apiKey: string): Promise<void> {
   scriptLoadPromise = new Promise<void>((resolve, reject) => {
     const callbackName = "__googleMapsInitCallback";
 
+    // Auth failure: invalid key, billing not enabled, or APIs not activated
+    (window as unknown as Record<string, unknown>)["gm_authFailure"] = () => {
+      console.error("[Maps] gm_authFailure triggered");
+      scriptLoadPromise = null;
+      reject(new Error("Clé API invalide ou APIs non activées. Vérifie que Maps JavaScript API et Directions API sont activées dans Google Cloud Console."));
+    };
+
     (window as unknown as Record<string, unknown>)[callbackName] = () => {
+      console.log("[Maps] callback triggered — API loaded");
+      clearTimeout(timeout);
       resolve();
     };
 
+    // Timeout: if callback never fires after 15s, surface the error
+    const timeout = setTimeout(() => {
+      console.error("[Maps] timeout — callback never fired");
+      scriptLoadPromise = null;
+      reject(new Error("Délai dépassé : Google Maps ne répond pas. Vérifie ta clé API et que les APIs sont activées dans Google Cloud Console."));
+    }, 15_000);
+
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=geometry&callback=${callbackName}&loading=async`;
+    console.log("[Maps] injecting script tag");
+    // Note: do NOT use loading=async with the callback approach — it prevents the callback from firing
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=geometry&callback=${callbackName}`;
     script.async = true;
     script.defer = true;
+    script.onload = () => console.log("[Maps] script onload fired");
     script.onerror = () => {
+      clearTimeout(timeout);
       scriptLoadPromise = null;
       reject(new Error("Impossible de charger l'API Google Maps. Vérifie ta connexion internet et ta clé API."));
     };

@@ -1,0 +1,325 @@
+---
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Guide pas à pas pour obtenir une clé Google Maps API et configurer Territory Maker." />
+    <title>Obtenir une clé API — Territory Maker</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+
+  <body style="background-color:#0f1117;color:#e2e8f0;min-height:100vh;">
+
+    <!-- Header -->
+    <header style="border-bottom:1px solid #2d3148;background:#1a1d27;position:sticky;top:0;z-index:10;">
+      <div style="max-width:720px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:12px;">
+        <a href="/" style="display:flex;align-items:center;gap-8px;text-decoration:none;color:#94a3b8;font-size:0.82rem;transition:color 0.15s;" onmouseover="this.style.color='#e2e8f0'" onmouseout="this.style.color='#94a3b8'">
+          <span style="margin-right:6px;">←</span>Retour à l'app
+        </a>
+        <span style="color:#2d3148;">|</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="/favicon.svg" width="20" height="20" alt="" />
+          <span style="font-size:0.9rem;font-weight:700;color:#e2e8f0;">Territory Maker</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main style="max-width:720px;margin:0 auto;padding:40px 24px 80px;">
+
+      <!-- Title -->
+      <div style="margin-bottom:40px;">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);border-radius:9999px;padding:4px 14px;font-size:0.75rem;font-weight:600;color:#00e5a0;margin-bottom:16px;">
+          Guide de configuration
+        </div>
+        <h1 style="font-size:1.75rem;font-weight:800;color:#e2e8f0;margin:0 0 12px;line-height:1.2;">
+          Obtenir une clé Google Maps API
+        </h1>
+        <p style="font-size:0.95rem;color:#94a3b8;margin:0;line-height:1.6;">
+          Territory Maker utilise deux APIs Google Maps : <strong style="color:#e2e8f0;">Maps JavaScript API</strong> (affichage de la carte) et <strong style="color:#e2e8f0;">Directions API</strong> (calcul d'itinéraires). Ce guide te prend en main en 5 étapes.
+        </p>
+      </div>
+
+      <!-- Prerequisites -->
+      <div class="notice-box" style="margin-bottom:36px;">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-size:1rem;flex-shrink:0;">ℹ️</span>
+          <div>
+            <strong style="color:#e2e8f0;font-size:0.82rem;">Prérequis</strong>
+            <p style="margin:4px 0 0;font-size:0.8rem;line-height:1.5;">
+              Un compte Google et une carte bancaire valide sont nécessaires pour activer la facturation Google Cloud. Google offre <strong style="color:#e2e8f0;">200 $ de crédits gratuits par mois</strong> — l'utilisation normale de Territory Maker reste largement dans cette limite.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div style="display:flex;flex-direction:column;gap:24px;">
+
+        <!-- Step 1 -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <h2 class="step-title">Créer un projet Google Cloud</h2>
+          </div>
+          <div class="step-body">
+            <p>Rends-toi sur <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style="color:#818cf8;">console.cloud.google.com</a> et connecte-toi avec ton compte Google.</p>
+            <ol class="step-list">
+              <li>Clique sur le sélecteur de projet en haut à gauche (à côté du logo Google Cloud)</li>
+              <li>Clique sur <kbd>Nouveau projet</kbd></li>
+              <li>Donne un nom (ex : <code>territory-maker</code>) et clique sur <kbd>Créer</kbd></li>
+              <li>Attends quelques secondes que le projet soit créé, puis sélectionne-le</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <h2 class="step-title">Activer la facturation</h2>
+          </div>
+          <div class="step-body">
+            <p>Les APIs Google Maps nécessitent un compte de facturation actif (même sans dépasser les crédits gratuits).</p>
+            <ol class="step-list">
+              <li>Dans le menu latéral, clique sur <strong>Facturation</strong></li>
+              <li>Clique sur <kbd>Associer un compte de facturation</kbd> ou <kbd>Créer un compte de facturation</kbd></li>
+              <li>Suis les étapes pour renseigner tes coordonnées bancaires</li>
+              <li>Reviens sur ton projet une fois la facturation activée</li>
+            </ol>
+            <div class="step-notice">
+              <span>💡</span>
+              <span>Google offre 200 $ de crédits gratuits par mois. La Directions API coûte ~0,005 $ par requête — il faudrait 40 000 trajets pour atteindre la limite.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <h2 class="step-title">Activer les deux APIs</h2>
+          </div>
+          <div class="step-body">
+            <p>Tu dois activer précisément ces deux APIs dans ton projet :</p>
+            <ol class="step-list">
+              <li>
+                Clique sur <strong>APIs et services</strong> → <strong>Bibliothèque</strong>
+              </li>
+              <li>
+                Recherche <strong>Maps JavaScript API</strong>, clique dessus, puis clique sur <kbd>Activer</kbd>
+              </li>
+              <li>
+                Reviens à la bibliothèque, recherche <strong>Directions API</strong>, clique dessus, puis clique sur <kbd>Activer</kbd>
+              </li>
+            </ol>
+            <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+              <div class="api-badge api-badge-green">
+                <span>✓</span> Maps JavaScript API
+              </div>
+              <div class="api-badge api-badge-blue">
+                <span>✓</span> Directions API
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-number">4</div>
+            <h2 class="step-title">Créer la clé API</h2>
+          </div>
+          <div class="step-body">
+            <ol class="step-list">
+              <li>Dans le menu, clique sur <strong>APIs et services</strong> → <strong>Identifiants</strong></li>
+              <li>Clique sur <kbd>+ Créer des identifiants</kbd> → <strong>Clé API</strong></li>
+              <li>Une clé est générée immédiatement au format <code>AIzaSy…</code></li>
+              <li>Copie cette clé — tu en auras besoin pour l'étape suivante</li>
+            </ol>
+            <div class="step-notice step-notice-warning">
+              <span>⚠️</span>
+              <span>Ne ferme pas cette fenêtre avant d'avoir copié la clé ou noté où la retrouver.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step-card" style="border-color:rgba(251,191,36,0.3);">
+          <div class="step-header">
+            <div class="step-number" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);color:#fbbf24;">5</div>
+            <h2 class="step-title">Restreindre la clé à ton domaine <span style="font-size:0.72rem;font-weight:500;color:#fbbf24;margin-left:6px;">Fortement recommandé</span></h2>
+          </div>
+          <div class="step-body">
+            <p>Sans restriction, n'importe qui qui trouve ta clé peut l'utiliser à tes frais. Restreins-la à ton domaine :</p>
+            <ol class="step-list">
+              <li>Sur la page <strong>Identifiants</strong>, clique sur le nom de ta clé pour l'éditer</li>
+              <li>Sous <strong>Restrictions d'application</strong>, sélectionne <strong>Référents HTTP (sites web)</strong></li>
+              <li>
+                Ajoute tes domaines autorisés, par exemple :<br/>
+                <code>https://ton-site.pages.dev/*</code><br/>
+                <code>http://localhost:4321/*</code> (pour le développement local)
+              </li>
+              <li>Clique sur <kbd>Enregistrer</kbd></li>
+            </ol>
+            <div class="step-notice step-notice-warning">
+              <span>⚠️</span>
+              <span>Les restrictions peuvent prendre quelques minutes pour prendre effet. Si la carte ne charge pas immédiatement, attends 5 minutes et réessaie.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Final CTA -->
+      <div style="margin-top:40px;padding:24px;background:#1a1d27;border:1px solid #2d3148;border-radius:12px;text-align:center;">
+        <p style="font-size:0.9rem;color:#94a3b8;margin:0 0 16px;">
+          Ta clé est prête ? Retourne sur l'application et colle-la dans le champ <strong style="color:#e2e8f0;">Clé Google Maps API</strong>.
+        </p>
+        <a href="/" class="btn btn-primary" style="display:inline-flex;text-decoration:none;padding:10px 28px;font-size:0.9rem;">
+          Utiliser Territory Maker →
+        </a>
+      </div>
+
+    </main>
+
+  </body>
+</html>
+
+<style>
+  .step-card {
+    background: #1a1d27;
+    border: 1px solid #2d3148;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #2d3148;
+  }
+
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: rgba(0, 229, 160, 0.12);
+    border: 1px solid rgba(0, 229, 160, 0.35);
+    color: #00e5a0;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .step-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  .step-body {
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .step-body p {
+    margin: 0 0 12px;
+  }
+
+  .step-body strong {
+    color: #e2e8f0;
+  }
+
+  .step-body a {
+    color: #818cf8;
+  }
+
+  .step-body a:hover {
+    text-decoration: underline;
+  }
+
+  .step-body code {
+    background: #0d0f18;
+    border: 1px solid #2d3148;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.82rem;
+    color: #00e5a0;
+  }
+
+  .step-body kbd {
+    background: #252a3a;
+    border: 1px solid #3d4460;
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    font-family: inherit;
+  }
+
+  .step-list {
+    margin: 0 0 12px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .step-list li {
+    padding-left: 4px;
+  }
+
+  .step-notice {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    background: rgba(129, 140, 248, 0.08);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    margin-top: 12px;
+  }
+
+  .step-notice-warning {
+    background: rgba(251, 191, 36, 0.08);
+    border-color: rgba(251, 191, 36, 0.25);
+    color: #94a3b8;
+  }
+
+  .api-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .api-badge-green {
+    background: rgba(0, 229, 160, 0.12);
+    border: 1px solid rgba(0, 229, 160, 0.3);
+    color: #00e5a0;
+  }
+
+  .api-badge-blue {
+    background: rgba(129, 140, 248, 0.12);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    color: #818cf8;
+  }
+</style>
