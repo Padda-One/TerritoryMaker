@@ -7,8 +7,12 @@
 ## Features
 
 - **Mixed segments** — alternate between 🛣 *Trajet* (road-following) and ✈ *Vol d'oiseau* (straight line) segments for each point you place
-- **Dark-themed map** — comfortable for long tracing sessions
-- **KML Polygon export** — the traced territory is always exported as a closed polygon; supports copy to clipboard and `.kml` download
+- **Polygon closure** — click on the origin point (A) to close the polygon with a semi-transparent fill overlay
+- **App themes** — switch between Dark, Light, and System (follows OS preference) — persisted in `localStorage`
+- **Map themes** — independently choose between Dark, Light, Satellite, and Terrain map styles
+- **Settings panel** — API key management and appearance settings accessible via the ⚙ button; shows only the key status (not the key itself) once a key is stored
+- **Step-by-step API key guide** — built-in tutorial page at `/api-key` for obtaining and configuring a Google Maps API key
+- **KML Polygon export** — the traced territory is exported as a closed polygon; supports copy to clipboard and `.kml` download
 - **Encrypted local key storage** — your Google Maps API key is encrypted with AES-GCM 256-bit and stored in `localStorage` using a device-derived key (no password required)
 - **No backend** — everything runs in your browser; no data is sent to any server other than Google Maps APIs
 - **Responsive** — works on desktop and tablet
@@ -118,14 +122,15 @@ An unrestricted API key can be used by anyone who finds it in your browser's net
 src/
   pages/
     index.astro           Main page (HTML shell + script entry point)
+    api-key.astro         Step-by-step guide to obtain a Google Maps API key
   components/
     ApiKeyManager.ts      AES-GCM encryption / localStorage
-    MapController.ts      Google Maps init, markers, polylines
+    MapController.ts      Google Maps init, markers, polylines, polygon closure, map themes
     SegmentRouter.ts      Directions API or straight-line routing
     KmlExporter.ts        KML Polygon XML construction + download
-    RouteUI.ts            Application orchestrator (UI + state)
+    RouteUI.ts            Application orchestrator (UI, state, settings, themes)
   styles/
-    global.css            Tailwind v4 + custom CSS variables
+    global.css            Tailwind v4 + CSS variables (dark & light themes)
 public/
   favicon.svg
 ```

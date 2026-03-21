@@ -151,6 +151,18 @@ import "../styles/global.css";
           </div>
         </div>
 
+        <!-- Layer panel -->
+        <div class="panel-section" style="flex-shrink:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <p class="section-label" style="margin:0;">Polygones</p>
+            <button id="btn-add-polygon" class="btn btn-secondary"
+                    style="font-size:0.72rem;padding:3px 8px;" disabled>
+              + Nouveau
+            </button>
+          </div>
+          <div id="polygon-layer-list" style="margin-top:6px;display:flex;flex-direction:column;gap:3px;"></div>
+        </div>
+
         <!-- Waypoints list -->
         <div class="panel-section" style="flex:1;overflow-y:auto;min-height:80px;">
           <p class="section-label">Points de passage</p>
@@ -214,6 +226,14 @@ import "../styles/global.css";
           <button id="btn-mode-straight" class="toggle-pill-btn inactive">✈ Vol d'oiseau</button>
         </div>
       </div>
+
+      <!-- Snap toggle -->
+      <button
+        id="btn-snap-toggle"
+        class="snap-btn"
+        title="Outil aimant — accroche les nouveaux points sur les tracés existants"
+        style="position:absolute;top:16px;right:16px;z-index:10;"
+      >🧲</button>
 
       <!-- Map loading overlay -->
       <div id="map-loading" class="loading-overlay" style="display:none;">

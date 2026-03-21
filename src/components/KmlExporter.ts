@@ -4,6 +4,9 @@
  */
 
 import type { ResolvedSegment, Waypoint } from "./SegmentRouter.ts";
+import type { PolygonExportData } from "./MapController.ts";
+
+export type { PolygonExportData };
 
 export interface KmlStats {
   totalPoints: number;
@@ -40,39 +43,48 @@ function buildCoordinates(segments: ResolvedSegment[]): string {
   return coords.join("\n            ");
 }
 
-// ─── KML builder ─────────────────────────────────────────────────────────────
+/**
+ * Converts a CSS hex color (#rrggbb) to KML ABGR format (aabbggrr).
+ */
+function hexToKml(hex: string, alpha = "ff"): string {
+  const r = hex.slice(1, 3);
+  const g = hex.slice(3, 5);
+  const b = hex.slice(5, 7);
+  return `${alpha}${b}${g}${r}`;
+}
+
+// ─── KML builder — multi-polygon ──────────────────────────────────────────────
 
 /**
- * Builds the full KML document string.
+ * Builds a KML document with one Placemark per polygon.
  */
-export function buildKml(
-  segments: ResolvedSegment[],
-  _waypoints: Waypoint[],
-): string {
+export function buildKmlMulti(polygons: PolygonExportData[]): string {
   const now = new Date().toISOString();
-  const coordinates = buildCoordinates(segments);
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Territory Maker — ${now.slice(0, 10)}</name>
-    <description>Tracé exporté depuis Territory Maker</description>
-
-    <Style id="territoryStyle">
+  const styles = polygons
+    .map((p, i) => {
+      const lineColor = hexToKml(p.color);
+      const fillColor = hexToKml(p.color, "33"); // ~20% opacity
+      return `    <Style id="style${i}">
       <LineStyle>
-        <color>ff00e5a0</color>
+        <color>${lineColor}</color>
         <width>3</width>
       </LineStyle>
       <PolyStyle>
-        <color>3300e5a0</color>
+        <color>${fillColor}</color>
         <fill>1</fill>
         <outline>1</outline>
       </PolyStyle>
-    </Style>
+    </Style>`;
+    })
+    .join("\n\n");
 
-    <Placemark>
-      <name>Territoire</name>
-      <styleUrl>#territoryStyle</styleUrl>
+  const placemarks = polygons
+    .map((p, i) => {
+      const coordinates = buildCoordinates(p.segments);
+      return `    <Placemark>
+      <name>${p.name}</name>
+      <styleUrl>#style${i}</styleUrl>
       <Polygon>
         <extrude>0</extrude>
         <altitudeMode>clampToGround</altitudeMode>
@@ -84,9 +96,33 @@ export function buildKml(
           </LinearRing>
         </outerBoundaryIs>
       </Polygon>
-    </Placemark>
+    </Placemark>`;
+    })
+    .join("\n\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Territory Maker — ${now.slice(0, 10)}</name>
+    <description>Tracé exporté depuis Territory Maker</description>
+
+${styles}
+
+${placemarks}
   </Document>
 </kml>`;
+}
+
+// ─── KML builder — single polygon (backwards compat) ─────────────────────────
+
+/**
+ * Builds the full KML document string for a single polygon.
+ */
+export function buildKml(
+  segments: ResolvedSegment[],
+  _waypoints: Waypoint[],
+): string {
+  return buildKmlMulti([{ name: "Territoire", color: "#00e5a0", segments }]);
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────

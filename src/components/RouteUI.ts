@@ -5,6 +5,8 @@
  *   - Segment mode toggle
  *   - Transport mode selection
  *   - Waypoint list rendering
+ *   - Layer panel (multi-polygon management)
+ *   - Snap / magnet tool
  *   - KML export panel
  *   - Error / loading feedback
  *   - App theme & map theme management
@@ -12,8 +14,9 @@
 
 import * as ApiKeyManager from "./ApiKeyManager.ts";
 import { MapController } from "./MapController.ts";
-import { buildKml, downloadKml, copyKml, getStats } from "./KmlExporter.ts";
+import { buildKmlMulti, downloadKml, copyKml, getStats } from "./KmlExporter.ts";
 import type { Waypoint, ResolvedSegment, SegmentMode } from "./SegmentRouter.ts";
+import type { PolygonInfo } from "./MapController.ts";
 
 type MapTheme = "dark" | "light" | "satellite" | "terrain";
 type AppTheme = "dark" | "light" | "system";
@@ -25,6 +28,7 @@ export class RouteUI {
   private currentWaypoints: Waypoint[] = [];
   private errorTimer: ReturnType<typeof setTimeout> | null = null;
   private isMapLoaded = false;
+  private snapActive = false;
 
   // ─── Element accessors ───────────────────────────────────────────────────────
 
@@ -50,6 +54,7 @@ export class RouteUI {
     this.bindActionButtons();
     this.bindToggle();
     this.bindKmlButtons();
+    this.bindSnapToggle();
 
     // Try to restore a saved key
     const savedKey = await ApiKeyManager.loadKey().catch(() => null);
@@ -216,11 +221,18 @@ export class RouteUI {
         this.updateKmlPanel();
       };
 
+      this.mapController.onPolygonsChanged = (polygons) => {
+        this.renderLayerPanel(polygons);
+      };
+
       this.mapController.onError = (msg) => this.showError(msg);
       this.mapController.onLoadingChange = (loading) => this.showMapLoading(loading);
       this.mapController.onClosedChanged = (closed) => this.handleClosedChanged(closed);
 
       await this.mapController.init(apiKey, mapEl);
+
+      // Create the initial polygon
+      this.mapController.addPolygon();
 
       // Apply saved map theme
       const savedMapTheme = (localStorage.getItem("tm_map_theme") ?? "dark") as MapTheme;
@@ -229,6 +241,7 @@ export class RouteUI {
       }
 
       this.isMapLoaded = true;
+      this.bindLayerPanel();
     } catch (err) {
       this.isMapLoaded = false;
       this.updateKeySection(false);
@@ -317,7 +330,12 @@ export class RouteUI {
     undoBtn.disabled = count === 0;
     undoBtn.textContent = closed ? "↩ Rouvrir le polygone" : "↩ Supprimer dernier";
     this.el<HTMLButtonElement>("btn-clear").disabled = count === 0;
-    this.el<HTMLButtonElement>("btn-export-kml").disabled = count < 3;
+    this.el<HTMLButtonElement>("btn-export-kml").disabled =
+      (this.mapController?.getAllPolygonsForExport().length ?? 0) === 0;
+
+    // Enable "New polygon" button only when active polygon is closed
+    const addBtn = document.getElementById("btn-add-polygon") as HTMLButtonElement | null;
+    if (addBtn) addBtn.disabled = !closed;
 
     const hint = document.getElementById("map-hint-text");
     if (hint && !closed) {
@@ -337,6 +355,76 @@ export class RouteUI {
           : "Clique sur la carte pour placer un point de passage";
     }
     this.updateActionButtons();
+  }
+
+  // ─── Layer panel ─────────────────────────────────────────────────────────────
+
+  private bindLayerPanel(): void {
+    document.getElementById("btn-add-polygon")?.addEventListener("click", () => {
+      this.mapController?.addPolygon();
+    });
+  }
+
+  renderLayerPanel(polygons: PolygonInfo[]): void {
+    const list = document.getElementById("polygon-layer-list");
+    if (!list) return;
+    list.replaceChildren();
+
+    for (const poly of polygons) {
+      const row = document.createElement("div");
+      row.className = "polygon-layer-row" + (poly.isActive ? " active-layer" : "");
+      row.dataset.id = poly.id;
+
+      // Color dot
+      const dot = document.createElement("span");
+      dot.className = "polygon-color-dot";
+      dot.style.background = poly.color;
+
+      // Name
+      const name = document.createElement("span");
+      name.style.cssText = "flex:1;font-size:0.8rem;font-weight:500;color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+      name.textContent = poly.name;
+
+      // Status badge
+      const badge = document.createElement("span");
+      badge.style.cssText = `font-size:0.68rem;padding:2px 5px;border-radius:3px;background:${poly.isClosed ? "rgba(0,229,160,0.15)" : "rgba(129,140,248,0.15)"};color:${poly.isClosed ? "#00e5a0" : "#818cf8"};flex-shrink:0;`;
+      badge.textContent = poly.isClosed ? "Fermé" : "En cours";
+
+      // Delete button
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-icon";
+      delBtn.title = "Supprimer ce polygone";
+      delBtn.style.cssText = "font-size:0.75rem;padding:2px 4px;flex-shrink:0;";
+      delBtn.textContent = "🗑";
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.mapController?.deletePolygon(poly.id);
+      });
+
+      row.appendChild(dot);
+      row.appendChild(name);
+      row.appendChild(badge);
+      row.appendChild(delBtn);
+
+      // Click row to select polygon
+      row.addEventListener("click", () => {
+        this.mapController?.setActivePolygon(poly.id);
+      });
+
+      list.appendChild(row);
+    }
+  }
+
+  // ─── Snap / magnet tool ──────────────────────────────────────────────────────
+
+  private bindSnapToggle(): void {
+    const btn = document.getElementById("btn-snap-toggle");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      this.snapActive = !this.snapActive;
+      btn.classList.toggle("active-snap", this.snapActive);
+      this.mapController?.setSnapMode(this.snapActive);
+    });
   }
 
   // ─── Waypoint list ───────────────────────────────────────────────────────────
@@ -417,8 +505,9 @@ export class RouteUI {
   }
 
   private getCurrentKml(): string | null {
-    if (this.currentSegments.length === 0) return null;
-    return buildKml(this.currentSegments, this.currentWaypoints);
+    const polygons = this.mapController?.getAllPolygonsForExport() ?? [];
+    if (polygons.length === 0) return null;
+    return buildKmlMulti(polygons);
   }
 
   private updateKmlPanel(): void {
