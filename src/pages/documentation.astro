@@ -1,0 +1,1510 @@
+---
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Documentation complète de Territory Maker : tutoriel d'utilisation et guide d'obtention de la clé Google Maps API."
+    />
+    <title>Documentation — Territory Maker</title>
+    <link rel="icon" type="image/svg+xml" href="/logo-TerritoryMaker.svg" />
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header class="doc-header">
+      <div class="doc-header-inner">
+        <a href="/" class="doc-back-link">
+          <span>←</span>Retour à l'app
+        </a>
+        <span class="doc-header-divider">|</span>
+        <div class="doc-header-logo">
+          <img src="/logo-TerritoryMaker.svg" width="50" height="50" alt="" />
+          <span>Territory Maker</span>
+        </div>
+        <button
+          class="sidebar-mobile-btn"
+          id="sidebarToggle"
+          aria-label="Ouvrir la navigation"
+        >
+          ☰ Chapitres
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Doc layout -->
+    <div class="doc-layout">
+      <!-- Sidebar -->
+      <nav class="doc-sidebar" id="docSidebar" aria-label="Table des matières">
+        <div class="sidebar-label">Table des matières</div>
+        <ol class="sidebar-nav">
+          <li>
+            <a href="#ch1" class="sidebar-chapter-link">
+              <span class="sidebar-num">1</span>
+              <span>Démarrage</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li><a href="#ch1-1" class="sidebar-sub-link">Prérequis</a></li>
+              <li>
+                <a href="#ch1-2" class="sidebar-sub-link"
+                  >Créer un projet Google Cloud</a
+                >
+              </li>
+              <li>
+                <a href="#ch1-3" class="sidebar-sub-link"
+                  >Activer les deux APIs</a
+                >
+              </li>
+              <li>
+                <a href="#ch1-4" class="sidebar-sub-link"
+                  >Générer et restreindre la clé</a
+                >
+              </li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch2" class="sidebar-chapter-link">
+              <span class="sidebar-num">2</span>
+              <span>Première utilisation</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li>
+                <a href="#ch2-1" class="sidebar-sub-link">Saisir sa clé API</a>
+              </li>
+              <li>
+                <a href="#ch2-2" class="sidebar-sub-link">Sécurité : stockage</a
+                >
+              </li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch3" class="sidebar-chapter-link">
+              <span class="sidebar-num">3</span>
+              <span>Dessiner un territoire</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li>
+                <a href="#ch3-1" class="sidebar-sub-link">Poser des points</a>
+              </li>
+              <li>
+                <a href="#ch3-2" class="sidebar-sub-link"
+                  >Route vs Ligne droite</a
+                >
+              </li>
+              <li>
+                <a href="#ch3-3" class="sidebar-sub-link">Mode de transport</a>
+              </li>
+              <li>
+                <a href="#ch3-4" class="sidebar-sub-link">L'outil Snap</a>
+              </li>
+              <li>
+                <a href="#ch3-5" class="sidebar-sub-link">Annuler et effacer</a>
+              </li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch4" class="sidebar-chapter-link">
+              <span class="sidebar-num">4</span>
+              <span>Gérer ses calques</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li>
+                <a href="#ch4-1" class="sidebar-sub-link"
+                  >Créer et nommer un calque</a
+                >
+              </li>
+              <li>
+                <a href="#ch4-2" class="sidebar-sub-link"
+                  >Passer d'un calque à l'autre</a
+                >
+              </li>
+              <li>
+                <a href="#ch4-3" class="sidebar-sub-link"
+                  >Importer un fichier KML</a
+                >
+              </li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch5" class="sidebar-chapter-link">
+              <span class="sidebar-num">5</span>
+              <span>Exporter</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li><a href="#ch5-1" class="sidebar-sub-link">Format KML</a></li>
+              <li>
+                <a href="#ch5-2" class="sidebar-sub-link"
+                  >Copier ou télécharger</a
+                >
+              </li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch6" class="sidebar-chapter-link">
+              <span class="sidebar-num">6</span>
+              <span>Personnalisation</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li>
+                <a href="#ch6-1" class="sidebar-sub-link"
+                  >Thème de l'interface</a
+                >
+              </li>
+              <li>
+                <a href="#ch6-2" class="sidebar-sub-link">Thème de la carte</a>
+              </li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch7" class="sidebar-chapter-link">
+              <span class="sidebar-num">7</span>
+              <span>Outils avancés</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li><a href="#ch7-1" class="sidebar-sub-link">Découper (Split)</a></li>
+              <li><a href="#ch7-2" class="sidebar-sub-link">Fusionner (Merge)</a></li>
+              <li><a href="#ch7-3" class="sidebar-sub-link">Annuler Split / Merge</a></li>
+            </ol>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Content -->
+      <main class="doc-content">
+        <!-- Title -->
+        <div style="margin-bottom:40px;">
+          <div
+            style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);border-radius:9999px;padding:4px 14px;font-size:0.75rem;font-weight:600;color:#00e5a0;margin-bottom:16px;"
+          >
+            Documentation
+          </div>
+          <h1
+            style="font-size:1.75rem;font-weight:800;color:#e2e8f0;margin:0 0 12px;line-height:1.2;"
+          >
+            Guide complet — Territory Maker
+          </h1>
+          <p style="font-size:0.95rem;color:#94a3b8;margin:0;line-height:1.6;">
+            De la configuration de la clé API jusqu'à l'export de vos
+            territoires en KML.
+          </p>
+        </div>
+
+        <!-- ─── CHAPITRE 1 ─── -->
+        <section id="ch1" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">1</div>
+            <h2 class="chapter-title">Démarrage</h2>
+          </div>
+
+          <section id="ch1-1" class="doc-section">
+            <h3 class="section-title">1.1 Prérequis</h3>
+            <div class="notice-box">
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <span style="font-size:1rem;flex-shrink:0;">ℹ️</span>
+                <div>
+                  <p style="margin:0;font-size:0.82rem;line-height:1.5;">
+                    Un <strong style="color:#e2e8f0;">compte Google</strong> et une
+                    <strong style="color:#e2e8f0;">carte bancaire valide</strong
+                    > sont nécessaires pour activer la facturation Google Cloud. Google
+                    offre <strong style="color:#e2e8f0;"
+                      >200 $ de crédits gratuits par mois</strong
+                    > — l'utilisation normale de Territory Maker reste largement dans
+                    cette limite.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch1-2" class="doc-section">
+            <h3 class="section-title">1.2 Créer un projet Google Cloud</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Rendez-vous sur <a
+                    href="https://console.cloud.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="color:#818cf8;">console.cloud.google.com</a
+                  > et connectez-vous avec votre compte Google.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Cliquez sur le sélecteur de projet en haut à gauche (à côté
+                    du logo Google Cloud)
+                  </li>
+                  <li>Cliquez sur <kbd>Nouveau projet</kbd></li>
+                  <li>
+                    Donnez un nom (ex : <code>territory-maker</code>) et cliquez
+                    sur <kbd>Créer</kbd>
+                  </li>
+                  <li>
+                    Attendez quelques secondes que le projet soit créé, puis
+                    sélectionnez-le
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch1-3" class="doc-section">
+            <h3 class="section-title">1.3 Activer les deux APIs</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Territory Maker utilise précisément deux APIs Google Maps.
+                  Commence par activer la facturation, puis active chaque API.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Dans le menu latéral, cliquez sur <strong
+                      >Facturation</strong
+                    > et associez un compte de facturation à votre projet
+                  </li>
+                  <li>
+                    Cliquez sur <strong>APIs et services</strong> → <strong
+                      >Bibliothèque</strong
+                    >
+                  </li>
+                  <li>
+                    Recherchez <strong>Maps JavaScript API</strong>, cliquez
+                    dessus, puis cliquez sur <kbd>Activer</kbd>
+                  </li>
+                  <li>
+                    Revenez à la bibliothèque, recherchez <strong
+                      >Directions API</strong
+                    >, cliquez dessus, puis cliquez sur <kbd>Activer</kbd>
+                  </li>
+                </ol>
+                <div
+                  style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;"
+                >
+                  <div class="api-badge api-badge-green">
+                    <span>✓</span> Maps JavaScript API
+                  </div>
+                  <div class="api-badge api-badge-blue">
+                    <span>✓</span> Directions API
+                  </div>
+                </div>
+                <div class="step-notice" style="margin-top:12px;">
+                  <span>💡</span>
+                  <span
+                    >La Directions API coûte ~0,005 $ par requête — il faudrait
+                    40 000 trajets calculés pour atteindre les 200 $ de crédits
+                    gratuits.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch1-4" class="doc-section">
+            <h3 class="section-title">1.4 Générer et restreindre la clé API</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p><strong>Créer la clé :</strong></p>
+                <ol class="step-list">
+                  <li>
+                    Dans le menu, cliquez sur <strong>APIs et services</strong> →
+                    <strong>Identifiants</strong>
+                  </li>
+                  <li>
+                    Cliquez sur <kbd>+ Créer des identifiants</kbd> → <strong
+                      >Clé API</strong
+                    >
+                  </li>
+                  <li>
+                    Une clé est générée immédiatement au format <code
+                      >AIzaSy…</code
+                    > — copiez-la
+                  </li>
+                </ol>
+              </div>
+            </div>
+            <div
+              class="step-card"
+              style="border-color:rgba(251,191,36,0.3);margin-top:12px;"
+            >
+              <div
+                class="step-header"
+                style="border-bottom-color:rgba(251,191,36,0.2);"
+              >
+                <div
+                  class="step-number"
+                  style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);color:#fbbf24;"
+                >
+                  !
+                </div>
+                <h4 class="step-title">
+                  Restreindre la clé à votre domaine <span
+                    style="font-size:0.72rem;font-weight:500;color:#fbbf24;margin-left:6px;"
+                    >Fortement recommandé</span
+                  >
+                </h4>
+              </div>
+              <div class="step-body">
+                <p>
+                  Sans restriction, n'importe qui qui trouve votre clé peut
+                  l'utiliser à vos frais.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Sur la page <strong>Identifiants</strong>, cliquez sur le
+                    nom de votre clé
+                  </li>
+                  <li>
+                    Sous <strong>Restrictions d'application</strong>,
+                    sélectionnez <strong>Référents HTTP (sites web)</strong>
+                  </li>
+                  <li>
+                    Ajoutez vos domaines :<br />
+                    <code>https://votre-site.pages.dev/*</code><br />
+                    <code>http://localhost:4321/*</code>
+                  </li>
+                  <li>Cliquez sur <kbd>Enregistrer</kbd></li>
+                </ol>
+                <div class="step-notice step-notice-warning">
+                  <span>⚠️</span>
+                  <span
+                    >Les restrictions peuvent prendre quelques minutes pour
+                    prendre effet. Si la carte ne charge pas immédiatement,
+                    attendez 5 minutes et réessayez.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 2 ─── -->
+        <section id="ch2" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">2</div>
+            <h2 class="chapter-title">Première utilisation</h2>
+          </div>
+
+          <section id="ch2-1" class="doc-section">
+            <h3 class="section-title">2.1 Saisir sa clé API</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <ol class="step-list">
+                  <li>Ouvrez Territory Maker dans votre navigateur</li>
+                  <li>
+                    Cliquez sur l'icône ⚙️ en haut de la barre latérale pour
+                    ouvrir les paramètres
+                  </li>
+                  <li>
+                    Collez votre clé dans le champ <strong
+                      >Clé Google Maps API</strong
+                    >
+                  </li>
+                  <li>
+                    Appuyez sur <kbd>Entrée</kbd> — la carte se charge automatiquement
+                  </li>
+                </ol>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span
+                    >La clé est retenue entre les sessions : vous n'avez pas à
+                    la ressaisir à chaque visite.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch2-2" class="doc-section">
+            <h3 class="section-title">
+              2.2 Sécurité : comment la clé est stockée
+            </h3>
+            <div class="step-card">
+              <div class="step-body">
+                <ul class="step-list">
+                  <li>
+                    La clé est chiffrée en <strong>AES-GCM 256 bits</strong> avant
+                    d'être sauvegardée dans le <code>localStorage</code> de votre
+                    navigateur
+                  </li>
+                  <li>
+                    Elle n'est <strong>jamais envoyée</strong> à un serveur — tout
+                    reste sur votre appareil
+                  </li>
+                  <li>
+                    Pour l'effacer, cliquez sur le bouton <strong
+                      >Oublier la clé</strong
+                    > dans les paramètres
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 3 ─── -->
+        <section id="ch3" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">3</div>
+            <h2 class="chapter-title">Dessiner un territoire</h2>
+          </div>
+
+          <section id="ch3-1" class="doc-section">
+            <h3 class="section-title">3.1 Poser des points sur la carte</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Chaque clic sur la carte ajoute un <strong
+                    >point de passage</strong
+                  > (waypoint). Les segments entre les points se tracent automatiquement
+                  selon le mode actif.
+                </p>
+                <p>
+                  Pour fermer un territoire, revenez sur le premier point posé.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch3-2" class="doc-section">
+            <h3 class="section-title">3.2 Mode Route vs Ligne droite</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Le toggle en haut de la carte permet de basculer entre deux
+                  modes de tracé :
+                </p>
+                <ul class="step-list">
+                  <li>
+                    <strong>Route</strong> — chaque segment suit le réseau routier
+                    réel via la Directions API
+                  </li>
+                  <li>
+                    <strong>Ligne droite</strong> — les points sont reliés en ligne
+                    directe (vol d'oiseau), sans appel API
+                  </li>
+                </ul>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span
+                    >Utilisez le mode <strong>Ligne droite</strong> pour les zones
+                    sans routes (champs, forêts) ou pour économiser des requêtes API.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch3-3" class="doc-section">
+            <h3 class="section-title">3.3 Choisir le mode de transport</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  En mode <strong>Route</strong>, vous pouvez choisir le réseau
+                  emprunté :
+                </p>
+                <ul class="step-list">
+                  <li>🚗 <strong>Voiture</strong> — routes et autoroutes</li>
+                  <li>
+                    🚶 <strong>Marche à pied</strong> — chemins piétons, trottoirs
+                  </li>
+                  <li>
+                    🚲 <strong>Vélo</strong> — pistes cyclables et voies adaptées
+                  </li>
+                </ul>
+                <p style="margin-top:8px;">
+                  Ce réglage n'a aucun effet en mode <strong
+                    >Ligne droite</strong
+                  >.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch3-4" class="doc-section">
+            <h3 class="section-title">3.4 L'outil Snap</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Le bouton <strong>Snap</strong> (aimant) active le magnétisme :
+                  les nouveaux points se collent automatiquement aux tracés existants.
+                </p>
+                <ul class="step-list">
+                  <li>
+                    Utile pour raccorder deux territoires bord à bord sans
+                    espace ni chevauchement
+                  </li>
+                  <li>Fonctionne avec tous les calques visibles</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch3-5" class="doc-section">
+            <h3 class="section-title">3.5 Annuler et effacer</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <ul class="step-list">
+                  <li>
+                    <strong>Annuler</strong> — supprime le dernier point posé (raccourci
+                    : <kbd>Ctrl</kbd> + <kbd>Z</kbd>)
+                  </li>
+                  <li>
+                    <strong>Effacer tout</strong> — supprime tous les points du calque
+                    actif
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 4 ─── -->
+        <section id="ch4" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">4</div>
+            <h2 class="chapter-title">Gérer ses calques</h2>
+          </div>
+
+          <section id="ch4-1" class="doc-section">
+            <h3 class="section-title">4.1 Créer et nommer un calque</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Chaque calque représente un territoire indépendant (un
+                  polygone).
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Cliquez sur <kbd>+</kbd> dans la liste des calques pour en créer
+                    un nouveau
+                  </li>
+                  <li>Cliquez sur le nom du calque pour le renommer</li>
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch4-2" class="doc-section">
+            <h3 class="section-title">4.2 Passer d'un calque à l'autre</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Cliquez sur un calque dans la liste pour le rendre actif. Tous
+                  les clics suivants sur la carte s'appliquent au calque
+                  sélectionné.
+                </p>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span
+                    >Vous pouvez dessiner plusieurs territoires distincts en
+                    parallèle en changeant de calque actif à tout moment.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch4-3" class="doc-section">
+            <h3 class="section-title">4.3 Importer un fichier KML</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Cliquez sur <kbd>⬆ Importer</kbd> dans l'en-tête du panneau <strong
+                    >Polygones</strong
+                  > et sélectionnez un fichier <code>.kml</code>. Tous les
+                  polygones du fichier sont regroupés dans un dossier portant le
+                  nom du fichier.
+                </p>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span
+                    >Les fichiers volumineux (800+ polygones) sont traités par
+                    blocs — une barre de progression s'affiche pendant l'import.</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="step-card"
+              style="border-color:rgba(251,191,36,0.3);margin-top:12px;"
+            >
+              <div
+                class="step-header"
+                style="border-bottom-color:rgba(251,191,36,0.2);"
+              >
+                <div
+                  class="step-number"
+                  style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);color:#fbbf24;"
+                >
+                  !
+                </div>
+                <h4 class="step-title">
+                  N'importe que des fichiers de confiance
+                </h4>
+              </div>
+              <div class="step-body">
+                <p>
+                  Un fichier KML est un document XML structuré. Territory Maker
+                  l'analyse de façon sécurisée et n'exécute aucun code qu'il
+                  pourrait contenir. Cependant, un fichier malveillant conçu
+                  pour saturer la mémoire pourrait ralentir ou bloquer votre
+                  onglet.
+                </p>
+                <ul class="step-list">
+                  <li>
+                    N'importez que des fichiers provenant de sources que vous
+                    contrôlez ou en lesquelles vous avez confiance
+                  </li>
+                  <li>
+                    Méfiez-vous des fichiers KML reçus par e-mail ou téléchargés
+                    sur des sites inconnus
+                  </li>
+                  <li>
+                    En cas de doute, ouvrez d'abord le fichier dans un éditeur
+                    de texte pour vérifier son contenu
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 5 ─── -->
+        <section id="ch5" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">5</div>
+            <h2 class="chapter-title">Exporter</h2>
+          </div>
+
+          <section id="ch5-1" class="doc-section">
+            <h3 class="section-title">5.1 Format KML</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Territory Maker exporte en <strong>KML</strong> (Keyhole Markup
+                  Language), le format standard pour les données géographiques.
+                </p>
+                <ul class="step-list">
+                  <li>
+                    Compatible avec <strong>Google My Maps</strong>, <strong
+                      >Google Earth</strong
+                    >, <strong>QGIS</strong>, et la plupart des SIG
+                  </li>
+                  <li>Chaque calque est exporté comme un polygone distinct</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-2" class="doc-section">
+            <h3 class="section-title">5.2 Copier ou télécharger</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <ol class="step-list">
+                  <li>
+                    Cliquez sur <kbd>Exporter KML</kbd> dans la barre latérale pour
+                    ouvrir le panneau d'export
+                  </li>
+                  <li>
+                    Choisissez entre <kbd>Copier</kbd> (colle dans un autre outil)
+                    ou
+                    <kbd>Télécharger</kbd> (sauvegarde un fichier <code
+                      >.kml</code
+                    >)
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 6 ─── -->
+        <section id="ch6" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">6</div>
+            <h2 class="chapter-title">Personnalisation</h2>
+          </div>
+
+          <section id="ch6-1" class="doc-section">
+            <h3 class="section-title">6.1 Thème de l'interface</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>Accessible depuis le panneau ⚙️ :</p>
+                <ul class="step-list">
+                  <li><strong>Sombre</strong> — interface noire (défaut)</li>
+                  <li><strong>Clair</strong> — interface blanche</li>
+                  <li>
+                    <strong>Système</strong> — suit les préférences de votre OS
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch6-2" class="doc-section">
+            <h3 class="section-title">6.2 Thème de la carte</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Le fond de carte peut être changé indépendamment de
+                  l'interface :
+                </p>
+                <ul class="step-list">
+                  <li>
+                    <strong>Sombre</strong> — carte en niveaux de gris sombres
+                  </li>
+                  <li><strong>Clair</strong> — carte classique Google Maps</li>
+                  <li><strong>Satellite</strong> — vue aérienne</li>
+                  <li><strong>Relief</strong> — topographie et terrain</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 7 ─── -->
+        <section id="ch7" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">7</div>
+            <h2 class="chapter-title">Outils avancés</h2>
+          </div>
+
+          <section id="ch7-1" class="doc-section">
+            <h3 class="section-title">7.1 Découper un polygone (Split)</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  L'outil <strong>Split</strong> permet de couper un polygone
+                  fermé en deux en traçant une ligne de découpe à l'intérieur.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Sélectionnez un <strong>polygone fermé</strong> — le bouton
+                    <kbd>✂</kbd> apparaît dans la barre d'outils à droite
+                  </li>
+                  <li>
+                    Cliquez sur <kbd>✂</kbd> pour entrer en mode découpe. Le
+                    curseur devient une <strong>croix</strong> et l'aimant
+                    s'active automatiquement
+                  </li>
+                  <li>
+                    Cliquez un premier point <strong>sur le contour</strong> du
+                    polygone — un marqueur rouge indique le point de départ
+                  </li>
+                  <li>
+                    Cliquez des points intermédiaires à l'intérieur pour guider
+                    la découpe (optionnel)
+                  </li>
+                  <li>
+                    Cliquez un deuxième point <strong>sur le contour</strong>
+                    pour valider — deux nouveaux polygones sont créés
+                    automatiquement
+                  </li>
+                </ol>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    La ligne de découpe utilise le <strong>mode actif</strong> (Route
+                    ou Ligne droite) sélectionné dans la barre d'outils. Choisissez
+                    <strong>Ligne droite</strong> pour une découpe rectiligne ou
+                    <strong>Route</strong> pour suivre le réseau routier.
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="step-card" style="margin-top:12px;">
+              <div class="step-body">
+                <p><strong>Résultat :</strong></p>
+                <ul class="step-list">
+                  <li>
+                    Le polygone original est supprimé et remplacé par deux
+                    nouveaux polygones nommés <code>NomOriginal-1</code> et
+                    <code>NomOriginal-2</code>
+                  </li>
+                  <li>
+                    Les deux polygones sont placés dans un dossier
+                    <strong>"territoires enfants"</strong> (créé automatiquement
+                    s'il n'existe pas encore)
+                  </li>
+                </ul>
+                <div class="step-notice step-notice-warning">
+                  <span>⚠️</span>
+                  <span>
+                    Pour annuler, appuyez sur <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou
+                    cliquez le bouton <kbd>↩</kbd> dans la barre d'outils — le
+                    polygone original est restauré et les deux fragments sont
+                    supprimés.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch7-2" class="doc-section">
+            <h3 class="section-title">7.2 Fusionner deux polygones (Merge)</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  L'outil <strong>Merge</strong> fusionne deux polygones
+                  adjacents ou se chevauchant en un seul.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Cliquez sur un premier polygone pour le sélectionner
+                  </li>
+                  <li>
+                    <kbd>Ctrl</kbd>+<strong>Clic</strong> sur un second
+                    polygone — les deux sont surlignés en <strong>ambre</strong>
+                    et le bouton <kbd>⊕</kbd> apparaît dans la barre d'outils
+                  </li>
+                  <li>
+                    Cliquez sur <kbd>⊕</kbd> pour fusionner — un seul polygone
+                    nommé <code>Polygone1 - Polygone2</code> est créé
+                  </li>
+                </ol>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    Territory Maker aligne automatiquement les bords partagés
+                    (tolérance ±5 m) avant la fusion — les polygones tracés de
+                    chaque côté d'une même route se rejoignent proprement sans
+                    laisser de gap ni superposer les contours.
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="step-card"
+              style="border-color:rgba(251,191,36,0.3);margin-top:12px;"
+            >
+              <div
+                class="step-header"
+                style="border-bottom-color:rgba(251,191,36,0.2);"
+              >
+                <div
+                  class="step-number"
+                  style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);color:#fbbf24;"
+                >
+                  !
+                </div>
+                <h4 class="step-title">Polygones non adjacents</h4>
+              </div>
+              <div class="step-body">
+                <p>
+                  Si les deux polygones sélectionnés ne se touchent pas et ne
+                  se chevauchent pas (même avec la tolérance de 5 m), un
+                  message d'erreur s'affiche et aucune modification n'est
+                  effectuée.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch7-3" class="doc-section">
+            <h3 class="section-title">7.3 Annuler un Split ou un Merge</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Chaque opération Split et Merge est <strong>annulable</strong>.
+                </p>
+                <ul class="step-list">
+                  <li>
+                    Appuyez sur <kbd>Ctrl</kbd>+<kbd>Z</kbd> (ou <kbd>Cmd</kbd
+                    >+<kbd>Z</kbd> sur Mac) — l'annulation de Split/Merge est
+                    prioritaire sur l'annulation de waypoint
+                  </li>
+                  <li>
+                    Ou cliquez le bouton <kbd>↩</kbd> dans la barre d'outils à
+                    droite (visible uniquement quand des opérations sont dans
+                    l'historique)
+                  </li>
+                </ul>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    Plusieurs opérations successives peuvent être annulées une
+                    par une — l'historique est empilé et vidé dans l'ordre
+                    inverse.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- Footer CTA -->
+        <div
+          style="margin-top:40px;padding:24px;background:#1a1d27;border:1px solid #2d3148;border-radius:12px;text-align:center;"
+        >
+          <p style="font-size:0.9rem;color:#94a3b8;margin:0 0 16px;">
+            Prêt à commencer ? Retourne sur l'application.
+          </p>
+          <a
+            href="/"
+            class="btn btn-primary"
+            style="display:inline-flex;text-decoration:none;padding:10px 28px;font-size:0.9rem;"
+          >
+            Utiliser Territory Maker →
+          </a>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
+
+<script>
+  // ── Active section tracking ──────────────────────────────────────────────
+  function updateActiveSection() {
+    const scrollPos = window.scrollY + 80;
+    const sections = [...document.querySelectorAll('section[id^="ch"]')];
+
+    let current = sections[0]?.id ?? null;
+    for (const section of sections) {
+      if ((section as HTMLElement).offsetTop <= scrollPos) {
+        current = section.id;
+      }
+    }
+
+    document
+      .querySelectorAll(".sidebar-nav a.is-active")
+      .forEach((el) => el.classList.remove("is-active"));
+
+    if (current) {
+      const link = document.querySelector(`.sidebar-nav a[href="#${current}"]`);
+      if (link) link.classList.add("is-active");
+
+      // Also highlight parent chapter when a subsection is active
+      const chapterId = current.includes("-") ? current.split("-")[0] : null;
+      if (chapterId) {
+        const chapterLink = document.querySelector(
+          `.sidebar-nav a[href="#${chapterId}"]`,
+        );
+        if (chapterLink) chapterLink.classList.add("is-active");
+      }
+    }
+  }
+
+  window.addEventListener("scroll", updateActiveSection, { passive: true });
+  updateActiveSection();
+
+  // ── Mobile sidebar ───────────────────────────────────────────────────────
+  const sidebarToggle = document.getElementById("sidebarToggle")!;
+  const docSidebar = document.getElementById("docSidebar")!;
+  const sidebarBackdrop = document.getElementById("sidebarBackdrop")!;
+
+  function openSidebar() {
+    docSidebar.classList.add("is-open");
+    sidebarBackdrop.classList.add("is-visible");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSidebar() {
+    docSidebar.classList.remove("is-open");
+    sidebarBackdrop.classList.remove("is-visible");
+    document.body.style.overflow = "";
+  }
+
+  sidebarToggle.addEventListener("click", () => {
+    docSidebar.classList.contains("is-open") ? closeSidebar() : openSidebar();
+  });
+
+  sidebarBackdrop.addEventListener("click", closeSidebar);
+
+  docSidebar.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+</script>
+
+<style is:global>
+  /* ── Base ─────────────────────────────────────────────────────────────── */
+  /* Surcharge height:100% de global.css — nécessaire pour position:sticky */
+  html,
+  body {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* ── Header ───────────────────────────────────────────────────────────── */
+  .doc-header {
+    border-bottom: 1px solid #2d3148;
+    background: #1a1d27;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .doc-header-inner {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .doc-back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    transition: color 0.15s;
+  }
+
+  .doc-back-link:hover {
+    color: #e2e8f0;
+  }
+
+  .doc-header-divider {
+    color: #2d3148;
+  }
+
+  .doc-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  .doc-layout {
+    display: flex;
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 24px;
+    gap: 48px;
+    align-items: flex-start;
+  }
+
+  /* ── Sidebar ──────────────────────────────────────────────────────────── */
+  .doc-sidebar {
+    width: 220px;
+    min-width: 220px;
+    position: sticky;
+    top: 50px;
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+    padding: 28px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #2d3148 transparent;
+  }
+
+  .doc-sidebar::-webkit-scrollbar {
+    width: 3px;
+  }
+  .doc-sidebar::-webkit-scrollbar-thumb {
+    background: #2d3148;
+    border-radius: 2px;
+  }
+
+  .sidebar-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #8892a4;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+    padding-left: 4px;
+  }
+
+  .sidebar-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .sidebar-chapter-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #a5adcb;
+    font-size: 0.83rem;
+    font-weight: 600;
+    padding: 5px 4px;
+    border-radius: 6px;
+    transition: color 0.15s;
+    line-height: 1.3;
+  }
+
+  .sidebar-chapter-link:hover {
+    color: #e2e8f0;
+  }
+
+  .sidebar-chapter-link.is-active {
+    color: #00e5a0;
+  }
+
+  .sidebar-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border-radius: 5px;
+    background: rgba(0, 229, 160, 0.07);
+    border: 1px solid rgba(0, 229, 160, 0.18);
+    color: #00e5a0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .sidebar-chapter-link.is-active .sidebar-num {
+    background: rgba(0, 229, 160, 0.16);
+    border-color: rgba(0, 229, 160, 0.4);
+  }
+
+  .sidebar-sub-list {
+    list-style: none;
+    margin: 2px 0 6px 28px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-sub-link {
+    display: block;
+    text-decoration: none;
+    color: #a5adcb;
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-left: 2px solid #2d3148;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
+    line-height: 1.45;
+  }
+
+  .sidebar-sub-link:hover {
+    color: #cad3f5;
+    border-left-color: #44475b;
+  }
+
+  .sidebar-sub-link.is-active {
+    color: #a6da95;
+    border-left-color: #a6da95;
+  }
+
+  /* ── Content ──────────────────────────────────────────────────────────── */
+  .doc-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 700px;
+    padding: 40px 0 80px;
+  }
+
+  /* ── Mobile ───────────────────────────────────────────────────────────── */
+  .sidebar-mobile-btn {
+    display: none;
+    margin-left: auto;
+    background: rgba(0, 229, 160, 0.08);
+    border: 1px solid rgba(0, 229, 160, 0.25);
+    color: #00e5a0;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+
+  .sidebar-mobile-btn:hover {
+    background: rgba(0, 229, 160, 0.14);
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 30;
+  }
+
+  .sidebar-backdrop.is-visible {
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar-mobile-btn {
+      display: block;
+    }
+
+    .doc-layout {
+      padding: 0 16px;
+    }
+
+    .doc-sidebar {
+      position: fixed;
+      left: -270px;
+      top: 0;
+      height: 100vh;
+      width: 260px;
+      min-width: 260px;
+      max-height: 100vh;
+      background: #1a1d27;
+      border-right: 1px solid #2d3148;
+      padding: 24px 20px;
+      z-index: 40;
+      transition: left 0.28s ease;
+    }
+
+    .doc-sidebar.is-open {
+      left: 0;
+    }
+  }
+
+  /* ── Table of contents (kept for reference, hidden) ────────────────────── */
+  .toc-list {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    counter-reset: toc-chapter;
+  }
+
+  .toc-list > li {
+    counter-increment: toc-chapter;
+  }
+
+  .toc-list > li > ol {
+    padding-left: 20px;
+    margin: 2px 0 8px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .toc-list a {
+    text-decoration: none;
+    font-size: 0.83rem;
+    color: #94a3b8;
+    padding: 3px 0;
+    display: block;
+    transition: color 0.15s;
+  }
+
+  .toc-list a:hover {
+    color: #e2e8f0;
+  }
+
+  .toc-chapter {
+    font-weight: 600;
+    color: #e2e8f0 !important;
+    margin-bottom: 2px;
+  }
+
+  /* ── Chapter headers ──────────────────────────────────────────────────── */
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #2d3148;
+  }
+
+  .chapter-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: rgba(0, 229, 160, 0.1);
+    border: 1px solid rgba(0, 229, 160, 0.3);
+    color: #00e5a0;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .chapter-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  /* ── Section headings ─────────────────────────────────────────────────── */
+  .doc-section {
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin: 0 0 10px;
+  }
+
+  /* ── Step cards ───────────────────────────────────────────────────────── */
+  .step-card {
+    background: #1a1d27;
+    border: 1px solid #2d3148;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #2d3148;
+  }
+
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: rgba(0, 229, 160, 0.12);
+    border: 1px solid rgba(0, 229, 160, 0.35);
+    color: #00e5a0;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .step-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  .step-body {
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .step-body p {
+    margin: 0 0 12px;
+  }
+  .step-body p:last-child {
+    margin-bottom: 0;
+  }
+  .step-body strong {
+    color: #e2e8f0;
+  }
+  .step-body a {
+    color: #818cf8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .step-body a:hover {
+    color: #a5b4fc;
+  }
+
+  .step-body code {
+    background: #0d0f18;
+    border: 1px solid #2d3148;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.82rem;
+    color: #00e5a0;
+  }
+
+  .step-body kbd {
+    background: #252a3a;
+    border: 1px solid #3d4460;
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    font-family: inherit;
+  }
+
+  .step-list {
+    margin: 0 0 12px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .step-list:last-child {
+    margin-bottom: 0;
+  }
+  .step-list li {
+    padding-left: 4px;
+  }
+
+  .step-notice {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    background: rgba(129, 140, 248, 0.08);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    margin-top: 12px;
+  }
+
+  .step-notice-warning {
+    background: rgba(251, 191, 36, 0.08);
+    border-color: rgba(251, 191, 36, 0.25);
+    color: #94a3b8;
+  }
+
+  .notice-box {
+    background: rgba(129, 140, 248, 0.06);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .api-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .api-badge-green {
+    background: rgba(0, 229, 160, 0.12);
+    border: 1px solid rgba(0, 229, 160, 0.3);
+    color: #00e5a0;
+  }
+
+  .api-badge-blue {
+    background: rgba(129, 140, 248, 0.12);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    color: #818cf8;
+  }
+</style>

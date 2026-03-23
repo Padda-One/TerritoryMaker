@@ -1,0 +1,1006 @@
+---
+import "../styles/global.css";
+import "leaflet/dist/leaflet.css";
+---
+
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Tracez un territoire sur Google Maps en combinant segments routiers et lignes droites, puis exportez en KML."
+    />
+    <title>Territory Maker</title>
+    <link rel="icon" type="image/svg+xml" href="/logo-TerritoryMaker.svg" />
+  </head>
+
+  <body
+    style="display:flex;height:100vh;overflow:hidden;background-color:var(--color-bg);color:var(--color-text);"
+  >
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LANDING PAGE (shown when no API key is stored)
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <div id="landing-page" aria-label="Présentation de Territory Maker">
+      <!-- ── Navigation ────────────────────────────────────────────────────── -->
+      <header class="lp-nav">
+        <nav class="lp-nav-inner">
+          <div class="lp-nav-logo">
+            <img
+              src="/logo-TerritoryMaker.svg"
+              width="50"
+              height="50"
+              aria-hidden="true"
+              class="lp-nav-logo-icon"
+            />
+            Territory Maker
+          </div>
+          <div class="lp-nav-links">
+            <a href="/documentation" class="lp-nav-link">Documentation</a>
+            <a
+              href="https://github.com/Padda-One/TerritoryMaker"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="lp-nav-link">GitHub</a
+            >
+            <button
+              class="lp-nav-cta"
+              onclick="document.getElementById('landing-key-input').focus()"
+              >Commencer</button
+            >
+          </div>
+        </nav>
+      </header>
+
+      <!-- ── Hero ─────────────────────────────────────────────────────────── -->
+      <main class="lp-main">
+        <section class="lp-hero reveal">
+          <!-- Left column -->
+          <div class="lp-hero-left">
+            <div class="lp-space-y-10">
+              <div class="lp-space-y-6">
+                <span class="lp-badge"
+                  >Cartographie de territoires · Export KML</span
+                >
+                <h1 class="lp-h1">
+                  Délimitez vos territoires avec une <span class="lp-h1-accent"
+                    >précision absolue</span
+                  >.
+                </h1>
+                <p class="lp-hero-desc">
+                  Outil client-side pour le tracé, l'import et l'export de
+                  polygones KML. Combinez segments routiers et lignes droites,
+                  gérez des centaines de polygones, exportez vers Google Earth
+                  et QGIS.
+                </p>
+              </div>
+
+              <!-- Form card -->
+              <div class="glass-card lp-form-card lp-neon-focus">
+                <form id="landing-key-form" class="lp-form-inner" novalidate>
+                  <div class="lp-form-field">
+                    <label for="landing-key-input" class="lp-form-label">
+                      Authentification API Google Maps
+                    </label>
+                    <input
+                      id="landing-key-input"
+                      type="password"
+                      class="lp-form-input"
+                      placeholder="Saisir la clé API (AIza…)"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-describedby="landing-key-hint"
+                      required
+                    />
+                  </div>
+                  <p id="landing-key-hint" class="lp-form-hint">
+                    Nécessite <strong>Maps JavaScript API</strong> et <strong
+                      >Directions API</strong
+                    >.
+                  </p>
+                  <div
+                    id="landing-error"
+                    role="status"
+                    aria-live="polite"
+                    class="landing-error"
+                    hidden
+                  >
+                  </div>
+                  <button
+                    type="submit"
+                    class="lp-submit landing-submit lp-neon-hover"
+                  >
+                    Initialiser la session
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      ><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg
+                    >
+                  </button>
+                </form>
+                <a href="/documentation" class="lp-form-guide"
+                  >Procédure d'obtention de la clé API →</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column — SVG visualization -->
+          <div class="lp-hero-right" aria-hidden="true">
+            <div class="lp-grid-bg"></div>
+            <svg
+              class="lp-svg"
+              viewBox="0 0 500 500"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient
+                  id="neonGrad"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="100%"
+                >
+                  <stop offset="0%" stop-color="#a6da95" stop-opacity="0.8"
+                  ></stop>
+                  <stop offset="100%" stop-color="#8aadf4" stop-opacity="0.8"
+                  ></stop>
+                </linearGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"
+                  ></feGaussianBlur>
+                  <feMerge
+                    ><feMergeNode in="coloredBlur"></feMergeNode><feMergeNode
+                      in="SourceGraphic"></feMergeNode></feMerge
+                  >
+                </filter>
+              </defs>
+              <!-- Grid lines -->
+              <path
+                d="M0,100 L500,100 M0,200 L500,200 M0,300 L500,300 M0,400 L500,400"
+                stroke="#44475b"
+                stroke-width="0.5"></path>
+              <path
+                d="M100,0 L100,500 M200,0 L200,500 M300,0 L300,500 M400,0 L400,500"
+                stroke="#44475b"
+                stroke-width="0.5"></path>
+              <!-- Contour lines -->
+              <path
+                d="M50,120 C150,70 250,170 450,120"
+                stroke="#a6da95"
+                stroke-width="1.5"
+                fill="none"
+                opacity="0.4"></path>
+              <path
+                d="M30,170 C130,120 230,220 430,170"
+                stroke="#8aadf4"
+                stroke-width="1"
+                fill="none"
+                opacity="0.2"></path>
+              <!-- Territory polygons -->
+              <path
+                d="M140,180 L240,160 L280,240 L200,280 Z"
+                fill="url(#neonGrad)"
+                fill-opacity="0.05"
+                stroke="#a6da95"
+                stroke-width="2"
+                stroke-dasharray="8 4"
+                filter="url(#glow)"></path>
+              <path
+                d="M320,300 L440,280 L460,380 L340,400 Z"
+                fill="#8aadf4"
+                fill-opacity="0.05"
+                stroke="#8aadf4"
+                stroke-width="1.5"
+                filter="url(#glow)"></path>
+              <!-- Marker dots -->
+              <circle
+                cx="220"
+                cy="220"
+                r="5"
+                fill="#a6da95"
+                class="lp-dot-pulse"></circle>
+              <circle
+                cx="400"
+                cy="340"
+                r="5"
+                fill="#8aadf4"
+                class="lp-dot-pulse"
+                style="animation-delay:1.5s"></circle>
+            </svg>
+          </div>
+        </section>
+
+        <!-- ── Reliability section ─────────────────────────────────────────── -->
+        <section class="lp-reliability reveal">
+          <div class="lp-reliability-inner">
+            <div class="lp-section-header">
+              <h2 class="lp-section-title">Pourquoi l'outil est fiable</h2>
+              <p class="lp-section-desc">
+                Territory Maker opère en mode isolé. L'architecture garantit la
+                protection de vos données et la pérennité du traitement local.
+              </p>
+            </div>
+
+            <div class="lp-cards-grid">
+              <!-- Card 1 -->
+              <div class="glass-card lp-feature-card lp-hover-lift">
+                <div class="lp-feature-icon-box lp-icon-green">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    ><rect x="4" y="4" width="16" height="16" rx="2"
+                    ></rect><rect x="9" y="9" width="6" height="6"></rect><line
+                      x1="9"
+                      y1="1"
+                      x2="9"
+                      y2="4"></line><line x1="15" y1="1" x2="15" y2="4"
+                    ></line><line x1="9" y1="20" x2="9" y2="23"></line><line
+                      x1="15"
+                      y1="20"
+                      x2="15"
+                      y2="23"></line><line x1="20" y1="9" x2="23" y2="9"
+                    ></line><line x1="20" y1="14" x2="23" y2="14"></line><line
+                      x1="1"
+                      y1="9"
+                      x2="4"
+                      y2="9"></line><line x1="1" y1="14" x2="4" y2="14"
+                    ></line></svg
+                  >
+                </div>
+                <div class="lp-feature-text">
+                  <h3 class="lp-feature-title">Exécution Locale</h3>
+                  <p class="lp-feature-desc">
+                    Moteur 100% statique. Le traitement s'effectue exclusivement
+                    dans le runtime du navigateur, sans transit serveur.
+                  </p>
+                </div>
+              </div>
+              <!-- Card 2 -->
+              <div class="glass-card lp-feature-card lp-hover-lift">
+                <div class="lp-feature-icon-box lp-icon-blue">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    ><rect x="3" y="11" width="18" height="11" rx="2"
+                    ></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg
+                  >
+                </div>
+                <div class="lp-feature-text">
+                  <h3 class="lp-feature-title">Persistence Isolée</h3>
+                  <p class="lp-feature-desc">
+                    La clé API est chiffrée AES-GCM 256 bits dans le
+                    localStorage. Elle ne quitte jamais votre navigateur.
+                  </p>
+                </div>
+              </div>
+              <!-- Card 3 -->
+              <div class="glass-card lp-feature-card lp-hover-lift">
+                <div class="lp-feature-icon-box lp-icon-green">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    ><path
+                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                    ></path><line x1="1" y1="1" x2="23" y2="23"></line></svg
+                  >
+                </div>
+                <div class="lp-feature-text">
+                  <h3 class="lp-feature-title">Zéro Tracking</h3>
+                  <p class="lp-feature-desc">
+                    Aucun cookie, aucune analytics, aucune balise tierce. Les
+                    données restent rigoureusement limitées aux requêtes
+                    cartographiques.
+                  </p>
+                </div>
+              </div>
+              <!-- Card 4 -->
+              <div class="glass-card lp-feature-card lp-hover-lift">
+                <div class="lp-feature-icon-box lp-icon-blue">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    ><polyline points="16 18 22 12 16 6"></polyline><polyline
+                      points="8 6 2 12 8 18"></polyline></svg
+                  >
+                </div>
+                <div class="lp-feature-text">
+                  <h3 class="lp-feature-title">Audit Open Source</h3>
+                  <p class="lp-feature-desc">
+                    Code source public et auditable en continu sur <a
+                      href="https://github.com/Padda-One/TerritoryMaker"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="lp-inline-link">GitHub</a
+                    >. Transparence totale sur les algorithmes.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Technical note -->
+            <div class="glass-card lp-tech-note">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                class="lp-tech-note-icon"
+                ><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path
+                  d="M1.42 9a16 16 0 0 1 21.16 0"></path><path
+                  d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line
+                  x1="12"
+                  y1="20"
+                  x2="12.01"
+                  y2="20"></line></svg
+              >
+              <p class="lp-tech-note-text">
+                Architecture technique : les tuiles cartographiques sont
+                établies en liaison directe entre votre navigateur et les
+                endpoints des fournisseurs (Google Maps / OpenStreetMap) via
+                authentification par clé API. Aucun proxy de notre part.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ── Footer ────────────────────────────────────────────────────────── -->
+      <footer class="lp-footer">
+        <div class="lp-footer-inner">
+          <div class="lp-footer-brand">
+            <div class="lp-footer-logo">
+              <img
+                src="/logo-TerritoryMaker.svg"
+                width="50"
+                height="50"
+                aria-hidden="true"
+              />
+              Territory Maker
+            </div>
+            <div class="lp-footer-version">Système de cartographie KML</div>
+          </div>
+          <div class="lp-footer-links">
+            <button
+              class="lp-footer-link"
+              onclick="document.getElementById('legal-modal').style.display='flex'"
+              >Mentions Légales</button
+            >
+            <a
+              href="https://github.com/Padda-One/TerritoryMaker"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="lp-footer-link">GitHub</a
+            >
+            <a href="/documentation" class="lp-footer-link">Documentation</a>
+          </div>
+          <div class="lp-footer-copy">
+            Fait avec ❤️ par <a
+              href="https://paddaone.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="lp-footer-paddaone"
+              ><img
+                src="/paddaone-logo.avif"
+                alt="Paddaone"
+                class="lp-footer-brand-logo"
+                width="16"
+                height="16"
+              />Paddaone</a
+            >
+          </div>
+        </div>
+      </footer>
+    </div><!-- /#landing-page -->
+
+    <!-- ── Legal modal (outside #landing-page to avoid overflow clipping) ──── -->
+    <div
+      id="legal-modal"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('legal-modal').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
+          >
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title">Protocole Légal</h2>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Entité Éditrice</h3>
+            <p>
+              Plateforme opérée par <strong
+                style="color:var(--color-accent-blue)">Padda-One</strong
+              >.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Infrastructures</h3>
+            <p>
+              Déploiement via infrastructure statique <strong
+                style="color:var(--color-accent-blue)">GitHub Pages</strong
+              > (GitHub Inc.). Aucun serveur applicatif.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Données Personnelles</h3>
+            <p>
+              Aucune donnée personnelle n'est collectée, traitée ou transmise.
+              Les configurations sont encapsulées dans le périmètre local du
+              navigateur.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Clé API</h3>
+            <p>
+              Votre clé Google Maps API est stockée uniquement dans votre
+              navigateur, chiffrée AES-GCM 256 bits. Elle n'est jamais transmise
+              à l'éditeur ni à un tiers.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Cookies</h3>
+            <p>Aucun cookie d'aucune sorte. Aucun traceur, aucune analytics.</p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Données Cartographiques</h3>
+            <p>
+              Tuiles fournies par Google Maps API et/ou OpenStreetMap. ©
+              Contributeurs OpenStreetMap, licence <a
+                href="https://opendatacommons.org/licenses/odbl/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="lp-inline-link">ODbL</a
+              >.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Code Source</h3>
+            <p>
+              Public et auditable sur <a
+                href="https://github.com/Padda-One/TerritoryMaker"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="lp-inline-link">GitHub — https://github.com/Padda-One/TerritoryMaker</a
+              >.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <aside id="sidebar" class="sidebar">
+      <!-- Header -->
+      <div class="sidebar-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="/logo-TerritoryMaker.svg" width="50" height="50" alt="" />
+          <div>
+            <h1
+              style="font-size:0.95rem;font-weight:700;color:var(--color-text);margin:0;line-height:1.2;"
+            >
+              Territory Maker
+            </h1>
+            <p
+              style="font-size:0.68rem;color:var(--color-text-muted);margin:1px 0 0;"
+            >
+              Tracez · Exportez · KML
+            </p>
+          </div>
+        </div>
+        <button id="btn-settings-toggle" class="btn-icon" title="Paramètres"
+          >⚙</button
+        >
+      </div>
+
+      <!-- ─── SETTINGS PANEL ──────────────────────────────────────────────── -->
+      <div
+        id="settings-panel"
+        style="display:flex;flex-direction:column;flex:1;overflow-y:auto;"
+      >
+        <!-- API Key section -->
+        <div class="settings-section">
+          <p class="settings-section-title">Clé Google Maps API</p>
+
+          <!-- Key form (shown when no key stored) -->
+          <div
+            id="key-form-section"
+            style="display:flex;flex-direction:column;gap:10px;"
+          >
+            <p
+              style="font-size:0.75rem;color:var(--color-text-muted);margin:0;line-height:1.5;"
+            >
+              Nécessite l'activation de <strong style="color:var(--color-text);"
+                >Maps JavaScript API</strong
+              >
+              et <strong style="color:var(--color-text);">Directions API</strong
+              >.
+            </p>
+            <a href="/documentation" class="guide-link">
+              📖 Pas encore de clé ? Guide pas à pas →
+            </a>
+            <form
+              id="key-form"
+              style="display:flex;flex-direction:column;gap:8px;"
+            >
+              <input
+                id="key-input"
+                type="password"
+                class="input-dark"
+                placeholder="AIza…"
+                autocomplete="off"
+                spellcheck="false"
+                required
+              />
+              <button type="submit" class="btn btn-primary" style="width:100%;">
+                Charger la carte
+              </button>
+            </form>
+          </div>
+
+          <!-- Key status (shown when key is stored) -->
+          <div
+            id="key-stored-section"
+            style="display:none;flex-direction:column;gap:10px;"
+          >
+            <div class="key-status-box">
+              <span style="font-size:1.2rem;">🔑</span>
+              <div>
+                <strong style="font-size:0.82rem;color:var(--color-text);"
+                  >Clé API enregistrée</strong
+                >
+                <p
+                  style="margin:3px 0 0;font-size:0.73rem;color:var(--color-text-muted);"
+                >
+                  Chiffrée localement (AES-GCM 256 bits).
+                </p>
+              </div>
+            </div>
+            <a href="/documentation" class="guide-link">
+              📖 Consulter la documentation →
+            </a>
+            <button
+              id="btn-forget-key"
+              class="btn btn-danger"
+              style="width:100%;font-size:0.78rem;"
+            >
+              🗝 Oublier la clé API
+            </button>
+          </div>
+
+          <!-- Security notices -->
+          <div class="notice-box">
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span style="font-size:1rem;flex-shrink:0;">🔒</span>
+              <div>
+                <strong style="color:var(--color-text);font-size:0.78rem;"
+                  >Stockage local chiffré</strong
+                >
+                <p style="margin:4px 0 0;font-size:0.73rem;">
+                  Ta clé reste sur ton appareil. Elle n'est jamais envoyée à nos
+                  serveurs.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="notice-box notice-box-warning">
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span style="font-size:1rem;flex-shrink:0;">⚠️</span>
+              <div>
+                <strong
+                  style="color:var(--color-accent-yellow);font-size:0.78rem;"
+                  >Restreins ta clé API</strong
+                >
+                <p
+                  style="margin:4px 0 0;font-size:0.73rem;color:var(--color-text-muted);"
+                >
+                  Limite ta clé à ton domaine dans
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="color:var(--color-accent-blue);"
+                    >Google Cloud Console</a
+                  >
+                  pour éviter tout usage non autorisé.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appearance section -->
+        <div class="settings-section">
+          <p class="settings-section-title">Apparence</p>
+
+          <div>
+            <p class="settings-row-label">Thème de l'application</p>
+            <div class="theme-picker" id="app-theme-picker">
+              <button class="theme-btn" data-value="dark">🌙 Sombre</button>
+              <button class="theme-btn" data-value="light">☀️ Clair</button>
+              <button class="theme-btn" data-value="system">⚙ Système</button>
+            </div>
+          </div>
+
+          <div>
+            <p class="settings-row-label">Thème de la carte</p>
+            <div class="theme-picker" id="map-theme-picker">
+              <button class="theme-btn" data-value="dark">Sombre</button>
+              <button class="theme-btn" data-value="light">Clair</button>
+              <button class="theme-btn" data-value="satellite">Satellite</button
+              >
+              <button class="theme-btn" data-value="terrain">Relief</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /#settings-panel -->
+
+      <!-- ─── MAP PANEL ───────────────────────────────────────────────────── -->
+      <div
+        id="map-panel"
+        style="display:none;flex-direction:column;height:100%;overflow:hidden;"
+      >
+        <!-- Transport mode -->
+        <div class="panel-section">
+          <p class="section-label">Mode de transport (segments route)</p>
+          <div style="display:flex;gap:6px;">
+            <button
+              id="btn-transport-driving"
+              class="transport-btn active"
+              title="Voiture">🚗 Voiture</button
+            >
+            <button
+              id="btn-transport-walking"
+              class="transport-btn"
+              title="À pied">🚶 Pied</button
+            >
+            <button
+              id="btn-transport-bicycling"
+              class="transport-btn"
+              title="Vélo">🚴 Vélo</button
+            >
+          </div>
+        </div>
+
+        <!-- Layer panel -->
+        <div class="panel-section" style="flex-shrink:0;">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;gap:4px;"
+          >
+            <p class="section-label" style="margin:0;">Polygones</p>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <button
+                id="btn-import-kml"
+                class="btn btn-secondary"
+                style="font-size:0.72rem;padding:3px 8px;"
+                title="Importer un fichier KML"
+              >
+                ⬆ Importer
+              </button>
+              <input
+                id="input-kml-file"
+                type="file"
+                accept=".kml"
+                style="display:none;"
+              />
+              <button
+                id="btn-add-polygon"
+                class="btn btn-secondary"
+                style="font-size:0.72rem;padding:3px 8px;"
+                disabled
+              >
+                + Nouveau
+              </button>
+            </div>
+          </div>
+          <!-- Import progress bar (hidden by default) -->
+          <div id="import-progress" style="display:none;margin-top:6px;">
+            <p
+              id="import-progress-text"
+              style="font-size:0.7rem;color:var(--color-text-muted);margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+            >
+            </p>
+            <div
+              style="height:3px;background:var(--color-border);border-radius:2px;"
+            >
+              <div
+                id="import-progress-bar"
+                style="height:100%;width:0%;background:var(--color-accent-green);border-radius:2px;transition:width 0.15s;"
+              >
+              </div>
+            </div>
+          </div>
+          <!-- Filter (visible once polygons are loaded) -->
+          <input
+            id="layer-filter"
+            type="search"
+            placeholder="Filtrer les polygones…"
+            style="margin-top:6px;width:100%;font-size:0.75rem;background:var(--color-surface-2);color:var(--color-text);border:1px solid var(--color-border);border-radius:4px;padding:3px 7px;outline:none;box-sizing:border-box;"
+          />
+          <div
+            id="polygon-layer-list"
+            style="margin-top:4px;display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto;"
+          >
+          </div>
+        </div>
+
+        <!-- Waypoints list -->
+        <div
+          class="panel-section"
+          style="flex:1;overflow-y:auto;min-height:80px;"
+        >
+          <p class="section-label">Points de passage</p>
+          <div
+            id="waypoint-list"
+            style="display:flex;flex-direction:column;gap:4px;"
+          >
+            <p
+              style="font-size:0.75rem;color:var(--color-text-muted);font-style:italic;text-align:center;padding:8px 0;"
+            >
+              Cliquez sur la carte pour ajouter des points
+            </p>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div
+          class="panel-section"
+          style="display:flex;flex-direction:column;gap:6px;"
+        >
+          <div style="display:flex;gap:6px;">
+            <button
+              id="btn-undo"
+              class="btn btn-secondary"
+              style="flex:1;"
+              disabled
+            >
+              ↩ Supprimer dernier
+            </button>
+            <button id="btn-clear" class="btn btn-danger" disabled>🗑</button>
+          </div>
+          <button
+            id="btn-export-kml"
+            class="btn btn-blue"
+            style="width:100%;"
+            disabled
+          >
+            🗺 Exporter la carte
+          </button>
+        </div>
+
+        <!-- KML export panel (collapsible) -->
+        <div
+          id="kml-panel"
+          style="display:none;padding:12px 16px;border-top:1px solid var(--color-border);flex-direction:column;gap:8px;"
+        >
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;"
+          >
+            <p class="section-label" style="margin:0;">KML Polygon</p>
+            <button
+              id="btn-kml-close"
+              style="background:none;border:none;color:var(--color-text-muted);cursor:pointer;font-size:1rem;padding:0;line-height:1;"
+              >×</button
+            >
+          </div>
+          <div
+            id="kml-stats"
+            style="font-size:0.72rem;color:var(--color-text-muted);"
+          >
+          </div>
+          <textarea
+            id="kml-output"
+            class="kml-textarea"
+            rows="8"
+            readonly
+            spellcheck="false"></textarea>
+          <div style="display:flex;gap:6px;">
+            <button
+              id="btn-kml-copy"
+              class="btn btn-secondary"
+              style="flex:1;font-size:0.78rem;"
+            >
+              📋 Copier
+            </button>
+            <button
+              id="btn-kml-download"
+              class="btn btn-primary"
+              style="flex:1;font-size:0.78rem;"
+            >
+              ⬇ Télécharger .kml
+            </button>
+          </div>
+        </div>
+      </div><!-- /#map-panel -->
+
+      <!-- Sidebar resize handle -->
+      <div id="sidebar-resize" aria-hidden="true"></div>
+    </aside><!-- /aside -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MAP AREA
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <main style="position:relative;flex:1;overflow:hidden;z-index:0;">
+      <!-- Segment mode toggle -->
+      <div
+        style="position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:1000;"
+      >
+        <div class="toggle-pill" id="segment-toggle">
+          <button id="btn-mode-route" class="toggle-pill-btn active-route"
+            >🛣 Trajet</button
+          >
+          <button id="btn-mode-straight" class="toggle-pill-btn inactive"
+            >✈ Vol d'oiseau</button
+          >
+        </div>
+      </div>
+
+      <!-- ─── Right toolbar ──────────────────────────────────────────────── -->
+      <div
+        style="position:absolute;top:16px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:6px;"
+      >
+        <!-- Snap -->
+        <button
+          id="btn-snap-toggle"
+          class="snap-btn"
+          title="Outil aimant — accroche les nouveaux points sur les tracés existants"
+          >🧲</button
+        >
+
+        <!-- Map provider -->
+        <button
+          id="btn-provider-toggle"
+          class="snap-btn"
+          title="Basculer le fournisseur de carte (OpenStreetMap = affichage uniquement, calcul des trajets toujours via Google)"
+          style=""
+          ><img
+            id="btn-provider-icon"
+            src="/gm.avif"
+            alt="Google Maps"
+            style="width:22px;height:22px;display:block;border-radius:3px;"
+          /></button
+        >
+
+        <!-- Vertex edit (visible when an imported polygon is active) -->
+        <button
+          id="btn-vertex-edit"
+          class="snap-btn"
+          title="Éditer les coordonnées du polygone importé"
+          style="display:none;"
+          ><img
+            src="/images/tools/pencil.svg"
+            width="20"
+            height="20"
+            alt=""
+            aria-hidden="true"
+          /></button
+        >
+
+        <!-- Split (visible when a closed polygon is active) -->
+        <button id="btn-split" class="snap-btn" title="Découper le polygone" style="display:none;">✂</button>
+
+        <!-- Merge (visible when exactly 2 polygons are selected) -->
+        <button id="btn-merge" class="snap-btn" title="Fusionner les polygones sélectionnés" style="display:none;">⊕</button>
+
+        <!-- Undo Split/Merge -->
+        <button id="btn-undo-split-merge" class="snap-btn" title="Annuler la dernière opération Split/Merge" style="display:none;">↩</button>
+      </div>
+
+      <!-- Map loading overlay -->
+      <div id="map-loading" class="loading-overlay" style="display:none;">
+        <div class="spinner"></div>
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin:0;">
+          Chargement de la carte…
+        </p>
+      </div>
+
+      <!-- Hint overlay -->
+      <div
+        id="map-hint"
+        style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none;"
+      >
+        <div class="map-hint-inner">
+          <span id="map-hint-text"
+            >Cliquez sur la carte pour placer un point de passage</span
+          >
+        </div>
+      </div>
+
+      <!-- Google Maps / Leaflet container -->
+      <div id="map" style="height:100%;width:100%;position:relative;z-index:0;">
+      </div>
+    </main>
+
+    <!-- Context menu for layer panel -->
+    <div
+      id="layer-ctx-menu"
+      class="ctx-menu"
+      role="menu"
+      aria-label="Actions"
+      hidden
+    >
+    </div>
+  </body>
+</html>
+
+<script>
+  import { RouteUI } from "../components/RouteUI.ts";
+
+  const ui = new RouteUI();
+  ui.init().catch(console.error);
+
+  // Scroll-reveal via IntersectionObserver
+  const revealObserver = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("active");
+          revealObserver.unobserve(e.target);
+        }
+      }),
+    { threshold: 0.08 },
+  );
+  document
+    .querySelectorAll(".reveal")
+    .forEach((el) => revealObserver.observe(el));
+</script>
