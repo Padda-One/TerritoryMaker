@@ -22,7 +22,8 @@
 - **Merge polygons** — ⊕ Ctrl+click two polygons to select them, then click Merge to fuse them into one; uses selective vertex snapping to align shared borders (tolerance 5 m); blocks non-adjacent polygons with an error; supports Ctrl+Z undo
 - **Multi-select** — Ctrl+click polygon rows in the layer panel or polygon fills on the map to select multiple polygons; selected polygons are highlighted in amber
 - **Waypoint editing** — double-click any existing point to drag it to a new position; adjacent segments are recalculated automatically
-- **Coordinate editing** — ✏ edit individual vertices of imported polygons: drag to move, click to delete, click an edge to insert a new point
+- **Coordinate editing** — ✏ edit individual vertices of Zone polygons: drag to move, click to delete, click an edge to insert a new point
+- **Polygon simplification** — ⬡ reduce the number of vertices of a Zone using Douglas-Peucker; each click applies one pass with a progressively larger tolerance; a ↺ restore button appears to revert to the original coordinates; a global "Simplifier les zones" button simplifies all zones at once
 - **Dual map backend** — choose between **Google Maps** and **OpenStreetMap** (Leaflet) as the display layer; routing always uses the Google Directions API
 - **Landing page** — first-launch welcome screen with project overview and API key form; skipped automatically when a key is already stored
 - **App themes** — switch between Dark, Light, and System (follows OS preference) — persisted in `localStorage`
@@ -80,7 +81,8 @@ The layer panel shows polygons in a **tree-view** organised by folder:
 Each polygon row shows:
 - A colored dot matching the map
 - The polygon name (double-click to rename)
-- A status badge (**Fermé** / **En cours** / **Importé**)
+- A status badge: **Tracé** (closed drawn polygon), **En cours** (in progress), or **Zone · N pts** (imported/converted polygon)
+- A **⬡** simplify button (Zone polygons only) — reduces vertex count; a **↺** restore button appears after simplification
 - A **⬇** download button (closed polygons only)
 - A **🗑** delete button
 
@@ -98,9 +100,9 @@ Click **⬆ Importer** in the *Polygones* panel header and select a KML 2.2 file
 
 All polygons from the same import share a single color. Coordinate rings are automatically simplified (Douglas-Peucker) for dense geometry.
 
-### 6 — Edit coordinates of an imported polygon
+### 6 — Edit coordinates of a Zone polygon
 
-Select an imported polygon (it shows an **Importé** badge in the layer panel). The **✏** button appears in the right toolbar.
+Select a Zone polygon (badge **Zone · N pts** in the layer panel). The **✏** button appears in the right toolbar.
 
 Click **✏** to enter coordinate edit mode:
 - **Drag** a vertex marker to move it
@@ -109,13 +111,26 @@ Click **✏** to enter coordinate edit mode:
 
 Click **⊗** or switch to another polygon to exit edit mode. Modified coordinates are preserved and exported correctly.
 
-### 7 — Snap tool (shared boundaries)
+> **Drawn polygons (Tracé):** clicking **✏** on a closed drawn polygon opens a two-step confirmation — the road routing is permanently converted to a flat coordinate ring before entering edit mode.
+
+### 7 — Simplify a Zone polygon
+
+Zone polygons (especially those converted from drawn routes) can contain hundreds of vertices. Territory Maker uses the **Douglas-Peucker** algorithm to reduce them:
+
+- Click the **⬡** button in the Zone's layer panel row to apply one simplification pass
+- Each subsequent click doubles the tolerance, progressively removing more vertices
+- Once satisfied, leave it as-is — a **↺** button appears to restore the original coordinates at any time
+- To simplify all Zone polygons at once, click **⬡ Simplifier les zones** in the sidebar (above the KML export button)
+
+> The global "Simplifier les zones" action is permanent and cannot be undone. Per-polygon ↺ restore is always available for individually simplified zones.
+
+### 8 — Snap tool (shared boundaries)
 
 Click the 🧲 button in the right toolbar to activate the snap tool (button turns **amber** when active).
 
 While the snap tool is on, moving the mouse near an existing polygon's path shows a **yellow circle marker** — clicking places the new waypoint exactly on the snapped position, giving you perfectly shared boundaries between adjacent territories.
 
-### 8 — Split a polygon
+### 9 — Split a polygon
 
 Select a closed polygon, then click the **✂** button in the right toolbar to enter split mode. The cursor changes to a crosshair and the snap tool activates automatically.
 
@@ -127,7 +142,7 @@ The dividing line uses the **current segment mode** (road-following or straight 
 
 > **Undo:** press `Ctrl+Z` or click the **↩** undo button in the right toolbar to restore the original polygon.
 
-### 9 — Merge two polygons
+### 10 — Merge two polygons
 
 1. **Ctrl+click** a second polygon (on its fill or in the layer panel row) while another polygon is already active — both are highlighted in amber and the **⊕** merge button appears in the right toolbar
 2. Click **⊕** — the two polygons are fused into one, named `polygon1 - polygon2`
@@ -138,13 +153,13 @@ Territory Maker automatically snaps shared border vertices (within 5 m) before m
 
 > **Undo:** press `Ctrl+Z` or click the **↩** undo button.
 
-### 10 — Map provider
+### 11 — Map provider
 
 Click the map icon button (Google Maps / OpenStreetMap) in the right toolbar to switch the display layer. Your drawn polygons are preserved across switches.
 
 > Routing (road-following segments) always uses the Google Directions API regardless of the display provider.
 
-### 11 — Export
+### 12 — Export
 
 | Button | What it exports |
 |---|---|
@@ -156,7 +171,7 @@ The export panel also offers **📋 Copier** to copy the KML to the clipboard.
 
 Each polygon is exported as a separate `<Placemark>` inside a single KML `<Document>`, with its own style and color.
 
-### 12 — Resize the sidebar
+### 13 — Resize the sidebar
 
 Drag the thin handle on the **right edge of the sidebar** left or right to adjust its width (180 px – 600 px). The width is remembered across sessions.
 
