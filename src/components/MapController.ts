@@ -1449,13 +1449,22 @@ export class MapController {
     }
     const coords: { lat: number; lng: number }[] = [];
     for (const wp of poly.waypoints) {
-      coords.push({ lat: wp.lat, lng: wp.lng });
-      if (wp.segment) {
-        for (const pt of wp.segment.path) coords.push({ lat: pt.lat(), lng: pt.lng() });
+      if (!wp.segment) {
+        // First waypoint — no incoming segment yet
+        coords.push({ lat: wp.lat, lng: wp.lng });
+      } else {
+        // wp.segment goes FROM the previous waypoint TO this one.
+        // path[0] duplicates the previous position already in coords, so skip it.
+        for (let i = 1; i < wp.segment.path.length; i++) {
+          coords.push({ lat: wp.segment.path[i]!.lat(), lng: wp.segment.path[i]!.lng() });
+        }
       }
     }
     if (poly.closingSegment) {
-      for (const pt of poly.closingSegment.path) coords.push({ lat: pt.lat(), lng: pt.lng() });
+      // Closing segment: last waypoint → first waypoint. Skip path[0] (= last waypoint).
+      for (let i = 1; i < poly.closingSegment.path.length; i++) {
+        coords.push({ lat: poly.closingSegment.path[i]!.lat(), lng: poly.closingSegment.path[i]!.lng() });
+      }
     }
     return coords;
   }
