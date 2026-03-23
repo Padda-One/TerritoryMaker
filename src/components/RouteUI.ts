@@ -500,6 +500,10 @@ export class RouteUI {
     document.getElementById("btn-undo-split-merge")?.addEventListener("click", () => {
       this.mapController?.undoLastMergeSplit();
     });
+
+    document.getElementById("btn-simplify-all")?.addEventListener("click", () => {
+      this.mapController?.simplifyAllPolygons();
+    });
   }
 
   private updateSplitMergeButtons(groups: GroupInfo[]): void {
@@ -556,6 +560,15 @@ export class RouteUI {
     btn.classList.toggle("active-snap", active?.vertexEditActive ?? false);
   }
 
+  private updateSimplifyAllButton(): void {
+    const btn = document.getElementById("btn-simplify-all") as HTMLButtonElement | null;
+    if (!btn) return;
+    const hasZones = (this.mapController?.getGroups() ?? [])
+      .flatMap(g => g.polygons)
+      .some(p => p.isImported && p.isClosed);
+    btn.disabled = !hasZones;
+  }
+
   private updateActionButtons(): void {
     const count = this.currentWaypoints.length;
     const closed = this.mapController?.closed ?? false;
@@ -566,6 +579,7 @@ export class RouteUI {
     this.el<HTMLButtonElement>("btn-export-kml").disabled =
       (this.mapController?.getAllPolygonsForExport().length ?? 0) === 0;
     this.updateVertexEditButton(this.mapController?.getGroups() ?? []);
+    this.updateSimplifyAllButton();
 
     // Enable "New polygon" button when there are no polygons, or when the active polygon is closed
     const polygonsCount = this.mapController?.getGroups().flatMap((g) => g.polygons).length ?? 0;
@@ -1004,6 +1018,20 @@ export class RouteUI {
         row.appendChild(dot);
         row.appendChild(name);
         row.appendChild(badge);
+
+        // Per-polygon simplify (only for imported zones)
+        if (poly.isImported && poly.isClosed) {
+          const simplBtn = document.createElement("button");
+          simplBtn.className = "btn-icon";
+          simplBtn.title = "Simplifier le tracé (réduire le nombre de points)";
+          simplBtn.style.cssText = "font-size:0.75rem;padding:2px 4px;flex-shrink:0;";
+          simplBtn.textContent = "⬡";
+          simplBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.mapController?.simplifyPolygon(poly.id);
+          });
+          row.appendChild(simplBtn);
+        }
 
         // Per-polygon KML download (only when closed)
         if (poly.isClosed) {

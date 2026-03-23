@@ -123,7 +123,7 @@ function perpendicularDistance(
   return Math.sqrt((pt.lng - (a.lng + t * dx)) ** 2 + (pt.lat - (a.lat + t * dy)) ** 2);
 }
 
-function douglasPeucker(
+export function douglasPeucker(
   points: { lat: number; lng: number }[],
   epsilon: number,
 ): { lat: number; lng: number }[] {
