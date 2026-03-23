@@ -31,7 +31,8 @@ pnpm-lock.yaml
 
 # Local/session files
 CONTEXT.md
-.claude/settings.local.json
+docs/EXEMPLES_AGENTS.md
+scripts/handoff.sh
 
 # Cloudflare / Wrangler
 .wrangler/
