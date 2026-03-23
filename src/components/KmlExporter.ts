@@ -170,12 +170,13 @@ function todayISO(): string {
 /**
  * Triggers a browser download of the KML content as a .kml file.
  */
-export function downloadKml(kml: string): void {
+export function downloadKml(kml: string, name?: string): void {
   const blob = new Blob([kml], { type: "application/vnd.google-earth.kml+xml" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `itineraire-${todayISO()}.kml`;
+  const slug = name ? name.replace(/[^a-z0-9_\-]/gi, "_") : `itineraire-${todayISO()}`;
+  a.download = `${slug}.kml`;
   a.click();
   URL.revokeObjectURL(url);
 }
