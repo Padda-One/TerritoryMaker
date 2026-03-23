@@ -789,7 +789,7 @@ export class RouteUI {
       groupKmlBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         const data = this.mapController?.getGroupPolygonsForExport(group.id) ?? [];
-        if (data.length > 0) downloadKml(buildKmlMulti(data));
+        if (data.length > 0) downloadKml(buildKmlMulti(data), group.name);
       });
 
       // Group delete button
@@ -977,7 +977,7 @@ export class RouteUI {
           kmlBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             const data = this.mapController?.getPolygonForExport(poly.id);
-            if (data) downloadKml(buildKmlMulti([data]));
+            if (data) downloadKml(buildKmlMulti([data]), poly.name);
           });
           row.appendChild(kmlBtn);
         }
