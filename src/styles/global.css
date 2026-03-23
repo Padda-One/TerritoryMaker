@@ -833,6 +833,13 @@ body {
   background: rgba(166, 218, 149, 0.07);
 }
 
+#btn-vertex-edit.vertex-edit-pending {
+  border-color: #fbbf24;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.2);
+  animation: neon-pulse 0.7s ease-in-out infinite alternate;
+}
+
 /* ─── Sidebar resize handle ──────────────────────────────────────────────── */
 
 #sidebar-resize {

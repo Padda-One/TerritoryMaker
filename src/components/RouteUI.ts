@@ -60,6 +60,7 @@ export class RouteUI {
     this.bindProviderToggle();
     this.bindSidebarResize();
     this.bindContextMenu();
+    this.bindLayerPanel();
 
     // Try to restore a saved key — validate before hiding the landing
     const savedKey = await ApiKeyManager.loadKey().catch(() => null);
@@ -335,7 +336,6 @@ export class RouteUI {
       }
 
       this.isMapLoaded = true;
-      this.bindLayerPanel();
       const initialGroups = this.mapController?.getGroups() ?? [];
       this.renderLayerPanel(initialGroups);
       this.updateSplitMergeButtons(initialGroups);
@@ -440,10 +440,47 @@ export class RouteUI {
       this.mapController?.clearAll();
     });
 
-    document.getElementById("btn-vertex-edit")?.addEventListener("click", () => {
-      const active = this.mapController?.getPolygons().find((p) => p.isActive);
-      if (active) this.mapController?.toggleVertexEdit(active.id);
-    });
+    {
+      let pendingId: string | null = null;
+      let pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+
+      const resetPending = () => {
+        pendingId = null;
+        if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
+        document.removeEventListener("click", cancelOnOutside);
+        document.getElementById("btn-vertex-edit")?.classList.remove("vertex-edit-pending");
+        this.updateVertexEditButton(this.mapController?.getGroups() ?? []);
+      };
+      const cancelOnOutside = (e: MouseEvent) => {
+        const btn = document.getElementById("btn-vertex-edit");
+        if (btn && !btn.contains(e.target as Node)) resetPending();
+      };
+
+      document.getElementById("btn-vertex-edit")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const active = this.mapController?.getPolygons().find((p) => p.isActive);
+        if (!active) return;
+
+        if (!active.isImported && active.isClosed) {
+          // Drawn closed polygon: two-step confirmation before irreversible conversion
+          const btn = e.currentTarget as HTMLButtonElement;
+          if (pendingId !== active.id) {
+            pendingId = active.id;
+            btn.classList.add("vertex-edit-pending");
+            btn.textContent = "⚠";
+            btn.title = "Cliquer à nouveau pour confirmer — le tracé routier sera perdu";
+            pendingTimeout = setTimeout(resetPending, 4000);
+            document.addEventListener("click", cancelOnOutside);
+          } else {
+            resetPending();
+            this.mapController?.toggleVertexEdit(active.id);
+          }
+        } else {
+          // Imported / zone polygon: direct toggle
+          this.mapController?.toggleVertexEdit(active.id);
+        }
+      });
+    }
 
     document.getElementById("btn-split")?.addEventListener("click", () => {
       if (this.mapController?.splitModeActive) {
@@ -501,20 +538,21 @@ export class RouteUI {
     const active = allPolygons.find((p) => p.isActive);
     const btn = document.getElementById("btn-vertex-edit") as HTMLButtonElement | null;
     if (!btn) return;
-    btn.style.display = active?.isImported ? "" : "none";
+    btn.style.display = active?.isClosed ? "" : "none";
     if (active?.vertexEditActive) {
       btn.textContent = "⊗";
-    } else {
+      btn.title = "Quitter l'édition des coordonnées";
+    } else if (!btn.classList.contains("vertex-edit-pending")) {
       const img = document.createElement("img");
       img.src = "/images/tools/pencil.svg";
       img.width = 20;
       img.height = 20;
       img.setAttribute("aria-hidden", "true");
       btn.replaceChildren(img);
+      btn.title = active?.isImported
+        ? "Éditer les coordonnées"
+        : "Convertir en zone éditable (le tracé routier sera perdu)";
     }
-    btn.title = active?.vertexEditActive
-      ? "Quitter l'édition des coordonnées"
-      : "Éditer les coordonnées du polygone importé";
     btn.classList.toggle("active-snap", active?.vertexEditActive ?? false);
   }
 
@@ -957,10 +995,10 @@ export class RouteUI {
         const badge = document.createElement("span");
         if (poly.isImported) {
           badge.style.cssText = "font-size:0.68rem;padding:2px 5px;border-radius:3px;background:rgba(251,191,36,0.15);color:#fbbf24;flex-shrink:0;";
-          badge.textContent = poly.vertexCount ? `${poly.vertexCount} pts` : "Importé";
+          badge.textContent = poly.vertexCount ? `Zone · ${poly.vertexCount} pts` : "Zone";
         } else {
           badge.style.cssText = `font-size:0.68rem;padding:2px 5px;border-radius:3px;background:${poly.isClosed ? "rgba(0,229,160,0.15)" : "rgba(129,140,248,0.15)"};color:${poly.isClosed ? "#00e5a0" : "#818cf8"};flex-shrink:0;`;
-          badge.textContent = poly.isClosed ? "Fermé" : "En cours";
+          badge.textContent = poly.isClosed ? "Tracé" : "En cours";
         }
 
         row.appendChild(dot);

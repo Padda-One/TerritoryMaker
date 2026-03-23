@@ -779,6 +779,8 @@ export class MapController {
   }
 
   addPolygon(): string {
+    const current = this.polygons[this.activeIndex];
+    if (current?.vertexEditActive) this.deactivateVertexEdit(current);
     const groupId = this.ensureDrawnGroup();
     const index = this.polygons.length;
     const { color, textColor } = polygonColor(index);
@@ -1063,11 +1065,11 @@ export class MapController {
     this.notifyPolygonsChanged();
   }
 
-  // ─── Vertex edit mode (imported polygons) ─────────────────────────────────
+  // ─── Vertex edit mode ─────────────────────────────────────────────────────
 
   toggleVertexEdit(id: string): void {
     const poly = this.polygons.find((p) => p.id === id);
-    if (!poly || poly.kind !== "imported") return;
+    if (!poly || !poly.isClosed) return;
     if (poly.vertexEditActive) {
       this.deactivateVertexEdit(poly);
     } else {
@@ -1077,8 +1079,26 @@ export class MapController {
   }
 
   private activateVertexEdit(poly: PolygonData): void {
+    if (poly.kind === "drawn") this.convertDrawnToFlat(poly);
     poly.vertexEditActive = true;
     this.rebuildVertexEdit(poly);
+  }
+
+  /** Converts a closed drawn polygon (waypoints + routing segments) to a flat
+   *  rawCoordinates ring, enabling vertex edit. Irreversible. */
+  private convertDrawnToFlat(poly: PolygonData): void {
+    const coords = this.getPolygonFlatCoords(poly);
+    for (const wp of poly.waypoints) {
+      this.removeObj(wp.marker);
+      this.removeObj(wp.polyline);
+    }
+    this.removeObj(poly.closingPolyline);
+    poly.waypoints = [];
+    poly.closingPolyline = null;
+    poly.closingSegment = null;
+    poly.rawCoordinates = coords;
+    poly.kind = "imported";
+    this.notifyChange();
   }
 
   private deactivateVertexEdit(poly: PolygonData): void {
@@ -1536,6 +1556,8 @@ export class MapController {
     color?: string;
     textColor?: string;
   }): string {
+    const currentForEdit = this.polygons[this.activeIndex];
+    if (currentForEdit?.vertexEditActive) this.deactivateVertexEdit(currentForEdit);
     const [color, textColor] = opts.color
       ? [opts.color, opts.textColor ?? "#ffffff"]
       : POLYGON_PALETTE[this.polygons.length % POLYGON_PALETTE.length]!;
