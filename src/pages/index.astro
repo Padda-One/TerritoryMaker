@@ -8,11 +8,68 @@ import "leaflet/dist/leaflet.css";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Tracez un territoire sur Google Maps en combinant segments routiers et lignes droites, puis exportez en KML."
-    />
-    <title>Territory Maker</title>
+    <link rel="canonical" href="https://territory.paddaone.com/" />
+
+    <!-- SEO -->
+    <title>Territory Maker — Tracez et exportez vos territoires en KML</title>
+    <meta name="description" content="Outil web client-side pour délimiter des territoires sur Google Maps : tracé routier ou vol d'oiseau, gestion multi-polygones, import/export KML. Sans tracking, clé API chiffrée localement. Open source MIT." />
+    <meta name="author" content="Paddaone" />
+    <meta name="keywords" content="territory maker, tracé territoire, carte territoire, KML export, Google Maps territoire, polygone KML, cartographie territoire, QGIS KML, territoire géographique" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://territory.paddaone.com/" />
+    <meta property="og:site_name" content="Territory Maker" />
+    <meta property="og:title" content="Territory Maker — Tracez et exportez vos territoires en KML" />
+    <meta property="og:description" content="Délimitez des territoires sur Google Maps avec précision. Tracé routier ou vol d'oiseau, export KML vers Google Earth et QGIS. 100% client-side, sans tracking." />
+    <meta property="og:image" content="https://territory.paddaone.com/og-preview.png" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- Twitter/X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Territory Maker — Tracez et exportez vos territoires en KML" />
+    <meta name="twitter:description" content="Délimitez des territoires sur Google Maps. Export KML. 100% client-side, sans tracking." />
+    <meta name="twitter:image" content="https://territory.paddaone.com/og-preview.png" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Territory Maker",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web Browser",
+      "url": "https://territory.paddaone.com",
+      "description": "Outil web client-side pour délimiter des territoires géographiques sur Google Maps. Combine segments routiers (Google Directions API) et lignes droites. Gestion multi-polygones avec dossiers, import/export KML vers Google Earth et QGIS. Clé API chiffrée localement (AES-GCM 256-bit). Zéro tracking, zéro backend.",
+      "featureList": [
+        "Tracé routier via Google Directions API",
+        "Tracé en ligne droite (vol d'oiseau)",
+        "Gestion multi-polygones et dossiers",
+        "Import et export KML",
+        "Compatibilité Google Earth et QGIS",
+        "Chiffrement local AES-GCM 256-bit",
+        "Aucun tracking ni analytics",
+        "100% client-side",
+        "Open source MIT"
+      ],
+      "author": {
+        "@type": "Person",
+        "name": "Paddaone",
+        "url": "https://github.com/Padda-One"
+      },
+      "license": "https://opensource.org/licenses/MIT",
+      "softwareVersion": "1.0",
+      "inLanguage": "fr",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "codeRepository": "https://github.com/Padda-One/TerritoryMaker"
+    }
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="/logo-TerritoryMaker.svg" />
   </head>
 

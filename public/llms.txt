@@ -1,0 +1,53 @@
+# Territory Maker
+
+> Outil web client-side pour délimiter des territoires géographiques et exporter en KML.
+
+Territory Maker est une application web 100% client-side (aucun backend) permettant de :
+- Tracer des polygones géographiques sur Google Maps en suivant des routes ou en ligne droite
+- Gérer des centaines de polygones organisés en dossiers
+- Importer et exporter des fichiers KML compatibles Google Earth et QGIS
+- Combiner segments routiers (Google Directions API) et lignes droites (vol d'oiseau)
+
+## Sécurité et confidentialité
+
+- **Zéro tracking** : aucun cookie, aucun analytics, aucune donnée collectée
+- **Exécution locale** : tout le traitement se fait dans le navigateur de l'utilisateur
+- **Clé API chiffrée** : stockée localement via AES-GCM 256-bit (Web Crypto API natif)
+- **Open source MIT** : code source entièrement auditable sur GitHub
+
+## Fonctionnalités principales
+
+- Tracé routier précis via Google Directions API (suit les rues exactement)
+- Tracé en ligne droite (vol d'oiseau) combinable avec le tracé routier
+- Gestion multi-polygones avec arborescence de dossiers
+- Édition des sommets (vertex editing), snap magnétique, division et fusion de polygones
+- Import KML (polygones et dossiers)
+- Export KML compatible Google Earth et QGIS
+- Double backend cartographique : Google Maps ou OpenStreetMap (Leaflet)
+- Thèmes : sombre, clair, satellite, terrain
+
+## Stack technique
+
+- Framework : Astro 6 (SSG, entièrement statique)
+- Cartographie : Google Maps JavaScript API + Leaflet/OpenStreetMap
+- Routage : Google Directions API (clé utilisateur requise)
+- Géospatial : Turf.js
+- Chiffrement : Web Crypto API (AES-GCM 256-bit)
+- CSS : Tailwind CSS v4 + thème Catppuccin Macchiato
+- Hébergement : Cloudflare Pages
+
+## Prérequis
+
+L'utilisateur doit fournir sa propre clé API Google Maps avec les APIs suivantes activées :
+- Maps JavaScript API
+- Directions API
+
+La clé est stockée chiffrée localement dans le navigateur et n'est jamais transmise à un tiers.
+
+## Liens
+
+- Application : https://territory.paddaone.com
+- Documentation : https://territory.paddaone.com/documentation
+- Code source : https://github.com/Padda-One/TerritoryMaker
+- Licence : MIT
+- Auteur : Paddaone (https://github.com/Padda-One)
