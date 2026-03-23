@@ -54,6 +54,8 @@ interface PolygonData {
   rawCoordinates?: { lat: number; lng: number }[];
   /** Last epsilon used by simplifyPolygon (doubled on each call). */
   simplifyEpsilon?: number;
+  /** Original coords before first simplification — used to restore. */
+  preSimplifyCoordinates?: { lat: number; lng: number }[];
   /** Vertex edit mode state (imported polygons only). */
   vertexEditActive?: boolean;
   vertexMarkers?: VertexMarker[];
@@ -71,6 +73,7 @@ export interface PolygonInfo {
   vertexCount?: number;
   vertexEditActive: boolean;
   isSelected: boolean;
+  canRestoreSimplify: boolean;
 }
 
 export interface GroupInfo {
@@ -890,6 +893,7 @@ export class MapController {
       vertexCount: p.kind === "imported" ? p.rawCoordinates?.length : undefined,
       vertexEditActive: p.vertexEditActive ?? false,
       isSelected: this.selectedPolygonIds.has(p.id),
+      canRestoreSimplify: !!p.preSimplifyCoordinates,
     }));
   }
 
@@ -1010,6 +1014,7 @@ export class MapController {
             vertexCount: p.kind === "imported" ? p.rawCoordinates?.length : undefined,
             vertexEditActive: p.vertexEditActive ?? false,
             isSelected: this.selectedPolygonIds.has(p.id),
+            canRestoreSimplify: !!p.preSimplifyCoordinates,
           };
         }),
     }));
@@ -1077,6 +1082,8 @@ export class MapController {
   simplifyPolygon(id: string): void {
     const poly = this.polygons.find(p => p.id === id);
     if (!poly || poly.kind !== "imported" || !poly.rawCoordinates || poly.rawCoordinates.length < 4) return;
+    // Save original coords before the very first simplification pass
+    if (!poly.preSimplifyCoordinates) poly.preSimplifyCoordinates = [...poly.rawCoordinates];
     const epsilon = poly.simplifyEpsilon
       ? poly.simplifyEpsilon * 2
       : MapController.SIMPLIFY_BASE_EPSILON;
@@ -1085,6 +1092,18 @@ export class MapController {
     poly.rawCoordinates = simplified;
     poly.simplifyEpsilon = epsilon;
     if (poly.fillPolygon) this.updateFillPath(poly.fillPolygon, simplified.map(c => [c.lat, c.lng]));
+    if (poly.vertexEditActive) this.rebuildVertexEdit(poly);
+    this.notifyPolygonsChanged();
+  }
+
+  /** Restore the polygon to its pre-simplification coordinates. */
+  restorePolygon(id: string): void {
+    const poly = this.polygons.find(p => p.id === id);
+    if (!poly || !poly.preSimplifyCoordinates) return;
+    poly.rawCoordinates = poly.preSimplifyCoordinates;
+    poly.preSimplifyCoordinates = undefined;
+    poly.simplifyEpsilon = undefined;
+    if (poly.fillPolygon) this.updateFillPath(poly.fillPolygon, poly.rawCoordinates.map(c => [c.lat, c.lng]));
     if (poly.vertexEditActive) this.rebuildVertexEdit(poly);
     this.notifyPolygonsChanged();
   }
