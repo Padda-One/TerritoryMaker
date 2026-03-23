@@ -209,6 +209,7 @@ import "../styles/global.css";
               <li><a href="#ch7-1" class="sidebar-sub-link">Découper (Split)</a></li>
               <li><a href="#ch7-2" class="sidebar-sub-link">Fusionner (Merge)</a></li>
               <li><a href="#ch7-3" class="sidebar-sub-link">Annuler Split / Merge</a></li>
+              <li><a href="#ch7-4" class="sidebar-sub-link">Simplifier une Zone</a></li>
             </ol>
           </li>
         </ol>
@@ -668,6 +669,44 @@ import "../styles/global.css";
                 </div>
               </div>
             </div>
+            <div class="step-card" style="margin-top:12px;">
+              <div class="step-header">
+                <div class="step-number">i</div>
+                <h4 class="step-title">Tracé vs Zone — quelle différence ?</h4>
+              </div>
+              <div class="step-body">
+                <p>
+                  Territory Maker distingue deux types de polygones fermés :
+                </p>
+                <ul class="step-list">
+                  <li>
+                    <strong>Tracé</strong> (badge vert) — polygone dessiné à la
+                    main dans l'application. Il est composé de <em>waypoints</em>
+                    reliés par des segments routiers (via l'API Directions) ou
+                    des lignes droites. Les waypoints restent éditables et les
+                    segments peuvent être recalculés.
+                  </li>
+                  <li>
+                    <strong>Zone · N pts</strong> (badge ambre) — polygone défini
+                    par une liste plate de coordonnées : soit importé d'un fichier
+                    KML, soit issu d'un Tracé converti (en cliquant <kbd>✏</kbd>
+                    sur un Tracé fermé). Une Zone n'a pas de waypoints ni de
+                    segments routiers — uniquement des coordonnées brutes. Elle
+                    peut être éditée sommet par sommet (mode <kbd>✏</kbd>) et
+                    simplifiée (bouton <kbd>⬡</kbd>).
+                  </li>
+                </ul>
+                <div class="step-notice step-notice-warning">
+                  <span>⚠️</span>
+                  <span>
+                    La conversion d'un <strong>Tracé en Zone</strong> est
+                    <strong>irréversible</strong> — le tracé routier et les
+                    waypoints sont perdus. Seules les coordonnées du contour sont
+                    conservées.
+                  </span>
+                </div>
+              </div>
+            </div>
             <div
               class="step-card"
               style="border-color:rgba(251,191,36,0.3);margin-top:12px;"
@@ -969,6 +1008,52 @@ import "../styles/global.css";
                     Plusieurs opérations successives peuvent être annulées une
                     par une — l'historique est empilé et vidé dans l'ordre
                     inverse.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch7-4" class="doc-section">
+            <h3 class="section-title">7.4 Simplifier les coordonnées d'une Zone</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Les Zones importées ou converties depuis un Tracé peuvent
+                  contenir des centaines de sommets redondants. L'outil
+                  <strong>Simplifier</strong> utilise l'algorithme
+                  Douglas-Peucker pour réduire progressivement ce nombre.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Repérez la Zone à simplifier dans le panneau calques
+                    (badge ambre <strong>Zone · N pts</strong>)
+                  </li>
+                  <li>
+                    Cliquez sur le bouton <kbd>⬡</kbd> dans la ligne de ce
+                    polygone — une passe de simplification est appliquée et le
+                    nombre de points diminue
+                  </li>
+                  <li>
+                    Cliquez à nouveau pour simplifier davantage — la tolérance
+                    double à chaque passe, retirant progressivement plus de
+                    sommets
+                  </li>
+                  <li>
+                    Arrêtez quand le résultat vous convient. Un bouton
+                    <kbd>↺</kbd> apparaît dans la ligne pour restaurer les
+                    coordonnées d'origine à tout moment.
+                  </li>
+                </ol>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    Pour simplifier toutes les Zones en une seule opération,
+                    cliquez sur <kbd>⬡ Simplifier les zones</kbd> dans la barre
+                    latérale (au-dessus du bouton d'export KML). Cette action
+                    est <strong>définitive</strong> — le bouton <kbd>↺</kbd>
+                    individuel reste disponible pour les Zones simplifiées une
+                    par une.
                   </span>
                 </div>
               </div>
