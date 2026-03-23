@@ -1069,7 +1069,7 @@ export class MapController {
   // ─── Polygon simplification ───────────────────────────────────────────────
 
   /** Apply one Douglas-Peucker pass (ε = 0.00003°, ≈ 3 m) to a single imported polygon. */
-  simplifyPolygon(id: string, epsilon = 0.00003): void {
+  simplifyPolygon(id: string, epsilon = 0.000005): void {
     const poly = this.polygons.find(p => p.id === id);
     if (!poly || poly.kind !== "imported" || !poly.rawCoordinates || poly.rawCoordinates.length < 4) return;
     const simplified = douglasPeucker(poly.rawCoordinates, epsilon);
@@ -1081,7 +1081,7 @@ export class MapController {
   }
 
   /** Apply one Douglas-Peucker pass to all imported polygons at once. */
-  simplifyAllPolygons(epsilon = 0.00003): void {
+  simplifyAllPolygons(epsilon = 0.000005): void {
     for (const poly of this.polygons) {
       if (poly.kind !== "imported" || !poly.rawCoordinates || poly.rawCoordinates.length < 4) continue;
       const simplified = douglasPeucker(poly.rawCoordinates, epsilon);
