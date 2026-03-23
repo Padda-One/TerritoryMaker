@@ -52,6 +52,8 @@ interface PolygonData {
   isClosed: boolean;
   /** Raw coordinate ring for imported polygons (no waypoint markers). */
   rawCoordinates?: { lat: number; lng: number }[];
+  /** Last epsilon used by simplifyPolygon (doubled on each call). */
+  simplifyEpsilon?: number;
   /** Vertex edit mode state (imported polygons only). */
   vertexEditActive?: boolean;
   vertexMarkers?: VertexMarker[];
@@ -1068,25 +1070,37 @@ export class MapController {
 
   // ─── Polygon simplification ───────────────────────────────────────────────
 
-  /** Apply one Douglas-Peucker pass (ε = 0.00003°, ≈ 3 m) to a single imported polygon. */
-  simplifyPolygon(id: string, epsilon = 0.000005): void {
+  private static readonly SIMPLIFY_BASE_EPSILON = 0.000005; // ≈ 0.55 m
+
+  /** Apply one Douglas-Peucker pass to a single imported polygon.
+   *  Epsilon doubles on each call so successive clicks progressively simplify. */
+  simplifyPolygon(id: string): void {
     const poly = this.polygons.find(p => p.id === id);
     if (!poly || poly.kind !== "imported" || !poly.rawCoordinates || poly.rawCoordinates.length < 4) return;
+    const epsilon = poly.simplifyEpsilon
+      ? poly.simplifyEpsilon * 2
+      : MapController.SIMPLIFY_BASE_EPSILON;
     const simplified = douglasPeucker(poly.rawCoordinates, epsilon);
     if (simplified.length < 3) return;
     poly.rawCoordinates = simplified;
+    poly.simplifyEpsilon = epsilon;
     if (poly.fillPolygon) this.updateFillPath(poly.fillPolygon, simplified.map(c => [c.lat, c.lng]));
     if (poly.vertexEditActive) this.rebuildVertexEdit(poly);
     this.notifyPolygonsChanged();
   }
 
-  /** Apply one Douglas-Peucker pass to all imported polygons at once. */
-  simplifyAllPolygons(epsilon = 0.000005): void {
+  /** Apply one Douglas-Peucker pass to all imported polygons at once.
+   *  Each polygon tracks its own epsilon and doubles it on each call. */
+  simplifyAllPolygons(): void {
     for (const poly of this.polygons) {
       if (poly.kind !== "imported" || !poly.rawCoordinates || poly.rawCoordinates.length < 4) continue;
+      const epsilon = poly.simplifyEpsilon
+        ? poly.simplifyEpsilon * 2
+        : MapController.SIMPLIFY_BASE_EPSILON;
       const simplified = douglasPeucker(poly.rawCoordinates, epsilon);
       if (simplified.length < 3) continue;
       poly.rawCoordinates = simplified;
+      poly.simplifyEpsilon = epsilon;
       if (poly.fillPolygon) this.updateFillPath(poly.fillPolygon, simplified.map(c => [c.lat, c.lng]));
       if (poly.vertexEditActive) this.rebuildVertexEdit(poly);
     }
