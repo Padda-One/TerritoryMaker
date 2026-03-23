@@ -11,6 +11,7 @@ import turfUnion from "@turf/union";
 import { polygon as turfPolygon, featureCollection } from "@turf/helpers";
 import { resolveSegment, RoutingError } from "./SegmentRouter.ts";
 import type { SegmentMode, Waypoint, ResolvedSegment } from "./SegmentRouter.ts";
+import { douglasPeucker } from "./KmlImporter.ts";
 
 export type { SegmentMode, Waypoint, ResolvedSegment };
 export type MapProvider = "google" | "osm";
@@ -1062,6 +1063,33 @@ export class MapController {
       });
     }
     // Notify once after the full batch (not once per polygon)
+    this.notifyPolygonsChanged();
+  }
+
+  // ─── Polygon simplification ───────────────────────────────────────────────
+
+  /** Apply one Douglas-Peucker pass (ε = 0.00003°, ≈ 3 m) to a single imported polygon. */
+  simplifyPolygon(id: string, epsilon = 0.00003): void {
+    const poly = this.polygons.find(p => p.id === id);
+    if (!poly || poly.kind !== "imported" || !poly.rawCoordinates || poly.rawCoordinates.length < 4) return;
+    const simplified = douglasPeucker(poly.rawCoordinates, epsilon);
+    if (simplified.length < 3) return;
+    poly.rawCoordinates = simplified;
+    if (poly.fillPolygon) this.updateFillPath(poly.fillPolygon, simplified.map(c => [c.lat, c.lng]));
+    if (poly.vertexEditActive) this.rebuildVertexEdit(poly);
+    this.notifyPolygonsChanged();
+  }
+
+  /** Apply one Douglas-Peucker pass to all imported polygons at once. */
+  simplifyAllPolygons(epsilon = 0.00003): void {
+    for (const poly of this.polygons) {
+      if (poly.kind !== "imported" || !poly.rawCoordinates || poly.rawCoordinates.length < 4) continue;
+      const simplified = douglasPeucker(poly.rawCoordinates, epsilon);
+      if (simplified.length < 3) continue;
+      poly.rawCoordinates = simplified;
+      if (poly.fillPolygon) this.updateFillPath(poly.fillPolygon, simplified.map(c => [c.lat, c.lng]));
+      if (poly.vertexEditActive) this.rebuildVertexEdit(poly);
+    }
     this.notifyPolygonsChanged();
   }
 
