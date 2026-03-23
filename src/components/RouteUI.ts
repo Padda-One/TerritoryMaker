@@ -1019,7 +1019,7 @@ export class RouteUI {
         row.appendChild(name);
         row.appendChild(badge);
 
-        // Per-polygon simplify (only for imported zones)
+        // Per-polygon simplify + restore (only for imported zones)
         if (poly.isImported && poly.isClosed) {
           const simplBtn = document.createElement("button");
           simplBtn.className = "btn-icon";
@@ -1031,6 +1031,19 @@ export class RouteUI {
             this.mapController?.simplifyPolygon(poly.id);
           });
           row.appendChild(simplBtn);
+
+          if (poly.canRestoreSimplify) {
+            const restoreBtn = document.createElement("button");
+            restoreBtn.className = "btn-icon";
+            restoreBtn.title = "Restaurer le tracé original (annuler la simplification)";
+            restoreBtn.style.cssText = "font-size:0.75rem;padding:2px 4px;flex-shrink:0;";
+            restoreBtn.textContent = "↺";
+            restoreBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              this.mapController?.restorePolygon(poly.id);
+            });
+            row.appendChild(restoreBtn);
+          }
         }
 
         // Per-polygon KML download (only when closed)
