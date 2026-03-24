@@ -5,39 +5,43 @@
 @font-face {
   font-family: "Comfortaa";
   src: url("/fonts/comfortaa-latin-300-normal.woff2") format("woff2"),
-       url("/fonts/comfortaa-latin-300-normal.woff") format("woff");
+    url("/fonts/comfortaa-latin-300-normal.woff") format("woff");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Comfortaa";
   src: url("/fonts/comfortaa-latin-400-normal.woff2") format("woff2"),
-       url("/fonts/comfortaa-latin-400-normal.woff") format("woff");
+    url("/fonts/comfortaa-latin-400-normal.woff") format("woff");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Comfortaa";
   src: url("/fonts/comfortaa-latin-500-normal.woff2") format("woff2"),
-       url("/fonts/comfortaa-latin-500-normal.woff") format("woff");
+    url("/fonts/comfortaa-latin-500-normal.woff") format("woff");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Comfortaa";
   src: url("/fonts/comfortaa-latin-600-normal.woff2") format("woff2"),
-       url("/fonts/comfortaa-latin-600-normal.woff") format("woff");
+    url("/fonts/comfortaa-latin-600-normal.woff") format("woff");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Comfortaa";
   src: url("/fonts/comfortaa-latin-700-normal.woff2") format("woff2"),
-       url("/fonts/comfortaa-latin-700-normal.woff") format("woff");
+    url("/fonts/comfortaa-latin-700-normal.woff") format("woff");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -46,39 +50,43 @@
 @font-face {
   font-family: "Space Grotesk";
   src: url("/fonts/space-grotesk-latin-300-normal.woff2") format("woff2"),
-       url("/fonts/space-grotesk-latin-300-normal.woff") format("woff");
+    url("/fonts/space-grotesk-latin-300-normal.woff") format("woff");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Space Grotesk";
   src: url("/fonts/space-grotesk-latin-400-normal.woff2") format("woff2"),
-       url("/fonts/space-grotesk-latin-400-normal.woff") format("woff");
+    url("/fonts/space-grotesk-latin-400-normal.woff") format("woff");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Space Grotesk";
   src: url("/fonts/space-grotesk-latin-500-normal.woff2") format("woff2"),
-       url("/fonts/space-grotesk-latin-500-normal.woff") format("woff");
+    url("/fonts/space-grotesk-latin-500-normal.woff") format("woff");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Space Grotesk";
   src: url("/fonts/space-grotesk-latin-600-normal.woff2") format("woff2"),
-       url("/fonts/space-grotesk-latin-600-normal.woff") format("woff");
+    url("/fonts/space-grotesk-latin-600-normal.woff") format("woff");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Space Grotesk";
   src: url("/fonts/space-grotesk-latin-700-normal.woff2") format("woff2"),
-       url("/fonts/space-grotesk-latin-700-normal.woff") format("woff");
+    url("/fonts/space-grotesk-latin-700-normal.woff") format("woff");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -87,46 +95,46 @@
 /* ─── Design tokens — Catppuccin Macchiato (dark) ────────────────────────── */
 
 :root {
-  --color-route:          #a6da95;
-  --color-straight:       #8aadf4;
-  --color-bg:             #24273a;
-  --color-surface:        #1e2030;
-  --color-surface-2:      #181926;
-  --color-surface-hover:  #2a2d42;
-  --color-border:         #44475b;
-  --color-text:           #cad3f5;
-  --color-text-muted:     #a5adcb;
-  --color-accent-green:   #a6da95;
-  --color-accent-blue:    #8aadf4;
-  --color-accent-bright:  #c1f7af;
-  --color-accent-yellow:  #eed49f;
-  --color-danger:         #ed8796;
-  --color-danger-bg:      rgba(237, 135, 150, 0.1);
-  --color-code-bg:        #13141e;
-  --shadow-ambient:       0 8px 32px rgba(36, 39, 58, 0.6);
-  --radius-sm:            8px;
-  --radius-md:            12px;
-  --radius-lg:            16px;
+  --color-route: #a6da95;
+  --color-straight: #8aadf4;
+  --color-bg: #24273a;
+  --color-surface: #1e2030;
+  --color-surface-2: #181926;
+  --color-surface-hover: #2a2d42;
+  --color-border: #44475b;
+  --color-text: #cad3f5;
+  --color-text-muted: #a5adcb;
+  --color-accent-green: #a6da95;
+  --color-accent-blue: #8aadf4;
+  --color-accent-bright: #c1f7af;
+  --color-accent-yellow: #eed49f;
+  --color-danger: #ed8796;
+  --color-danger-bg: rgba(237, 135, 150, 0.1);
+  --color-code-bg: #13141e;
+  --shadow-ambient: 0 8px 32px rgba(36, 39, 58, 0.6);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 }
 
 /* ─── Design tokens — Catppuccin Latte (light) ───────────────────────────── */
 
 [data-theme="light"] {
-  --color-bg:             #eff1f5;
-  --color-surface:        #e6e9ef;
-  --color-surface-2:      #dce0e8;
-  --color-surface-hover:  #ccd0da;
-  --color-border:         #acb0be;
-  --color-text:           #4c4f69;
-  --color-text-muted:     #6c6f85;
-  --color-accent-green:   #40a02b;
-  --color-accent-blue:    #1e66f5;
-  --color-accent-bright:  #2c8d1f;
-  --color-accent-yellow:  #df8e1d;
-  --color-danger:         #d20f39;
-  --color-danger-bg:      rgba(210, 15, 57, 0.08);
-  --color-code-bg:        #dce0e8;
-  --shadow-ambient:       0 8px 32px rgba(76, 79, 105, 0.18);
+  --color-bg: #eff1f5;
+  --color-surface: #e6e9ef;
+  --color-surface-2: #dce0e8;
+  --color-surface-hover: #ccd0da;
+  --color-border: #acb0be;
+  --color-text: #4c4f69;
+  --color-text-muted: #6c6f85;
+  --color-accent-green: #40a02b;
+  --color-accent-blue: #1e66f5;
+  --color-accent-bright: #2c8d1f;
+  --color-accent-yellow: #df8e1d;
+  --color-danger: #d20f39;
+  --color-danger-bg: rgba(210, 15, 57, 0.08);
+  --color-code-bg: #dce0e8;
+  --shadow-ambient: 0 8px 32px rgba(76, 79, 105, 0.18);
 }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
@@ -381,8 +389,15 @@ body {
 }
 
 @keyframes slideUp {
-  from { transform: translateX(-50%) translateY(20px); opacity: 0; }
-  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+  from {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ─── Transport mode buttons ─────────────────────────────────────────────── */
@@ -492,7 +507,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Settings panel ─────────────────────────────────────────────────────── */
@@ -1090,9 +1107,17 @@ body.sidebar-resizing {
   box-shadow: 0 16px 48px rgba(76, 79, 105, 0.2);
 }
 
-.landing-features li:nth-child(1) { animation-delay: 0.10s; }
-.landing-features li:nth-child(2) { animation-delay: 0.20s; }
-.landing-features li:nth-child(3) { animation-delay: 0.30s; }
+.landing-features li:nth-child(1) {
+  animation-delay: 0.10s;
+}
+
+.landing-features li:nth-child(2) {
+  animation-delay: 0.20s;
+}
+
+.landing-features li:nth-child(3) {
+  animation-delay: 0.30s;
+}
 
 .landing-feature-icon {
   font-size: 1.9rem;
@@ -1272,7 +1297,8 @@ body.sidebar-resizing {
 /* ─── Legal modal ────────────────────────────────────────────────────────── */
 
 #legal-modal {
-  display: none; /* caché par défaut — le navigateur masque <dialog> mais notre CSS l'écrasait */
+  display: none;
+  /* caché par défaut — le navigateur masque <dialog> mais notre CSS l'écrasait */
   position: fixed;
   inset: 0;
   z-index: 10000;
@@ -1402,35 +1428,72 @@ body.sidebar-resizing {
 /* ─── Animations ─────────────────────────────────────────────────────────── */
 
 @keyframes blob-float {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(28px, -18px) scale(1.04); }
-  100% { transform: translate(-14px, 14px) scale(0.97); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(28px, -18px) scale(1.04);
+  }
+
+  100% {
+    transform: translate(-14px, 14px) scale(0.97);
+  }
 }
 
 @keyframes hero-in {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes card-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes landing-exit {
-  from { opacity: 1; transform: scale(1); }
-  to   { opacity: 0; transform: scale(1.025); }
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.025);
+  }
 }
 
 @keyframes app-fadein {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes neon-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 8px rgba(166, 218, 149, 0.35), 0 0 24px rgba(166, 218, 149, 0.12);
   }
+
   50% {
     box-shadow: 0 0 18px rgba(166, 218, 149, 0.6), 0 0 48px rgba(166, 218, 149, 0.22);
   }
@@ -1456,18 +1519,41 @@ body.sidebar-resizing {
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
-  .landing-features   { grid-template-columns: 1fr; }
-  .landing-title      { font-size: 2rem; }
-  .landing-tagline    { font-size: 0.95rem; }
-  .landing-form-card  { padding: 20px 18px; }
-  .landing-inner      { padding: 40px 16px 64px; gap: 36px; }
-  .landing-trust-list { flex-direction: column; gap: 8px; }
-  .legal-modal-card   { padding: 24px 20px; }
+  .landing-features {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-title {
+    font-size: 2rem;
+  }
+
+  .landing-tagline {
+    font-size: 0.95rem;
+  }
+
+  .landing-form-card {
+    padding: 20px 18px;
+  }
+
+  .landing-inner {
+    padding: 40px 16px 64px;
+    gap: 36px;
+  }
+
+  .landing-trust-list {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .legal-modal-card {
+    padding: 24px 20px;
+  }
 }
 
 /* ─── prefers-reduced-motion ─────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
+
   .landing-blob,
   .landing-hero,
   .landing-feature-card,
@@ -1764,6 +1850,45 @@ body.sidebar-resizing {
   border-color: rgba(64, 160, 43, 0.25);
 }
 
+/* ─── Hamburger ────────────────────────────────────────────────────────────── */
+
+.lp-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.lp-hamburger-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: 2px;
+  transition: transform 0.25s, opacity 0.25s;
+}
+
+.lp-hamburger.open .lp-hamburger-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.lp-hamburger.open .lp-hamburger-bar:nth-child(2) {
+  opacity: 0;
+}
+.lp-hamburger.open .lp-hamburger-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ─── Desktop notice (mobile only) ─────────────────────────────────────────── */
+
+.lp-desktop-notice {
+  display: none;
+}
+
 /* ─── Main / Hero ─────────────────────────────────────────────────────────── */
 
 .lp-main {
@@ -1997,6 +2122,13 @@ body.sidebar-resizing {
   justify-content: center;
 }
 
+.lp-hero-video {
+  max-height: 540px;
+  width: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 48px rgba(166, 218, 149, 0.9), 0 8px 32px rgba(0, 0, 0, 1);
+}
+
 .lp-grid-bg {
   position: absolute;
   inset: 0;
@@ -2015,8 +2147,17 @@ body.sidebar-resizing {
 }
 
 @keyframes lp-dot-pulse {
-  0%, 100% { opacity: 1; filter: drop-shadow(0 0 2px currentColor); }
-  50% { opacity: 0.7; filter: drop-shadow(0 0 8px currentColor); }
+
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+
+  50% {
+    opacity: 0.7;
+    filter: drop-shadow(0 0 8px currentColor);
+  }
 }
 
 .lp-dot-pulse {
@@ -2392,8 +2533,13 @@ body.sidebar-resizing {
 }
 
 @keyframes app-fadein {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* ─── Landing responsive ──────────────────────────────────────────────────── */
@@ -2407,10 +2553,58 @@ body.sidebar-resizing {
 @media (max-width: 768px) {
   .lp-nav-inner {
     padding: 14px 20px;
+    position: relative;
+  }
+
+  .lp-hamburger {
+    display: flex;
   }
 
   .lp-nav-links {
-    gap: 16px;
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(30, 32, 48, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(193, 247, 175, 0.15);
+    padding: 12px 20px 16px;
+    z-index: 100;
+  }
+
+  [data-theme="light"] .lp-nav-links {
+    background: rgba(230, 233, 239, 0.97);
+  }
+
+  .lp-nav-links.open {
+    display: flex;
+  }
+
+  .lp-nav-links .lp-nav-link {
+    padding: 10px 0;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .lp-nav-links .lp-nav-cta {
+    margin-top: 12px;
+  }
+
+  .lp-desktop-notice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    background: rgba(138, 173, 244, 0.08);
+    border: 1px solid rgba(138, 173, 244, 0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
   }
 
   .lp-hero {
@@ -2475,6 +2669,7 @@ body.sidebar-resizing {
 /* ─── Landing prefers-reduced-motion ─────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
+
   .reveal,
   .lp-dot-pulse,
   .lp-tech-note-icon,

@@ -6,6 +6,12 @@
 
 **Territory Maker** is an open-source, fully client-side web app that lets you draw geographic territories on a map by mixing road-following segments (via the Google Directions API) and straight-line segments, then export the result as KML Polygon files ready for use in Google Earth, QGIS, or any GIS tool.
 
+<div align="center">
+  <a href="https://github.com/user-attachments/assets/b585b192-0841-433e-9e08-6ddf5bb7a77c">
+    <img src="public/videos/Territory_Maker_poster.avif" width="300" alt="Territory Maker demo — click to watch" />
+  </a>
+</div>
+
 ---
 
 ## Features
@@ -33,7 +39,7 @@
 - **KML export** — export all polygons at once ("Exporter la carte") or each polygon individually from the layer panel; supports copy to clipboard and `.kml` download
 - **Encrypted local key storage** — your Google Maps API key is encrypted with AES-GCM 256-bit and stored in `localStorage` using a device-derived key (no password required)
 - **No backend** — everything runs in your browser; no data is sent to any server other than Google Maps APIs
-- **Responsive** — works on desktop and tablet
+- **Desktop-first** — designed for desktop use (mouse + keyboard); not optimised for mobile or touch
 
 ---
 
