@@ -48,7 +48,7 @@ import "leaflet/dist/leaflet.css";
         "Import et export KML",
         "Compatibilité Google Earth et QGIS",
         "Chiffrement local AES-GCM 256-bit",
-        "Aucun tracking ni analytics",
+        "Sans tracking publicitaire",
         "100% client-side",
         "Open source MIT"
       ],
@@ -67,6 +67,21 @@ import "leaflet/dist/leaflet.css";
         "priceCurrency": "EUR"
       },
       "codeRepository": "https://github.com/Padda-One/TerritoryMaker"
+    }
+    </script>
+
+    <!-- Video structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "Territory Maker — Présentation",
+      "description": "Démonstration de Territory Maker : tracé de territoires sur Google Maps, gestion multi-polygones, import/export KML.",
+      "thumbnailUrl": "https://territory.paddaone.com/videos/Territory_Maker_poster.avif",
+      "uploadDate": "2026-03-24",
+      "duration": "PT34S",
+      "contentUrl": "https://territory.paddaone.com/videos/Territory_Maker.mp4",
+      "embedUrl": "https://territory.paddaone.com/"
     }
     </script>
 
@@ -93,7 +108,7 @@ import "leaflet/dist/leaflet.css";
             />
             Territory Maker
           </div>
-          <div class="lp-nav-links">
+          <div class="lp-nav-links" id="lp-nav-links">
             <a href="/documentation" class="lp-nav-link">Documentation</a>
             <a
               href="https://github.com/Padda-One/TerritoryMaker"
@@ -107,6 +122,11 @@ import "leaflet/dist/leaflet.css";
               >Commencer</button
             >
           </div>
+          <button class="lp-hamburger" id="lp-hamburger" aria-label="Ouvrir le menu" aria-expanded="false">
+            <span class="lp-hamburger-bar"></span>
+            <span class="lp-hamburger-bar"></span>
+            <span class="lp-hamburger-bar"></span>
+          </button>
         </nav>
       </header>
 
@@ -130,6 +150,10 @@ import "leaflet/dist/leaflet.css";
                   polygones KML. Combinez segments routiers et lignes droites,
                   gérez des centaines de polygones, exportez vers Google Earth
                   et QGIS.
+                </p>
+                <p class="lp-desktop-notice">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                  Outil conçu pour une utilisation sur ordinateur.
                 </p>
               </div>
 
@@ -191,88 +215,21 @@ import "leaflet/dist/leaflet.css";
           </div>
 
           <!-- Right column — SVG visualization -->
-          <div class="lp-hero-right" aria-hidden="true">
-            <div class="lp-grid-bg"></div>
-            <svg
-              class="lp-svg"
-              viewBox="0 0 500 500"
-              xmlns="http://www.w3.org/2000/svg"
+          <div class="lp-hero-right">
+            <video
+              class="lp-hero-video"
+              autoplay
+              muted
+              loop
+              playsinline
+              poster="/videos/Territory_Maker_poster.avif"
+              preload="metadata"
+              width="390"
+              height="844"
             >
-              <defs>
-                <linearGradient
-                  id="neonGrad"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stop-color="#a6da95" stop-opacity="0.8"
-                  ></stop>
-                  <stop offset="100%" stop-color="#8aadf4" stop-opacity="0.8"
-                  ></stop>
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="2" result="coloredBlur"
-                  ></feGaussianBlur>
-                  <feMerge
-                    ><feMergeNode in="coloredBlur"></feMergeNode><feMergeNode
-                      in="SourceGraphic"></feMergeNode></feMerge
-                  >
-                </filter>
-              </defs>
-              <!-- Grid lines -->
-              <path
-                d="M0,100 L500,100 M0,200 L500,200 M0,300 L500,300 M0,400 L500,400"
-                stroke="#44475b"
-                stroke-width="0.5"></path>
-              <path
-                d="M100,0 L100,500 M200,0 L200,500 M300,0 L300,500 M400,0 L400,500"
-                stroke="#44475b"
-                stroke-width="0.5"></path>
-              <!-- Contour lines -->
-              <path
-                d="M50,120 C150,70 250,170 450,120"
-                stroke="#a6da95"
-                stroke-width="1.5"
-                fill="none"
-                opacity="0.4"></path>
-              <path
-                d="M30,170 C130,120 230,220 430,170"
-                stroke="#8aadf4"
-                stroke-width="1"
-                fill="none"
-                opacity="0.2"></path>
-              <!-- Territory polygons -->
-              <path
-                d="M140,180 L240,160 L280,240 L200,280 Z"
-                fill="url(#neonGrad)"
-                fill-opacity="0.05"
-                stroke="#a6da95"
-                stroke-width="2"
-                stroke-dasharray="8 4"
-                filter="url(#glow)"></path>
-              <path
-                d="M320,300 L440,280 L460,380 L340,400 Z"
-                fill="#8aadf4"
-                fill-opacity="0.05"
-                stroke="#8aadf4"
-                stroke-width="1.5"
-                filter="url(#glow)"></path>
-              <!-- Marker dots -->
-              <circle
-                cx="220"
-                cy="220"
-                r="5"
-                fill="#a6da95"
-                class="lp-dot-pulse"></circle>
-              <circle
-                cx="400"
-                cy="340"
-                r="5"
-                fill="#8aadf4"
-                class="lp-dot-pulse"
-                style="animation-delay:1.5s"></circle>
-            </svg>
+              <source src="/videos/Territory_Maker.webm" type="video/webm" />
+              <source src="/videos/Territory_Maker.mp4" type="video/mp4" />
+            </video>
           </div>
         </section>
 
@@ -374,7 +331,7 @@ import "leaflet/dist/leaflet.css";
                 <div class="lp-feature-text">
                   <h3 class="lp-feature-title">Zéro Tracking</h3>
                   <p class="lp-feature-desc">
-                    Aucun cookie, aucune analytics, aucune balise tierce. Les
+                    Aucun cookie, aucune balise tierce. Les
                     données restent rigoureusement limitées aux requêtes
                     cartographiques.
                   </p>
@@ -555,7 +512,7 @@ import "leaflet/dist/leaflet.css";
           </div>
           <div class="legal-section">
             <h3 class="legal-section-title">Cookies</h3>
-            <p>Aucun cookie d'aucune sorte. Aucun traceur, aucune analytics.</p>
+            <p>Aucun cookie d'aucune sorte.</p>
           </div>
           <div class="legal-section">
             <h3 class="legal-section-title">Données Cartographiques</h3>
@@ -1053,6 +1010,29 @@ import "leaflet/dist/leaflet.css";
 
   const ui = new RouteUI();
   ui.init().catch(console.error);
+
+  // Hamburger menu
+  const hamburger = document.getElementById("lp-hamburger")!;
+  const navLinks = document.getElementById("lp-nav-links")!;
+  hamburger.addEventListener("click", () => {
+    const open = navLinks.classList.toggle("open");
+    hamburger.classList.toggle("open", open);
+    hamburger.setAttribute("aria-expanded", String(open));
+  });
+  navLinks.querySelectorAll("a, button").forEach((el) =>
+    el.addEventListener("click", () => {
+      navLinks.classList.remove("open");
+      hamburger.classList.remove("open");
+      hamburger.setAttribute("aria-expanded", "false");
+    })
+  );
+  document.addEventListener("click", (e) => {
+    if (!hamburger.contains(e.target as Node) && !navLinks.contains(e.target as Node)) {
+      navLinks.classList.remove("open");
+      hamburger.classList.remove("open");
+      hamburger.setAttribute("aria-expanded", "false");
+    }
+  });
 
   // Scroll-reveal via IntersectionObserver
   const revealObserver = new IntersectionObserver(
