@@ -718,7 +718,7 @@ export class RouteUI {
         for (const cell of row) {
           const td = document.createElement("td");
           td.textContent = cell;
-          td.style.cssText = "padding:6px 10px;border-bottom:1px solid var(--color-surface-2);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+          td.style.cssText = "padding:6px 10px;border-bottom:1px solid var(--color-surface-2);";
           tr.appendChild(td);
         }
         tbody.appendChild(tr);
