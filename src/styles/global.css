@@ -835,12 +835,16 @@ body {
   border-color: var(--color-accent-yellow);
   color: var(--color-accent-yellow);
   box-shadow: 0 0 0 2px rgba(238, 212, 159, 0.3);
-  background: rgba(238, 212, 159, 0.12);
+  background: #2d2a1e;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 [data-theme="light"] .snap-btn.active-snap {
   box-shadow: 0 0 0 2px rgba(223, 142, 29, 0.25);
-  background: rgba(223, 142, 29, 0.1);
+  background: #f5eddb;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .snap-btn.active-provider-osm {

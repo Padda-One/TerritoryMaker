@@ -502,7 +502,25 @@ export class RouteUI {
     });
 
     document.getElementById("btn-simplify-all")?.addEventListener("click", () => {
+      const drawnIds = this.mapController?.getClosedDrawnPolygonIds() ?? [];
+      if (drawnIds.length === 0) {
+        this.mapController?.simplifyAllPolygons();
+        return;
+      }
+      const countEl = document.getElementById("simplify-drawn-count");
+      if (countEl) countEl.textContent = String(drawnIds.length);
+      const modal = document.getElementById("simplify-confirm-modal") as HTMLElement | null;
+      if (modal) modal.style.display = "flex";
+    });
+
+    document.getElementById("btn-simplify-confirm")?.addEventListener("click", () => {
+      (document.getElementById("simplify-confirm-modal") as HTMLElement).style.display = "none";
+      this.mapController?.convertAllDrawnToFlat();
       this.mapController?.simplifyAllPolygons();
+    });
+
+    document.getElementById("btn-simplify-cancel")?.addEventListener("click", () => {
+      (document.getElementById("simplify-confirm-modal") as HTMLElement).style.display = "none";
     });
   }
 
@@ -522,7 +540,7 @@ export class RouteUI {
       const inSplitMode = splitModeActive;
       btnSplit.style.display = (canSplit || inSplitMode) ? "" : "none";
       btnSplit.textContent = inSplitMode
-        ? (this.mapController?.splitStartSet ? "✂ En cours…" : "✂ Annuler")
+        ? (this.mapController?.splitStartSet ? "✂ En cours…" : "⊗")
         : "✂";
       btnSplit.title = inSplitMode ? "Annuler la découpe" : "Découper le polygone";
       btnSplit.classList.toggle("active-snap", inSplitMode);
@@ -563,9 +581,8 @@ export class RouteUI {
   private updateSimplifyAllButton(): void {
     const btn = document.getElementById("btn-simplify-all") as HTMLButtonElement | null;
     if (!btn) return;
-    const hasZones = (this.mapController?.getGroups() ?? [])
-      .flatMap(g => g.polygons)
-      .some(p => p.isImported && p.isClosed);
+    const polygons = (this.mapController?.getGroups() ?? []).flatMap(g => g.polygons);
+    const hasZones = polygons.some(p => p.isClosed);
     btn.disabled = !hasZones;
   }
 

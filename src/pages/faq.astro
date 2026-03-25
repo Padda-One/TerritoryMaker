@@ -1,0 +1,1653 @@
+---
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="canonical" href="https://territory.paddaone.com/faq" />
+    <meta
+      name="description"
+      content="Questions fréquentes sur Territory Maker : tracé de territoires KML, clé API Google Maps, export vers Google Earth et QGIS, sécurité des données."
+    />
+    <meta name="author" content="Paddaone" />
+    <meta
+      name="keywords"
+      content="FAQ territory maker, créer territoire KML, dessiner zone géographique exporter KML, territoire Google Earth, outil territoire prédication, créer carte territoire, fichier KML territoire, polygone Google Maps, QGIS KML territoire"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://territory.paddaone.com/faq" />
+    <meta property="og:site_name" content="Territory Maker" />
+    <meta property="og:title" content="FAQ — Territory Maker" />
+    <meta
+      property="og:description"
+      content="Réponses aux questions fréquentes sur Territory Maker : tracé de territoires, export KML, clé API Google Maps, compatibilité Google Earth et QGIS."
+    />
+    <meta
+      property="og:image"
+      content="https://territory.paddaone.com/og-preview.png"
+    />
+    <meta property="og:locale" content="fr_FR" />
+
+    <!-- Twitter/X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FAQ — Territory Maker" />
+    <meta
+      name="twitter:description"
+      content="Questions fréquentes : tracé KML, clé API Google Maps, export vers Google Earth et QGIS."
+    />
+    <meta
+      name="twitter:image"
+      content="https://territory.paddaone.com/og-preview.png"
+    />
+
+    <!-- Structured data : FAQPage schema -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "name": "FAQ — Territory Maker",
+        "description": "Questions fréquentes sur Territory Maker : clé API Google Maps, tracé de territoires, export KML, compatibilité Google Earth et QGIS.",
+        "url": "https://territory.paddaone.com/faq",
+        "inLanguage": "fr",
+        "isPartOf": {
+          "@type": "SoftwareApplication",
+          "name": "Territory Maker",
+          "url": "https://territory.paddaone.com"
+        },
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Mon tracé est bizarre / ne suit pas la bonne route",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Le mode Trajet respecte le sens de circulation. Si vous cliquez depuis la mauvaise rive d'une rue à sens unique, l'itinéraire contourne le bloc. Positionnez-vous à droite de la chaussée avant de cliquer. Vous pouvez aussi changer le mode de transport (à pied ou à vélo) pour un tronçon délicat, ou passer en Vol d'oiseau pour une ligne droite. Chaque segment peut utiliser un mode différent. Un double-clic sur un waypoint existant permet de le déplacer ; ajouter un point intermédiaire de chaque côté d'un sens unique résout souvent le problème."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Quelle est la différence entre Trajet et Vol d'oiseau ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Le Trajet (badge vert) suit le réseau routier via l'API Google Directions. Le Vol d'oiseau (badge bleu) relie deux points en ligne droite. Chaque segment peut être basculé indépendamment : le mode actif dans la barre d'outils s'applique au prochain clic seulement."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Comment fermer / terminer un polygone ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Cliquez sur le premier point du tracé pour fermer le polygone, ou utilisez le bouton Fermer dans la barre d'outils. Une fois fermé, le polygone est éditable sommet par sommet via le bouton Éditer."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Comment annuler la dernière action ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ctrl+Z (Cmd+Z sur Mac) annule le dernier point posé. Le bouton ↩ dans la barre d'outils annule les opérations Split et Merge."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Comment utiliser l'outil Snap (aimant) ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "L'outil Snap force le prochain clic à s'accrocher au sommet le plus proche d'un polygone voisin. Il est utile pour que deux territoires partagent exactement la même frontière. Cliquez le bouton aimant 🧲 dans la barre d'outils pour l'activer."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Comment créer plusieurs territoires ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Chaque territoire est un calque distinct. Cliquez sur + dans le panneau Polygones pour ajouter un calque, nommez-le, puis cliquez dessus pour le sélectionner. Tous les clics sur la carte s'appliquent au calque actif. Les calques peuvent être organisés en dossiers via le menu contextuel (clic droit)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Comment importer un fichier KML existant ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Cliquez sur le bouton Importer (⬆) dans l'en-tête du panneau Polygones et sélectionnez un fichier .kml. Tous ses polygones sont regroupés dans un dossier portant le nom du fichier. Les polygones importés sont des Zones (badge ambre) — ils n'ont pas de waypoints."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Quelle est la différence entre un Tracé et une Zone ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Un Tracé (badge vert) est dessiné dans l'application, conserve ses waypoints et peut recalculer ses segments routiers. Une Zone (badge ambre) est une liste plate de coordonnées, issue d'un import KML ou de la conversion d'un Tracé fermé. La conversion Tracé → Zone est irréversible."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "À quoi sert le bouton Simplifier ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Il réduit le nombre de sommets d'une Zone via l'algorithme Douglas-Peucker, en supprimant les points redondants tout en conservant la forme générale. Chaque clic double la tolérance. Un bouton ↺ permet de restaurer les coordonnées d'origine. Les polygones issus du mode Trajet accumulent beaucoup de points ; sur de grands territoires, un fichier KML non simplifié peut ralentir significativement Google Earth, QGIS ou Google My Maps."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Avec quels logiciels puis-je utiliser le fichier KML exporté ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Google My Maps (import direct), Google Earth (glisser-déposer ou File → Import), QGIS (Couche → Ajouter une couche vectorielle), et tout SIG supportant le format KML/KMZ (standard OGC). Pour les fichiers très lourds (nombreux polygones non simplifiés), utilisez la simplification avant l'export."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Comment exporter mon travail ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Cliquez sur Exporter KML dans la barre latérale, puis choisissez Copier (colle le XML) ou Télécharger (sauvegarde un fichier .kml). Seuls les calques visibles sont exportés."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "La clé API Google Maps est-elle payante ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Google offre 200 $ de crédits gratuits par mois. L'API Directions coûte environ 0,005 $ par requête — il faudrait 40 000 segments calculés pour atteindre le seuil de facturation. Un usage normal de Territory Maker reste largement gratuit."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Ma clé API est-elle en sécurité ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "La clé est stockée exclusivement dans votre navigateur, chiffrée AES-GCM 256 bits. Elle ne quitte jamais votre appareil et n'est jamais transmise à nos serveurs (il n'y en a pas). Restreignez-la à votre domaine dans la console Google Cloud pour éviter tout usage non autorisé."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Mes données géographiques sont-elles envoyées à un serveur ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Non. Territory Maker est 100% client-side : tout le traitement s'effectue dans votre navigateur. Les seuls appels réseau sont les tuiles cartographiques et les requêtes Directions API, envoyées directement vers Google depuis votre navigateur."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "L'application fonctionne-t-elle sur mobile ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Territory Maker est conçu pour desktop. Sur mobile l'interface est visible, mais le tracé point par point nécessite une précision difficile à obtenir avec un doigt. Utilisez un ordinateur avec souris pour créer et éditer vos territoires."
+            }
+          }
+        ]
+      }
+    </script>
+
+    <title>FAQ — Territory Maker</title>
+    <link rel="icon" type="image/svg+xml" href="/logo-TerritoryMaker.svg" />
+
+    <!-- Plausible Analytics (auto-hébergé, proxifié via Cloudflare Worker) -->
+    <script
+      defer
+      data-domain="territory.paddaone.com"
+      data-api="https://territory.paddaone.com/3wpjej9/event"
+      src="https://territory.paddaone.com/3wpjej9/script.outbound-links.js"
+      crossorigin="anonymous"></script>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header class="doc-header">
+      <div class="doc-header-inner">
+        <a href="/" class="doc-back-link">
+          <span>←</span>Retour à l'app
+        </a>
+        <span class="doc-header-divider">|</span>
+        <div class="doc-header-logo">
+          <img src="/logo-TerritoryMaker.svg" width="50" height="50" alt="" />
+          <span>Territory Maker</span>
+        </div>
+        <button
+          class="sidebar-mobile-btn"
+          id="sidebarToggle"
+          aria-label="Ouvrir la navigation"
+        >
+          ☰ Catégories
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- FAQ layout -->
+    <div class="doc-layout">
+      <!-- Sidebar -->
+      <nav class="doc-sidebar" id="docSidebar" aria-label="Catégories FAQ">
+        <div class="sidebar-label">Catégories</div>
+        <ol class="sidebar-nav">
+          <li>
+            <a href="#cat-trace" class="sidebar-chapter-link">
+              <span class="sidebar-num">A</span>
+              <span>Tracé et dessin</span>
+            </a>
+          </li>
+          <li>
+            <a href="#cat-calques" class="sidebar-chapter-link">
+              <span class="sidebar-num">B</span>
+              <span>Calques et territoires</span>
+            </a>
+          </li>
+          <li>
+            <a href="#cat-export" class="sidebar-chapter-link">
+              <span class="sidebar-num">C</span>
+              <span>Export et compatibilité</span>
+            </a>
+          </li>
+          <li>
+            <a href="#cat-api" class="sidebar-chapter-link">
+              <span class="sidebar-num">D</span>
+              <span>Clé API et coûts</span>
+            </a>
+          </li>
+          <li>
+            <a href="#cat-donnees" class="sidebar-chapter-link">
+              <span class="sidebar-num">E</span>
+              <span>Données et navigateur</span>
+            </a>
+          </li>
+        </ol>
+
+        <div
+          style="margin-top:32px;padding-top:20px;border-top:1px solid #2d3148;"
+        >
+          <a
+            href="/documentation"
+            class="sidebar-chapter-link"
+            style="font-size:0.78rem;font-weight:500;"
+          >
+            → Documentation complète
+          </a>
+        </div>
+      </nav>
+
+      <!-- Content -->
+      <main class="doc-content">
+        <!-- Title -->
+        <div style="margin-bottom:40px;">
+          <div
+            style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);border-radius:9999px;padding:4px 14px;font-size:0.75rem;font-weight:600;color:#00e5a0;margin-bottom:16px;"
+          >
+            FAQ
+          </div>
+          <h1
+            style="font-size:1.75rem;font-weight:800;color:#e2e8f0;margin:0 0 12px;line-height:1.2;"
+          >
+            Questions fréquentes
+          </h1>
+          <p style="font-size:0.95rem;color:#94a3b8;margin:0;line-height:1.6;">
+            Tout ce qu'il faut savoir pour tracer et exporter vos territoires en
+            KML. Pour un guide pas-à-pas, consultez la <a
+              href="/documentation"
+              style="color:#818cf8;text-decoration:underline;text-underline-offset:2px;"
+              >documentation complète</a
+            >.
+          </p>
+        </div>
+
+        <!-- ─── CATÉGORIE A : Tracé et dessin ─── -->
+        <section id="cat-trace" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">A</div>
+            <h2 class="chapter-title">Tracé et dessin</h2>
+          </div>
+
+          <div class="doc-section">
+            <div class="faq-item" id="faq-a1">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-a1-body"
+              >
+                <span class="faq-q-text"
+                  >Mon tracé est bizarre / ne suit pas la bonne route</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-a1-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    Le mode <strong>Trajet</strong> respecte le sens de circulation.
+                    Si vous cliquez depuis la mauvaise rive d'une rue à sens unique,
+                    l'itinéraire contourne le bloc.
+                  </p>
+                  <p><strong>Solutions :</strong></p>
+                  <ul class="step-list">
+                    <li>
+                      Positionnez-vous <strong>à droite de la chaussée</strong> avant
+                      de cliquer (dans les pays où l'on conduit à droite)
+                    </li>
+                    <li>
+                      Changez le <strong>mode de transport</strong> (à pied ou à vélo)
+                      pour ce tronçon délicat
+                    </li>
+                    <li>
+                      Passez en <strong>Vol d'oiseau</strong> pour tracer une ligne
+                      droite sur ce segment
+                    </li>
+                    <li>
+                      Ajoutez des <strong>points intermédiaires</strong> de chaque
+                      côté du sens unique
+                    </li>
+                  </ul>
+                  <p>
+                    Rappel : chaque segment peut utiliser un mode différent. Un <strong
+                      >double-clic</strong
+                    > sur un waypoint existant permet de le déplacer.
+                  </p>
+                  <div class="faq-img-row">
+                    <button
+                      class="faq-thumb-btn"
+                      data-lightbox-src="/images/captures/trace-bizarre.avif"
+                      data-lightbox-alt="Exemple de tracé bizarre dû à un sens unique"
+                      aria-label="Agrandir : exemple de tracé bizarre"
+                    >
+                      <img
+                        src="/images/captures/trace-bizarre.avif"
+                        alt="Exemple de tracé bizarre dû à un sens unique"
+                        class="faq-thumb"
+                        loading="lazy"
+                      />
+                      <span class="faq-thumb-caption">Tracé bizarre</span>
+                    </button>
+                    <button
+                      class="faq-thumb-btn"
+                      data-lightbox-src="/images/captures/trace-corrige.avif"
+                      data-lightbox-alt="Tracé corrigé après repositionnement du point"
+                      aria-label="Agrandir : tracé corrigé"
+                    >
+                      <img
+                        src="/images/captures/trace-corrige.avif"
+                        alt="Tracé corrigé après repositionnement du point"
+                        class="faq-thumb"
+                        loading="lazy"
+                      />
+                      <span class="faq-thumb-caption">Tracé corrigé</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-a2">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-a2-body"
+              >
+                <span class="faq-q-text"
+                  >Quelle est la différence entre Trajet et Vol d'oiseau ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-a2-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    <span class="api-badge api-badge-green">Trajet</span> suit le
+                    réseau routier via l'API Google Directions. Idéal pour les frontières
+                    de quartier qui longent des rues.
+                  </p>
+                  <p>
+                    <span class="api-badge api-badge-blue">Vol d'oiseau</span> relie
+                    deux points en ligne droite. Utile pour les limites naturelles
+                    (rivières, voies ferrées, terrains vagues) ou pour contourner
+                    un sens unique problématique.
+                  </p>
+                  <p>
+                    Chaque segment est indépendant : le mode actif dans la barre
+                    d'outils s'applique uniquement au prochain clic.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-a3">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-a3-body"
+              >
+                <span class="faq-q-text"
+                  >Comment fermer / terminer un polygone ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-a3-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    Cliquez sur le <strong>premier point</strong> du tracé pour fermer
+                    le polygone, ou utilisez le bouton <strong>Fermer</strong> dans
+                    la barre d'outils.
+                  </p>
+                  <p>
+                    Une fois fermé, le polygone devient un <span
+                      class="api-badge api-badge-green">Tracé</span
+                    >. Il reste éditable sommet par sommet via le bouton <strong
+                      >Éditer (✏)</strong
+                    >.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-a4">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-a4-body"
+              >
+                <span class="faq-q-text"
+                  >Comment annuler la dernière action ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-a4-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    <kbd>Ctrl</kbd>+<kbd>Z</kbd> (ou <kbd>Cmd</kbd>+<kbd>Z</kbd> sur
+                    Mac) annule le dernier point posé.
+                  </p>
+                  <p>
+                    Le bouton <strong>↩</strong> dans la barre d'outils annule les
+                    opérations Split et Merge.
+                  </p>
+                  <div class="step-notice step-notice-warning">
+                    <span style="flex-shrink:0;">⚠️</span>
+                    <span
+                      >Il n'y a pas de Redo (Ctrl+Y). Si vous annulez trop loin,
+                      recommencez depuis le dernier point conservé.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-a5">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-a5-body"
+              >
+                <span class="faq-q-text"
+                  >Comment utiliser l'outil Snap (aimant 🧲) ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-a5-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    L'outil <strong>Snap</strong> (icône aimant 🧲, jaune quand actif)
+                    force le prochain clic à s'accrocher au sommet le plus proche
+                    d'un polygone voisin.
+                  </p>
+                  <p>
+                    Il permet à deux territoires de partager <strong
+                      >exactement la même frontière</strong
+                    >
+                    sans espace ni chevauchement — indispensable pour un découpage
+                    propre d'une ville.
+                  </p>
+                  <p>
+                    Cliquez le bouton aimant 🧲 dans la barre d'outils pour
+                    l'activer manuellement. Il s'active aussi automatiquement
+                    lors d'une opération Split.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── CATÉGORIE B : Calques et territoires ─── -->
+        <section id="cat-calques" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">B</div>
+            <h2 class="chapter-title">Calques et territoires</h2>
+          </div>
+
+          <div class="doc-section">
+            <div class="faq-item" id="faq-b1">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-b1-body"
+              >
+                <span class="faq-q-text"
+                  >Comment créer plusieurs territoires ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-b1-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    Chaque territoire est un <strong>calque distinct</strong>.
+                    Cliquez sur <strong>+</strong> dans le panneau Polygones pour
+                    ajouter un calque et lui donner un nom.
+                  </p>
+                  <p>
+                    Cliquez sur un calque pour le <strong>sélectionner</strong> :
+                    tous les clics sur la carte s'appliquent au calque actif.
+                  </p>
+                  <p>
+                    Les calques peuvent être organisés en <strong
+                      >dossiers</strong
+                    >
+                    via le menu contextuel (clic droit dans le panneau).
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-b2">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-b2-body"
+              >
+                <span class="faq-q-text"
+                  >Comment importer un fichier KML existant ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-b2-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    Cliquez sur le bouton <strong>Importer (⬆)</strong> dans l'en-tête
+                    du panneau Polygones et sélectionnez un fichier <code
+                      >.kml</code
+                    >.
+                  </p>
+                  <p>
+                    Tous les polygones sont regroupés dans un dossier portant le
+                    nom du fichier. Ils apparaissent comme des <span
+                      class="api-badge api-badge-amber">Zones</span
+                    >
+                    — ils n'ont pas de waypoints ni de segments routiers.
+                  </p>
+                  <div class="step-notice">
+                    <span style="flex-shrink:0;">ℹ️</span>
+                    <span
+                      >L'import a été testé avec des fichiers contenant jusqu'à
+                      835 polygones.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-b3">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-b3-body"
+              >
+                <span class="faq-q-text"
+                  >Quelle est la différence entre un Tracé et une Zone ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-b3-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    <span class="api-badge api-badge-green">Tracé</span> — polygone
+                    dessiné dans l'application. Conserve ses waypoints et peut recalculer
+                    ses segments routiers. Éditable sommet par sommet.
+                  </p>
+                  <p>
+                    <span class="api-badge api-badge-amber">Zone</span> — liste plate
+                    de coordonnées brutes. Provient d'un import KML ou de la conversion
+                    d'un Tracé fermé. Peut être simplifiée.
+                  </p>
+                  <div class="step-notice step-notice-warning">
+                    <span style="flex-shrink:0;">⚠️</span>
+                    <span
+                      >La conversion Tracé → Zone est <strong
+                        >irréversible</strong
+                      >.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── CATÉGORIE C : Export et compatibilité ─── -->
+        <section id="cat-export" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">C</div>
+            <h2 class="chapter-title">Export et compatibilité</h2>
+          </div>
+
+          <div class="doc-section">
+            <div class="faq-item" id="faq-c1">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-c1-body"
+              >
+                <span class="faq-q-text"
+                  >À quoi sert le bouton "Simplifier" (⬡) ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-c1-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    Il réduit le nombre de sommets d'une Zone via l'algorithme
+                    <strong>Douglas-Peucker</strong>, en supprimant les points
+                    redondants tout en conservant la forme générale du polygone.
+                  </p>
+                  <p>
+                    Chaque clic sur le bouton <strong
+                      >double la tolérance</strong
+                    >
+                    (simplification progressive). Le bouton <strong>↺</strong> permet
+                    de restaurer les coordonnées d'origine à tout moment.
+                  </p>
+                  <p><strong>Pourquoi simplifier ?</strong></p>
+                  <p>
+                    Les polygones issus du mode Trajet accumulent de nombreux
+                    points (environ 1 par mètre parcouru). Sur de grands
+                    territoires, un fichier KML non simplifié peut contenir des
+                    dizaines de milliers de coordonnées. Cela peut ralentir
+                    significativement — voire bloquer l'import dans — Google
+                    Earth, QGIS ou tout autre logiciel utilisant des fichiers
+                    KML. En cas d'utilisation de nombreux territoires,
+                    simplifier avant l'export est fortement recommandé.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-c2">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-c2-body"
+              >
+                <span class="faq-q-text"
+                  >Avec quels logiciels puis-je utiliser le fichier KML exporté
+                  ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-c2-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <ul class="step-list">
+                    <li>
+                      <strong>Google My Maps</strong> — import direct via "Ajouter
+                      une couche"
+                    </li>
+                    <li>
+                      <strong>Google Earth</strong> — File → Import ou glisser-déposer
+                      du fichier
+                    </li>
+                    <li>
+                      <strong>QGIS</strong> — Couche → Ajouter une couche vectorielle
+                      (format KML/KMZ)
+                    </li>
+                    <li>
+                      <strong>New World Scheduler (NWS)</strong> — Territoires → Import
+                      → Territories from Google KML
+                    </li>
+                    <li>
+                      <strong>Territory Helper</strong> — Territoires → Edition →
+                      Bouton d'importation
+                    </li>
+                    <li>
+                      Tout autre SIG ou logiciel de cartographie supportant le
+                      format <strong>KML/KMZ</strong> (standard OGC)
+                    </li>
+                  </ul>
+                  <div class="step-notice step-notice-warning">
+                    <span style="flex-shrink:0;">⚠️</span>
+                    <span
+                      >Pour les fichiers contenant de nombreux polygones ou de
+                      grande taille, utilisez la fonction Simplifier avant
+                      l'export pour éviter les ralentissements.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-c3">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-c3-body"
+              >
+                <span class="faq-q-text">Comment exporter mon travail ?</span>
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-c3-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>Il existe trois niveaux d'export :</p>
+                  <ul class="step-list">
+                    <li>
+                      <strong>Carte entière</strong> — bouton <strong>
+                        🗺 Exporter la carte
+                      </strong>
+                      dans la barre latérale. Inclut tous les polygones fermés, quel
+                      que soit leur dossier. Choisissez ensuite <strong
+                        >Copier</strong
+                      >
+                      (presse-papier) ou <strong>Télécharger</strong> (fichier <code
+                        >.kml</code
+                      >).
+                    </li>
+                    <li>
+                      <strong>Un dossier</strong> — bouton <strong>⬇</strong> à droite
+                      du nom du dossier dans le panneau des calques. Exporte uniquement
+                      les polygones de ce dossier.
+                    </li>
+                    <li>
+                      <strong>Un seul polygone</strong> — bouton <strong
+                        >⬇</strong
+                      >
+                      à droite du nom du polygone. Exporte ce polygone uniquement.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── CATÉGORIE D : Clé API et coûts ─── -->
+        <section id="cat-api" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">D</div>
+            <h2 class="chapter-title">Clé API et coûts</h2>
+          </div>
+
+          <div class="doc-section">
+            <div class="faq-item" id="faq-d1">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-d1-body"
+              >
+                <span class="faq-q-text"
+                  >La clé API Google Maps est-elle payante ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-d1-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    Google offre <strong
+                      >200 $ de crédits gratuits par mois</strong
+                    > pour tous les comptes. L'API Directions coûte environ 0,005
+                    $ par requête — il faudrait
+                    <strong>40 000 segments calculés</strong> pour atteindre le seuil
+                    de facturation.
+                  </p>
+                  <p>
+                    Un usage normal de Territory Maker (quelques centaines de
+                    territoires) reste largement dans la limite gratuite.
+                  </p>
+                  <div class="step-notice">
+                    <span style="flex-shrink:0;">ℹ️</span>
+                    <span
+                      >Vous pouvez surveiller votre consommation dans la console
+                      Google Cloud sous Facturation → Rapports.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-d2">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-d2-body"
+              >
+                <span class="faq-q-text">Ma clé API est-elle en sécurité ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-d2-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    La clé est stockée <strong
+                      >exclusivement dans votre navigateur</strong
+                    >, chiffrée <strong>AES-GCM 256 bits</strong>. Elle ne
+                    quitte jamais votre appareil et n'est jamais transmise à nos
+                    serveurs (il n'y en a pas).
+                  </p>
+                  <p>
+                    Pour éviter qu'elle soit utilisée par quelqu'un d'autre si
+                    elle était découverte, <strong
+                      >restreignez-la à votre domaine</strong
+                    > dans la console Google Cloud (Restrictions d'application → Référents
+                    HTTP).
+                  </p>
+                  <p>
+                    Consultez la <a href="/documentation#ch1-4">documentation</a
+                    > pour la procédure complète de restriction.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── CATÉGORIE E : Données et navigateur ─── -->
+        <section id="cat-donnees" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">E</div>
+            <h2 class="chapter-title">Données et navigateur</h2>
+          </div>
+
+          <div class="doc-section">
+            <div class="faq-item" id="faq-e1">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-e1-body"
+              >
+                <span class="faq-q-text"
+                  >Mes données géographiques sont-elles envoyées à un serveur ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-e1-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    <strong>Non.</strong> Territory Maker est une application
+                    <strong>100% client-side</strong> : tout le traitement s'effectue
+                    dans votre navigateur. Aucune donnée géographique n'est transmise
+                    à nos serveurs.
+                  </p>
+                  <p>Les seuls appels réseau sont :</p>
+                  <ul class="step-list">
+                    <li>
+                      Les <strong>tuiles cartographiques</strong> Google Maps ou OpenStreetMap
+                      (directement depuis votre navigateur vers Google/OSM)
+                    </li>
+                    <li>
+                      Les <strong>requêtes API Directions</strong> (directement depuis
+                      votre navigateur vers Google, pour calculer les tracés routiers)
+                    </li>
+                    <li>
+                      Les <strong>statistiques de visite anonymes</strong> via Plausible
+                      Analytics (sans cookie, auto-hébergé)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="faq-item" id="faq-e2">
+              <button
+                class="faq-question"
+                aria-expanded="false"
+                aria-controls="faq-e2-body"
+              >
+                <span class="faq-q-text"
+                  >L'application fonctionne-t-elle sur mobile ?</span
+                >
+                <span class="faq-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="faq-answer" id="faq-e2-body" hidden>
+                <div class="faq-answer-inner step-body">
+                  <p>
+                    Territory Maker est <strong>conçu pour desktop</strong>. Sur
+                    mobile, l'interface est visible mais l'expérience est
+                    dégradée : le tracé point par point nécessite une précision
+                    difficile à obtenir avec un doigt, et certains éléments
+                    supposent un survol souris.
+                  </p>
+                  <p>
+                    <strong>Recommandation :</strong> utilisez un ordinateur avec
+                    souris pour créer et éditer vos territoires.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Contact -->
+        <div
+          style="margin-top:48px;padding:24px;background:#1a1d27;border:1px solid #2d3148;border-radius:12px;"
+        >
+          <p
+            style="font-size:0.88rem;font-weight:700;color:#e2e8f0;margin:0 0 6px;"
+          >
+            Votre question n'est pas dans la FAQ ?
+          </p>
+          <p
+            style="font-size:0.85rem;color:#94a3b8;margin:0 0 14px;line-height:1.6;"
+          >
+            Ouvrez une "issue" sur GitHub — c'est le moyen le plus direct de me
+            contacter, et les échanges profitent à toute la communauté.
+          </p>
+          <a
+            href="https://github.com/Padda-One/TerritoryMaker/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-secondary"
+            style="display:inline-flex;text-decoration:none;padding:8px 20px;font-size:0.85rem;"
+          >
+            Ouvrir une issue sur GitHub →
+          </a>
+        </div>
+
+        <!-- Footer CTA -->
+        <div
+          style="margin-top:16px;padding:28px 32px;background:#1a1d27;border:1px solid #2d3148;border-radius:16px;text-align:center;"
+        >
+          <p style="font-size:0.9rem;color:#94a3b8;margin:0 0 20px;">
+            La documentation couvre chaque fonctionnalité en détail.
+          </p>
+          <div
+            style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;"
+          >
+            <a
+              href="/documentation"
+              class="btn btn-primary"
+              style="display:inline-flex;text-decoration:none;padding:10px 28px;font-size:0.9rem;"
+            >
+              Documentation complète →
+            </a>
+            <a
+              href="/"
+              style="display:inline-flex;align-items:center;padding:10px 28px;font-size:0.9rem;text-decoration:none;color:#94a3b8;background:rgba(255,255,255,0.04);border:1px solid #2d3148;border-radius:9999px;font-weight:600;transition:color 0.15s;"
+            >
+              Utiliser Territory Maker
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+    <!-- Lightbox -->
+    <div
+      id="lightbox"
+      class="lightbox"
+      aria-modal="true"
+      role="dialog"
+      aria-label="Image agrandie"
+      hidden
+    >
+      <button class="lightbox-close" id="lightboxClose" aria-label="Fermer"
+        >✕</button
+      >
+      <img id="lightboxImg" src="" alt="" class="lightbox-img" />
+    </div>
+  </body>
+</html>
+
+<script>
+  // ── Active section tracking ──────────────────────────────────────────────
+  function updateActiveSection() {
+    const scrollPos = window.scrollY + 80;
+    const sections = [...document.querySelectorAll('section[id^="cat-"]')];
+
+    let current = sections[0]?.id ?? null;
+    for (const section of sections) {
+      if ((section as HTMLElement).offsetTop <= scrollPos) {
+        current = section.id;
+      }
+    }
+
+    document
+      .querySelectorAll(".sidebar-nav a.is-active")
+      .forEach((el) => el.classList.remove("is-active"));
+
+    if (current) {
+      const link = document.querySelector(`.sidebar-nav a[href="#${current}"]`);
+      if (link) link.classList.add("is-active");
+    }
+  }
+
+  window.addEventListener("scroll", updateActiveSection, { passive: true });
+  updateActiveSection();
+
+  // ── Mobile sidebar ───────────────────────────────────────────────────────
+  const sidebarToggle = document.getElementById("sidebarToggle")!;
+  const docSidebar = document.getElementById("docSidebar")!;
+  const sidebarBackdrop = document.getElementById("sidebarBackdrop")!;
+
+  function openSidebar() {
+    docSidebar.classList.add("is-open");
+    sidebarBackdrop.classList.add("is-visible");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSidebar() {
+    docSidebar.classList.remove("is-open");
+    sidebarBackdrop.classList.remove("is-visible");
+    document.body.style.overflow = "";
+  }
+
+  sidebarToggle.addEventListener("click", () => {
+    docSidebar.classList.contains("is-open") ? closeSidebar() : openSidebar();
+  });
+
+  sidebarBackdrop.addEventListener("click", closeSidebar);
+
+  docSidebar.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // ── Lightbox ─────────────────────────────────────────────────────────────
+  const lightbox = document.getElementById("lightbox")!;
+  const lightboxImg = document.getElementById(
+    "lightboxImg",
+  ) as HTMLImageElement;
+  const lightboxClose = document.getElementById("lightboxClose")!;
+
+  function openLightbox(src: string, alt: string) {
+    lightboxImg.src = src;
+    lightboxImg.alt = alt;
+    lightbox.hidden = false;
+    document.body.style.overflow = "hidden";
+    lightboxClose.focus();
+  }
+
+  function closeLightbox() {
+    lightbox.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  document
+    .querySelectorAll<HTMLButtonElement>(".faq-thumb-btn")
+    .forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const src = btn.dataset.lightboxSrc ?? "";
+        const alt = btn.dataset.lightboxAlt ?? "";
+        openLightbox(src, alt);
+      });
+    });
+
+  lightboxClose.addEventListener("click", closeLightbox);
+  lightbox.addEventListener("click", (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !lightbox.hidden) closeLightbox();
+  });
+
+  // ── Accordion ────────────────────────────────────────────────────────────
+  document.querySelectorAll(".faq-question").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const expanded = btn.getAttribute("aria-expanded") === "true";
+
+      // Close siblings in same section
+      const section = btn.closest("section");
+      section?.querySelectorAll(".faq-question").forEach((b) => {
+        b.setAttribute("aria-expanded", "false");
+        const bodyId = b.getAttribute("aria-controls");
+        if (bodyId) {
+          const body = document.getElementById(bodyId);
+          if (body) body.hidden = true;
+        }
+      });
+
+      // Open clicked item if it was closed
+      if (!expanded) {
+        btn.setAttribute("aria-expanded", "true");
+        const bodyId = btn.getAttribute("aria-controls");
+        if (bodyId) {
+          const body = document.getElementById(bodyId);
+          if (body) body.hidden = false;
+        }
+      }
+    });
+  });
+</script>
+
+<style is:global>
+  /* ── Base ─────────────────────────────────────────────────────────────── */
+  html,
+  body {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* ── Header ───────────────────────────────────────────────────────────── */
+  .doc-header {
+    border-bottom: 1px solid #2d3148;
+    background: #1a1d27;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .doc-header-inner {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .doc-back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    transition: color 0.15s;
+  }
+
+  .doc-back-link:hover {
+    color: #e2e8f0;
+  }
+
+  .doc-header-divider {
+    color: #2d3148;
+  }
+
+  .doc-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  .doc-layout {
+    display: flex;
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 24px;
+    gap: 48px;
+    align-items: flex-start;
+  }
+
+  /* ── Sidebar ──────────────────────────────────────────────────────────── */
+  .doc-sidebar {
+    width: 220px;
+    min-width: 220px;
+    position: sticky;
+    top: 50px;
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+    padding: 28px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #2d3148 transparent;
+  }
+
+  .doc-sidebar::-webkit-scrollbar {
+    width: 3px;
+  }
+  .doc-sidebar::-webkit-scrollbar-thumb {
+    background: #2d3148;
+    border-radius: 2px;
+  }
+
+  .sidebar-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #8892a4;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+    padding-left: 4px;
+  }
+
+  .sidebar-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .sidebar-chapter-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #a5adcb;
+    font-size: 0.83rem;
+    font-weight: 600;
+    padding: 5px 4px;
+    border-radius: 6px;
+    transition: color 0.15s;
+    line-height: 1.3;
+  }
+
+  .sidebar-chapter-link:hover {
+    color: #e2e8f0;
+  }
+
+  .sidebar-chapter-link.is-active {
+    color: #00e5a0;
+  }
+
+  .sidebar-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border-radius: 5px;
+    background: rgba(0, 229, 160, 0.07);
+    border: 1px solid rgba(0, 229, 160, 0.18);
+    color: #00e5a0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .sidebar-chapter-link.is-active .sidebar-num {
+    background: rgba(0, 229, 160, 0.16);
+    border-color: rgba(0, 229, 160, 0.4);
+  }
+
+  /* ── Content ──────────────────────────────────────────────────────────── */
+  .doc-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 700px;
+    padding: 40px 0 80px;
+  }
+
+  /* ── Mobile ───────────────────────────────────────────────────────────── */
+  .sidebar-mobile-btn {
+    display: none;
+    margin-left: auto;
+    background: rgba(0, 229, 160, 0.08);
+    border: 1px solid rgba(0, 229, 160, 0.25);
+    color: #00e5a0;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+
+  .sidebar-mobile-btn:hover {
+    background: rgba(0, 229, 160, 0.14);
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 30;
+  }
+
+  .sidebar-backdrop.is-visible {
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar-mobile-btn {
+      display: block;
+    }
+
+    .doc-layout {
+      padding: 0 16px;
+    }
+
+    .doc-sidebar {
+      position: fixed;
+      left: -270px;
+      top: 0;
+      height: 100vh;
+      width: 260px;
+      min-width: 260px;
+      max-height: 100vh;
+      background: #1a1d27;
+      border-right: 1px solid #2d3148;
+      padding: 24px 20px;
+      z-index: 40;
+      transition: left 0.28s ease;
+    }
+
+    .doc-sidebar.is-open {
+      left: 0;
+    }
+  }
+
+  /* ── Chapter headers ──────────────────────────────────────────────────── */
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #2d3148;
+  }
+
+  .chapter-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: rgba(0, 229, 160, 0.1);
+    border: 1px solid rgba(0, 229, 160, 0.3);
+    color: #00e5a0;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .chapter-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  /* ── Section ──────────────────────────────────────────────────────────── */
+  .doc-section {
+    margin-bottom: 24px;
+  }
+
+  /* ── Step body (reused for FAQ answers) ──────────────────────────────── */
+  .step-body {
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .step-body p {
+    margin: 0 0 12px;
+  }
+  .step-body p:last-child {
+    margin-bottom: 0;
+  }
+  .step-body strong {
+    color: #e2e8f0;
+  }
+  .step-body a {
+    color: #818cf8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .step-body a:hover {
+    color: #a5b4fc;
+  }
+  .step-body code {
+    background: #0d0f18;
+    border: 1px solid #2d3148;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.82rem;
+    color: #00e5a0;
+  }
+  .step-body kbd {
+    background: #252a3a;
+    border: 1px solid #3d4460;
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    font-family: inherit;
+  }
+
+  .step-list {
+    margin: 0 0 12px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .step-list:last-child {
+    margin-bottom: 0;
+  }
+  .step-list li {
+    padding-left: 4px;
+  }
+
+  .step-notice {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    background: rgba(129, 140, 248, 0.08);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    margin-top: 12px;
+  }
+
+  .step-notice-warning {
+    background: rgba(251, 191, 36, 0.08);
+    border-color: rgba(251, 191, 36, 0.25);
+    color: #94a3b8;
+  }
+
+  .notice-box {
+    background: rgba(129, 140, 248, 0.06);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .api-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .api-badge-green {
+    background: rgba(0, 229, 160, 0.12);
+    border: 1px solid rgba(0, 229, 160, 0.3);
+    color: #00e5a0;
+  }
+
+  .api-badge-blue {
+    background: rgba(129, 140, 248, 0.12);
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    color: #818cf8;
+  }
+
+  .api-badge-amber {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+  }
+
+  /* ── FAQ Accordion ────────────────────────────────────────────────────── */
+  .faq-item {
+    border: 1px solid #2d3148;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: #1a1d27;
+    border: none;
+    padding: 14px 18px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    gap: 12px;
+    transition: background 0.15s;
+  }
+
+  .faq-question:hover {
+    background: #1f2337;
+    color: #e2e8f0;
+  }
+
+  .faq-question[aria-expanded="true"] {
+    background: #1f2337;
+    color: #00e5a0;
+  }
+
+  .faq-q-text {
+    flex: 1;
+  }
+
+  .faq-chevron {
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: #64748b;
+    transition: transform 0.2s;
+  }
+
+  .faq-question[aria-expanded="true"] .faq-chevron {
+    transform: rotate(180deg);
+    color: #00e5a0;
+  }
+
+  .faq-answer-inner {
+    border-top: 1px solid #2d3148;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-chevron {
+      transition: none;
+    }
+  }
+
+  /* ── FAQ image thumbnails ─────────────────────────────────────────────── */
+  .faq-img-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .faq-thumb-btn {
+    background: #0d0f18;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    padding: 0;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+    width: 160px;
+    flex-shrink: 0;
+  }
+
+  .faq-thumb-btn:hover {
+    border-color: #00e5a0;
+    box-shadow: 0 0 0 2px rgba(0, 229, 160, 0.15);
+  }
+
+  .faq-thumb {
+    width: 160px;
+    height: 100px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .faq-thumb-caption {
+    font-size: 0.72rem;
+    color: #64748b;
+    padding: 5px 8px;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+    border-top: 1px solid #2d3148;
+  }
+
+  .faq-thumb-btn:hover .faq-thumb-caption {
+    color: #00e5a0;
+  }
+
+  /* ── Lightbox ─────────────────────────────────────────────────────────── */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .lightbox[hidden] {
+    display: none;
+  }
+
+  .lightbox-img {
+    max-width: 100%;
+    max-height: calc(100vh - 80px);
+    border-radius: 10px;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.6);
+    object-fit: contain;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  @media (max-width: 480px) {
+    .faq-thumb-btn {
+      width: 140px;
+    }
+    .faq-thumb {
+      width: 140px;
+      height: 88px;
+    }
+  }
+</style>

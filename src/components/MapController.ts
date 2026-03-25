@@ -1108,6 +1108,22 @@ export class MapController {
     this.notifyPolygonsChanged();
   }
 
+  /** Returns ids of all closed drawn polygons (tracés) that would be skipped by simplifyAllPolygons. */
+  getClosedDrawnPolygonIds(): string[] {
+    return this.polygons
+      .filter(p => p.kind === "drawn" && p.isClosed)
+      .map(p => p.id);
+  }
+
+  /** Converts all closed drawn polygons (tracés) to flat zones. Irreversible. */
+  convertAllDrawnToFlat(): void {
+    for (const poly of this.polygons) {
+      if (poly.kind === "drawn" && poly.isClosed) {
+        this.convertDrawnToFlat(poly);
+      }
+    }
+  }
+
   /** Apply one Douglas-Peucker pass to all imported polygons at once.
    *  Each polygon tracks its own epsilon and doubles it on each call. */
   simplifyAllPolygons(): void {

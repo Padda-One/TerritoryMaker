@@ -33,8 +33,9 @@
 - **App themes** — switch between Dark, Light, and System (follows OS preference) — persisted in `localStorage`
 - **Map themes** — independently choose between Dark, Light, Satellite, and Terrain map styles
 - **Settings panel** — API key management and appearance settings accessible via the ⚙ button; shows only the key status (not the key itself) once a key is stored
-- **Step-by-step API key guide** — built-in tutorial page at `/documentation` for obtaining and configuring a Google Maps API key
-- **KML export** — export all polygons at once ("Exporter la carte") or each polygon individually from the layer panel; supports copy to clipboard and `.kml` download
+- **Step-by-step API key guide** — built-in documentation page at `/documentation` for obtaining and configuring a Google Maps API key
+- **FAQ** — dedicated `/faq` page covering common questions (routing oddities, simplification, KML compatibility, API key cost and security, data privacy); includes FAQPage schema for Google rich snippets
+- **KML export** — export all polygons at once, per folder, or per polygon from the layer panel; supports copy to clipboard and `.kml` download
 - **Encrypted local key storage** — your Google Maps API key is encrypted with AES-GCM 256-bit and stored in `localStorage` using a device-derived key (no password required)
 - **No backend** — everything runs in your browser; no data is sent to any server other than Google Maps APIs
 - **Desktop-first** — designed for desktop use (mouse + keyboard); not optimised for mobile or touch
@@ -286,7 +287,8 @@ An unrestricted API key can be used by anyone who finds it in your browser's net
 src/
   pages/
     index.astro           Main page (HTML shell + script entry point)
-    documentation.astro   Documentation complète : tutoriel d'utilisation + guide clé API
+    documentation.astro   Full documentation: usage tutorial + API key guide
+    faq.astro             FAQ page (15 questions, FAQPage schema for SEO)
   components/
     ApiKeyManager.ts      AES-GCM encryption / localStorage
     MapController.ts      Map init, markers, polylines, multi-polygon, groups, snap, drag-edit, vertex edit, split, merge, undo stack
@@ -297,9 +299,10 @@ src/
   styles/
     global.css            Tailwind v4 + CSS variables (dark & light themes)
 public/
-  logo-TerritoryMaker.svg  Logo et favicon
-  gm.avif                  Google Maps provider icon
-  images/tools/pencil.svg  Icône édition de coordonnées
+  logo-TerritoryMaker.svg        Logo and favicon
+  gm.avif                        Google Maps provider icon
+  images/tools/pencil.svg        Coordinate edit icon
+  images/captures/               FAQ screenshots (trace-bizarre.avif, trace-corrige.avif)
 ```
 
 ---
@@ -308,7 +311,7 @@ public/
 
 | Layer | Technology |
 |---|---|
-| Framework | [Astro](https://astro.build/) 5 (SSG) |
+| Framework | [Astro](https://astro.build/) 6 (SSG) |
 | Styling | [Tailwind CSS](https://tailwindcss.com/) v4 via `@tailwindcss/vite` |
 | Language | TypeScript (strict) |
 | Maps display | Google Maps JavaScript API v3 **or** [Leaflet](https://leafletjs.com/) + OpenStreetMap |
@@ -325,6 +328,12 @@ public/
 ## License
 
 MIT — see [LICENSE](./LICENSE) for details.
+
+---
+
+## Questions & Support
+
+Have a question or found a bug? [Open an issue on GitHub](https://github.com/Padda-One/TerritoryMaker/issues) — it's the best way to get help, and the discussion benefits the whole community.
 
 ---
 
