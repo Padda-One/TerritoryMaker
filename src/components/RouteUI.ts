@@ -1404,9 +1404,11 @@ export class RouteUI {
         });
         row.appendChild(delBtn);
 
-        // Click row to select polygon (Ctrl+click adds to selection)
+        // Click row to select polygon (Ctrl+click adds to selection without fitting)
         row.addEventListener("click", (e) => {
-          this.mapController?.selectPolygon(poly.id, e.ctrlKey || e.metaKey);
+          const multi = e.ctrlKey || e.metaKey;
+          this.mapController?.selectPolygon(poly.id, multi);
+          if (!multi) this.mapController?.fitToPolygon(poly.id);
         });
 
         children.appendChild(row);
