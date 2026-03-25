@@ -177,6 +177,11 @@ import "../styles/global.css";
                   >Importer un fichier KML</a
                 >
               </li>
+              <li>
+                <a href="#ch4-4" class="sidebar-sub-link"
+                  >Couleur d'un dossier</a
+                >
+              </li>
             </ol>
           </li>
           <li>
@@ -219,6 +224,19 @@ import "../styles/global.css";
               <li><a href="#ch7-2" class="sidebar-sub-link">Fusionner (Merge)</a></li>
               <li><a href="#ch7-3" class="sidebar-sub-link">Annuler Split / Merge</a></li>
               <li><a href="#ch7-4" class="sidebar-sub-link">Simplifier une Zone</a></li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch8" class="sidebar-chapter-link">
+              <span class="sidebar-num">8</span>
+              <span>NWS CSV</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li><a href="#ch8-1" class="sidebar-sub-link">Importer un CSV NWS</a></li>
+              <li><a href="#ch8-2" class="sidebar-sub-link">Exporter en CSV NWS</a></li>
+              <li><a href="#ch8-3" class="sidebar-sub-link">Fusion avec accès NWS</a></li>
+              <li><a href="#ch8-4" class="sidebar-sub-link">Fusion sans accès NWS</a></li>
+              <li><a href="#ch8-5" class="sidebar-sub-link">Rapport de suppressions</a></li>
             </ol>
           </li>
         </ol>
@@ -759,6 +777,39 @@ import "../styles/global.css";
               </div>
             </div>
           </section>
+
+          <section id="ch4-4" class="doc-section">
+            <h3 class="section-title">4.4 Changer la couleur d'un dossier</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Chaque ligne de dossier affiche une <strong>pastille de couleur</strong>
+                  (rond coloré) entre l'icône 📁 et le nom. Cliquer dessus ouvre le
+                  sélecteur de couleur natif du navigateur.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Cliquez sur la <strong>pastille</strong> dans l'en-tête du dossier
+                  </li>
+                  <li>
+                    Choisissez une couleur dans le sélecteur qui s'ouvre
+                  </li>
+                  <li>
+                    La couleur s'applique immédiatement à <strong>tous les calques</strong>
+                    du dossier : contour, overlay (remplissage) et marqueurs de waypoints
+                  </li>
+                </ol>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    La couleur par défaut est le <strong>noir</strong> (#000000), qui s'applique
+                    à la fois au contour et à l'overlay semi-transparent. Cela permet
+                    d'identifier visuellement les dossiers en leur attribuant des couleurs distinctes.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
         </section>
 
         <!-- ─── CHAPITRE 5 ─── -->
@@ -958,7 +1009,7 @@ import "../styles/global.css";
                   <span>💡</span>
                   <span>
                     Territory Maker aligne automatiquement les bords partagés
-                    (tolérance ±5 m) avant la fusion — les polygones tracés de
+                    (tolérance ±10 m) avant la fusion — les polygones tracés de
                     chaque côté d'une même route se rejoignent proprement sans
                     laisser de gap ni superposer les contours.
                   </span>
@@ -984,7 +1035,7 @@ import "../styles/global.css";
               <div class="step-body">
                 <p>
                   Si les deux polygones sélectionnés ne se touchent pas et ne
-                  se chevauchent pas (même avec la tolérance de 5 m), un
+                  se chevauchent pas (même avec la tolérance de 10 m), un
                   message d'erreur s'affiche et aucune modification n'est
                   effectuée.
                 </p>
@@ -1065,6 +1116,153 @@ import "../styles/global.css";
                     par une.
                   </span>
                 </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 8 ─── -->
+        <section id="ch8" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">8</div>
+            <h2 class="chapter-title">NWS CSV</h2>
+          </div>
+
+          <section id="ch8-1" class="doc-section">
+            <h3 class="section-title">8.1 Importer un CSV NWS</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Territory Maker accepte les fichiers CSV exportés depuis <strong>NWS</strong>
+                  (logiciel de gestion de territoires). Le bouton <kbd>⬆ Importer</kbd>
+                  accepte à la fois les fichiers <code>.kml</code> et <code>.csv</code>.
+                </p>
+                <ol class="step-list">
+                  <li>
+                    Cliquez sur <kbd>⬆ Importer</kbd> et sélectionnez votre fichier
+                    <code>.csv</code> exporté depuis NWS
+                  </li>
+                  <li>
+                    Territory Maker lit les 12 colonnes NWS (<code>TerritoryID</code>,
+                    <code>Category</code>, <code>Number</code>, <code>Suffix</code>,
+                    <code>Boundary</code>, etc.) et crée un <strong>dossier par catégorie</strong>
+                  </li>
+                  <li>
+                    Chaque territoire est affiché sous la forme <code>Numéro-Suffixe</code>
+                    (ex. : <code>1-A</code>)
+                  </li>
+                </ol>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    Les métadonnées NWS (<code>TerritoryID</code>, <code>Area</code>,
+                    <code>Link1</code>, <code>CustomNotes1</code>…) sont conservées en
+                    mémoire tout au long de la session et incluses dans l'export CSV final.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch8-2" class="doc-section">
+            <h3 class="section-title">8.2 Exporter en CSV NWS</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Après avoir importé un CSV NWS et modifié les limites des territoires,
+                  cliquez sur <kbd>📋 Exporter CSV (NWS)</kbd> dans la barre latérale
+                  (visible uniquement après un import CSV NWS).
+                </p>
+                <p>
+                  Le fichier généré est au même format que l'export NWS d'origine : toutes
+                  les colonnes sont préservées et le champ <code>Boundary</code> reflète
+                  les coordonnées modifiées.
+                </p>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    Les polygones <em>dessinés manuellement</em> (non issus du CSV NWS) ne
+                    sont pas inclus dans l'export CSV NWS — utilisez l'export KML pour eux.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch8-3" class="doc-section">
+            <h3 class="section-title">8.3 Fusion avec accès NWS</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Lors de la première fusion (Merge) d'une session NWS CSV,
+                  Territory Maker demande : <strong>« Avez-vous accès à NWS en ce moment ? »</strong>
+                  Cette réponse est mémorisée pour toute la session.
+                </p>
+                <p>Si vous répondez <strong>Oui</strong> :</p>
+                <ol class="step-list">
+                  <li>
+                    Une seconde fenêtre s'ouvre : <strong>« Quel territoire conserver ? »</strong>
+                    — affiche le numéro et le TerritoryID des deux territoires
+                  </li>
+                  <li>
+                    Choisissez de préférence le territoire dont la <strong>date d'attribution
+                    est la plus récente</strong> dans NWS
+                  </li>
+                  <li>
+                    Le territoire conservé garde son <code>TerritoryID</code> et ses métadonnées ;
+                    le territoire supprimé est ajouté au rapport de suppressions
+                    (<em>à supprimer dans NWS</em>)
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch8-4" class="doc-section">
+            <h3 class="section-title">8.4 Fusion sans accès NWS</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>Si vous répondez <strong>Non</strong> à la question d'accès NWS :</p>
+                <ul class="step-list">
+                  <li>
+                    Le premier territoire sélectionné (<em>T_new</em>) conserve ses métadonnées
+                    dans le polygone fusionné
+                  </li>
+                  <li>
+                    La paire T_new / T_old est ajoutée au rapport de suppressions
+                    (<em>à contrôler dans NWS</em>) avec des instructions détaillées :
+                    comparer les dates d'attribution et supprimer le plus ancien
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch8-5" class="doc-section">
+            <h3 class="section-title">8.5 Rapport de suppressions</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Avant chaque export CSV NWS, si des fusions ont eu lieu, une fenêtre
+                  affiche le <strong>rapport de suppressions</strong> :
+                </p>
+                <ul class="step-list">
+                  <li>
+                    <strong>Suppressions à faire</strong> — territoires à supprimer directement
+                    dans NWS (fusion avec accès NWS)
+                  </li>
+                  <li>
+                    <strong>À contrôler dans NWS</strong> — paires à comparer et traiter
+                    manuellement (fusion sans accès NWS)
+                  </li>
+                </ul>
+                <p>Vous pouvez :</p>
+                <ul class="step-list">
+                  <li>Télécharger le rapport en <strong>CSV</strong></li>
+                  <li>Télécharger le rapport en <strong>Excel (.xlsx)</strong></li>
+                  <li>L'imprimer / enregistrer en PDF via <kbd>🖨 Imprimer</kbd></li>
+                  <li>Continuer l'export CSV sans télécharger le rapport</li>
+                </ul>
               </div>
             </div>
           </section>

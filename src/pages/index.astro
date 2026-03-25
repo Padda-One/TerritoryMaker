@@ -764,14 +764,14 @@ import "leaflet/dist/leaflet.css";
                 id="btn-import-kml"
                 class="btn btn-secondary"
                 style="font-size:0.72rem;padding:3px 8px;"
-                title="Importer un fichier KML"
+                title="Importer un fichier KML ou CSV NWS"
               >
                 ⬆ Importer
               </button>
               <input
                 id="input-kml-file"
                 type="file"
-                accept=".kml"
+                accept=".kml,.csv"
                 style="display:none;"
               />
               <button
@@ -814,6 +814,9 @@ import "leaflet/dist/leaflet.css";
           >
           </div>
         </div>
+
+        <!-- Resize handle between layer list and waypoints -->
+        <div id="layer-list-resize" aria-hidden="true"></div>
 
         <!-- Waypoints list -->
         <div
@@ -864,6 +867,13 @@ import "leaflet/dist/leaflet.css";
             disabled
           >
             🗺 Exporter la carte
+          </button>
+          <button
+            id="btn-export-csv"
+            class="btn btn-secondary"
+            style="width:100%;display:none;"
+          >
+            📋 Exporter CSV (NWS)
           </button>
         </div>
 
@@ -1053,6 +1063,83 @@ import "leaflet/dist/leaflet.css";
         </div>
       </div>
     </div>
+
+    <!-- ── NWS modal 1 : accès NWS ─────────────────────────────────────────── -->
+    <div
+      id="modal-nws-access"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card" style="max-width:480px;">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('modal-nws-access').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">Fusion de territoires NWS</h2>
+          <p style="color:var(--color-text-muted);font-size:0.9rem;margin:0;">
+            Avez-vous accès à NWS en ce moment ?
+          </p>
+          <p style="color:var(--color-text-muted);font-size:0.78rem;margin:0;opacity:0.75;">
+            Cette réponse sera mémorisée pour toutes les fusions de cette session.
+          </p>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button id="btn-nws-access-yes" class="btn btn-primary" style="flex:1;">Oui, j'ai NWS sous la main</button>
+            <button id="btn-nws-access-no" class="btn btn-secondary" style="flex:1;">Non, je verrai plus tard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NWS modal 2 : choix du territoire à conserver ──────────────────── -->
+    <div
+      id="modal-nws-keep"
+      class="lp-modal"
+      style="display:none"
+    >
+      <div class="lp-modal-card" style="max-width:520px;">
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">Quel territoire conserver ?</h2>
+          <p style="color:var(--color-text-muted);font-size:0.84rem;margin:0;">
+            De préférence celui dont la <strong>date d'attribution est la plus récente</strong> dans NWS.
+          </p>
+          <div id="nws-keep-options" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NWS modal 3 : suppressions ─────────────────────────────────────── -->
+    <div
+      id="modal-nws-suppressions"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card" style="max-width:900px;">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('modal-nws-suppressions').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">Suppressions à effectuer dans NWS</h2>
+          <div id="nws-suppressions-content" style="display:flex;flex-direction:column;gap:24px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button id="btn-suppressions-csv" class="btn btn-secondary" style="font-size:0.82rem;">⬇ Télécharger CSV</button>
+            <button id="btn-suppressions-xlsx" class="btn btn-secondary" style="font-size:0.82rem;">⬇ Télécharger Excel</button>
+            <button id="btn-suppressions-print" class="btn btn-secondary" style="font-size:0.82rem;" onclick="window.print()">🖨 Imprimer / PDF</button>
+            <button id="btn-suppressions-continue" class="btn btn-primary" style="font-size:0.82rem;margin-left:auto;">Continuer l'export →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </body>
 </html>
 
