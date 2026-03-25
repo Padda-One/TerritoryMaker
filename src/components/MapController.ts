@@ -12,8 +12,11 @@ import { polygon as turfPolygon, featureCollection } from "@turf/helpers";
 import { resolveSegment, RoutingError } from "./SegmentRouter.ts";
 import type { SegmentMode, Waypoint, ResolvedSegment } from "./SegmentRouter.ts";
 import { douglasPeucker } from "./KmlImporter.ts";
+import type { NWSData, NWSRow } from "./NwsCsvImporter.ts";
+import { nwsDisplayName } from "./NwsCsvImporter.ts";
 
 export type { SegmentMode, Waypoint, ResolvedSegment };
+export type { NWSData };
 export type MapProvider = "google" | "osm";
 
 // ─── Internal types ───────────────────────────────────────────────────────────
@@ -43,6 +46,8 @@ interface PolygonData {
   name: string;
   color: string;
   textColor: string;
+  /** Fill (overlay) color — defaults to #000000, changeable via recolorGroup. */
+  fillColor: string;
   kind: "drawn" | "imported";
   groupId: string;
   waypoints: WaypointInternal[];
@@ -60,12 +65,15 @@ interface PolygonData {
   vertexEditActive?: boolean;
   vertexMarkers?: VertexMarker[];
   edgePolylines?: AnyPolyline[];
+  /** NWS metadata — preserved through all operations when present. */
+  nwsData?: NWSData;
 }
 
 export interface PolygonInfo {
   id: string;
   name: string;
   color: string;
+  fillColor: string;
   isClosed: boolean;
   waypointCount: number;
   isActive: boolean;
@@ -90,6 +98,8 @@ export interface PolygonExportData {
   segments: ResolvedSegment[];
   /** For imported polygons — used instead of segments when present. */
   rawCoordinates?: { lat: number; lng: number }[];
+  /** NWS metadata carried through for CSV export. */
+  nwsData?: NWSData;
 }
 
 // ─── Undo / Split types ───────────────────────────────────────────────────────
@@ -99,11 +109,13 @@ interface SavedPolygonData {
   name: string;
   color: string;
   textColor: string;
+  fillColor: string;
   groupId: string;
   groupName: string;
   groupKind: "drawn" | "imported";
   groupPersistent: boolean;
   rawCoordinates: { lat: number; lng: number }[];
+  nwsData?: NWSData;
 }
 
 interface UndoOperation {
@@ -126,7 +138,7 @@ interface SplitState {
 }
 
 /** Distance in metres below which two borders are considered shared (routing precision). */
-const MERGE_SNAP_DISTANCE_METERS = 5;
+const MERGE_SNAP_DISTANCE_METERS = 10;
 
 // ─── Color palette ────────────────────────────────────────────────────────────
 
@@ -142,6 +154,19 @@ const POLYGON_PALETTE: Array<[string, string]> = [
 function polygonColor(index: number): { color: string; textColor: string } {
   const pair = POLYGON_PALETTE[index % POLYGON_PALETTE.length]!;
   return { color: pair[0], textColor: pair[1] };
+}
+
+/**
+ * Compute relative luminance (0–1) of a hex color string (#rrggbb).
+ * Used to decide whether to use a dark or light text color on top.
+ */
+export function colorLuminance(hex: string): number {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.slice(0, 2), 16) / 255;
+  const g = parseInt(c.slice(2, 4), 16) / 255;
+  const b = parseInt(c.slice(4, 6), 16) / 255;
+  const lin = (v: number) => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }
 
 // ─── Google Maps styles & polyline options ────────────────────────────────────
@@ -444,11 +469,11 @@ export class MapController {
     }
   }
 
-  private makeFillPolygon(path: [number, number][], color: string): AnyPolygon {
+  private makeFillPolygon(path: [number, number][]): AnyPolygon {
     if (!this.isOsm) {
-      return new google.maps.Polygon({ paths: path.map(([lat, lng]) => ({ lat, lng })), map: this.gMap!, fillColor: color, fillOpacity: 0.15, strokeWeight: 0, zIndex: 0 });
+      return new google.maps.Polygon({ paths: path.map(([lat, lng]) => ({ lat, lng })), map: this.gMap!, fillColor: "#000000", fillOpacity: 0.18, strokeColor: "#000000", strokeWeight: 0, zIndex: 0 });
     }
-    return L.polygon(path, { fillColor: color, fillOpacity: 0.15, weight: 0 }).addTo(this.lMap!);
+    return L.polygon(path, { fillColor: "#000000", fillOpacity: 0.18, weight: 0 }).addTo(this.lMap!);
   }
 
   private addFillClickHandler(fillPoly: AnyPolygon, id: string): void {
@@ -493,10 +518,30 @@ export class MapController {
     else { (polygon as google.maps.Polygon).setOptions({ fillOpacity: opacity }); }
   }
 
+  private setFillColor(polygon: AnyPolygon | null, color: string): void {
+    if (!polygon) return;
+    if (polygon instanceof L.Polygon) { polygon.setStyle({ fillColor: color }); }
+    else { (polygon as google.maps.Polygon).setOptions({ fillColor: color }); }
+  }
+
   private setFillStroke(polygon: AnyPolygon | null, weight: number, color: string): void {
     if (!polygon) return;
     if (polygon instanceof L.Polygon) { polygon.setStyle({ weight, color }); }
     else { (polygon as google.maps.Polygon).setOptions({ strokeWeight: weight, strokeColor: color }); }
+  }
+
+  private setPolylineColor(polyline: AnyPolyline | null, color: string, mode: SegmentMode): void {
+    if (!polyline) return;
+    if (polyline instanceof L.Polyline) {
+      polyline.setStyle({ color });
+    } else {
+      const gp = polyline as google.maps.Polyline;
+      if (mode === "route") {
+        gp.setOptions({ strokeColor: color });
+      } else {
+        gp.setOptions({ icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: color, strokeWeight: 2, scale: 3 }, offset: "0", repeat: "10px" }] });
+      }
+    }
   }
 
   // ─── Active polygon accessor ───────────────────────────────────────────────
@@ -695,7 +740,7 @@ export class MapController {
     const path = this.buildFillPath(poly);
     if (poly.fillPolygon) { this.updateFillPath(poly.fillPolygon, path); }
     else {
-      poly.fillPolygon = this.makeFillPolygon(path, poly.color);
+      poly.fillPolygon = this.makeFillPolygon(path);
       this.addFillClickHandler(poly.fillPolygon, poly.id);
     }
   }
@@ -718,7 +763,7 @@ export class MapController {
       );
       poly.closingPolyline = this.makePolyline(segment, poly.color);
       poly.closingSegment = segment;
-      poly.fillPolygon = this.makeFillPolygon(this.buildFillPath(poly), poly.color);
+      poly.fillPolygon = this.makeFillPolygon(this.buildFillPath(poly));
       this.addFillClickHandler(poly.fillPolygon, poly.id);
       poly.isClosed = true;
       this.onClosedChanged?.(true);
@@ -791,7 +836,7 @@ export class MapController {
     const index = this.polygons.length;
     const { color, textColor } = polygonColor(index);
     const id = crypto.randomUUID();
-    this.polygons.push({ id, name: this.nextPolygonName(), color, textColor, kind: "drawn", groupId, waypoints: [], closingPolyline: null, closingSegment: null, fillPolygon: null, isClosed: false });
+    this.polygons.push({ id, name: this.nextPolygonName(), color, textColor, fillColor: "#000000", kind: "drawn", groupId, waypoints: [], closingPolyline: null, closingSegment: null, fillPolygon: null, isClosed: false });
     this.activeIndex = this.polygons.length - 1;
     this.selectedPolygonIds.clear();
     this.selectedPolygonIds.add(id);
@@ -886,6 +931,7 @@ export class MapController {
       id: p.id,
       name: p.name,
       color: p.color,
+      fillColor: p.fillColor,
       isClosed: p.isClosed,
       waypointCount: p.waypoints.length,
       isActive: i === this.activeIndex,
@@ -1007,6 +1053,7 @@ export class MapController {
             id: p.id,
             name: p.name,
             color: p.color,
+            fillColor: p.fillColor,
             isClosed: p.isClosed,
             waypointCount: p.waypoints.length,
             isActive: globalIdx === this.activeIndex,
@@ -1024,6 +1071,35 @@ export class MapController {
     return this.polygons.filter((p) => p.groupId === groupId && p.isClosed).map((p) => this.buildExportData(p));
   }
 
+  recolorGroup(groupId: string, newColor: string): void {
+    const newTextColor = colorLuminance(newColor) > 0.35 ? "#0f1117" : "#ffffff";
+    const polys = this.polygons.filter((p) => p.groupId === groupId);
+    for (const poly of polys) {
+      poly.color = newColor;
+      poly.textColor = newTextColor;
+      poly.fillColor = newColor;
+      // Update markers
+      for (const wp of poly.waypoints) {
+        this.setMarkerIcon(wp.marker, wp.label, newColor, newTextColor);
+      }
+      // Update polylines
+      for (const wp of poly.waypoints) {
+        this.setPolylineColor(wp.polyline, newColor, wp.segment?.mode ?? "route");
+      }
+      this.setPolylineColor(poly.closingPolyline, newColor, poly.closingSegment?.mode ?? "route");
+      // Update fill color and stroke
+      this.setFillColor(poly.fillPolygon, newColor);
+      this.setFillStroke(poly.fillPolygon, this.selectedPolygonIds.has(poly.id) || poly === this.polygons[this.activeIndex] ? 2 : 0, newColor);
+      // Update vertex edit handles if active
+      if (poly.vertexEditActive && poly.edgePolylines) {
+        for (const ep of poly.edgePolylines) {
+          this.setPolylineColor(ep, newColor, "route");
+        }
+      }
+    }
+    this.notifyPolygonsChanged();
+  }
+
   getAllPolygonsForExport(): PolygonExportData[] {
     return this.polygons.filter((p) => p.isClosed).map((p) => this.buildExportData(p));
   }
@@ -1036,11 +1112,70 @@ export class MapController {
 
   private buildExportData(poly: PolygonData): PolygonExportData {
     if (poly.kind === "imported" && poly.rawCoordinates) {
-      return { name: poly.name, color: poly.color, segments: [], rawCoordinates: poly.rawCoordinates };
+      return { name: poly.name, color: poly.color, segments: [], rawCoordinates: poly.rawCoordinates, nwsData: poly.nwsData };
     }
     const segments = poly.waypoints.filter((w) => w.segment !== null).map((w) => w.segment!);
     if (poly.closingSegment) segments.push(poly.closingSegment);
-    return { name: poly.name, color: poly.color, segments };
+    return { name: poly.name, color: poly.color, segments, nwsData: poly.nwsData };
+  }
+
+  // ─── Import polygons from NWS CSV ─────────────────────────────────────────
+
+  /**
+   * Import NWS CSV rows: groups polygons by Category (persistent groups),
+   * preserves all NWS metadata, and assigns one shared color per Category group.
+   */
+  importNwsCsv(rows: NWSRow[]): void {
+    if (rows.length === 0) return;
+
+    // Group rows by category
+    const byCategory = new Map<string, NWSRow[]>();
+    for (const row of rows) {
+      const key = row.groupName;
+      if (!byCategory.has(key)) byCategory.set(key, []);
+      byCategory.get(key)!.push(row);
+    }
+
+    for (const [categoryName, categoryRows] of byCategory) {
+      // Re-use existing group if already present (e.g. multiple CSV imports)
+      let group = this.groups.find(g => g.name === categoryName && g.kind === "imported");
+      if (!group) {
+        const gid = crypto.randomUUID();
+        this.groups.push({ id: gid, name: categoryName.slice(0, 30), collapsed: false, kind: "imported", persistent: true });
+        group = this.groups.find(g => g.id === gid)!;
+      }
+      const { color, textColor } = polygonColor(this.polygons.length);
+      for (const row of categoryRows) {
+        const fillPolygon = this.makeFillPolygon(row.coordinates.map(c => [c.lat, c.lng]));
+        const id = crypto.randomUUID();
+        this.addFillClickHandler(fillPolygon, id);
+        this.polygons.push({
+          id,
+          name: row.name,
+          color,
+          textColor,
+          fillColor: "#000000",
+          kind: "imported",
+          groupId: group.id,
+          waypoints: [],
+          closingPolyline: null,
+          closingSegment: null,
+          fillPolygon,
+          isClosed: true,
+          rawCoordinates: row.coordinates,
+          nwsData: row.nwsData,
+        });
+      }
+    }
+    this.notifyPolygonsChanged();
+  }
+
+  /**
+   * Returns the NWS metadata attached to a polygon, or undefined if none.
+   * Used by RouteUI to retrieve data before calling mergePolygons() (which deletes the source polygons).
+   */
+  getPolygonNwsData(id: string): NWSData | undefined {
+    return this.polygons.find(p => p.id === id)?.nwsData;
   }
 
   // ─── Import polygons from KML ──────────────────────────────────────────────
@@ -1052,13 +1187,14 @@ export class MapController {
     for (const parsed of polygons) {
       const path: [number, number][] = parsed.coordinates.map((c) => [c.lat, c.lng]);
       const id = crypto.randomUUID();
-      const fillPolygon = this.makeFillPolygon(path, color);
+      const fillPolygon = this.makeFillPolygon(path);
       this.addFillClickHandler(fillPolygon, id);
       this.polygons.push({
         id,
         name: parsed.name,
         color,
         textColor,
+        fillColor: "#000000",
         kind: "imported",
         groupId,
         waypoints: [],
@@ -1446,9 +1582,9 @@ export class MapController {
       const isActive = i === this.activeIndex;
       const isSelected = this.selectedPolygonIds.has(poly.id);
       const strokeOp = isActive ? 1.0 : isSelected ? 0.7 : 0.35;
-      const fillOp = isActive ? 0.25 : isSelected ? 0.15 : 0.07;
+      const fillOp = isActive ? 0.38 : isSelected ? 0.28 : 0.18;
       this.setFillOpacity(poly.fillPolygon, fillOp);
-      this.setFillStroke(poly.fillPolygon, isActive || isSelected ? 2 : 0, poly.color);
+      this.setFillStroke(poly.fillPolygon, isActive || isSelected ? 2 : 0, poly.fillColor);
       for (const wp of poly.waypoints) {
         this.setPolylineOpacity(wp.polyline, strokeOp, wp.segment?.mode ?? "route", poly.color);
       }
@@ -1625,11 +1761,13 @@ export class MapController {
       name: poly.name,
       color: poly.color,
       textColor: poly.textColor,
+      fillColor: poly.fillColor,
       groupId: poly.groupId,
       groupName: group?.name ?? "",
       groupKind: group?.kind ?? "drawn",
       groupPersistent: group?.persistent ?? false,
       rawCoordinates: this.getPolygonFlatCoords(poly),
+      nwsData: poly.nwsData,
     };
   }
 
@@ -1641,6 +1779,8 @@ export class MapController {
     id?: string;
     color?: string;
     textColor?: string;
+    fillColor?: string;
+    nwsData?: NWSData;
   }): string {
     const currentForEdit = this.polygons[this.activeIndex];
     if (currentForEdit?.vertexEditActive) this.deactivateVertexEdit(currentForEdit);
@@ -1651,14 +1791,15 @@ export class MapController {
     const id = opts.id ?? crypto.randomUUID();
     const coords = opts.rawCoordinates;
 
+    const fillColor = opts.fillColor ?? "#000000";
     let fillPoly: AnyPolygon;
     if (!this.isOsm) {
       fillPoly = new google.maps.Polygon({
         paths: coords.map(c => ({ lat: c.lat, lng: c.lng })),
         map: this.gMap,
-        fillColor: color,
-        fillOpacity: 0.07,
-        strokeColor: color,
+        fillColor,
+        fillOpacity: 0.18,
+        strokeColor: fillColor,
         strokeOpacity: 0.35,
         strokeWeight: 0,
         clickable: true,
@@ -1666,9 +1807,9 @@ export class MapController {
       });
     } else {
       fillPoly = L.polygon(coords.map(c => [c.lat, c.lng] as [number, number]), {
-        color,
-        fillColor: color,
-        fillOpacity: 0.07,
+        color: fillColor,
+        fillColor,
+        fillOpacity: 0.18,
         opacity: 0.35,
         weight: 0,
         interactive: true,
@@ -1680,6 +1821,7 @@ export class MapController {
       name: opts.name,
       color,
       textColor,
+      fillColor,
       kind: "imported",
       groupId: opts.groupId,
       waypoints: [],
@@ -1688,6 +1830,7 @@ export class MapController {
       fillPolygon: fillPoly,
       isClosed: true,
       rawCoordinates: coords,
+      nwsData: opts.nwsData,
     };
 
     this.addFillClickHandler(fillPoly, id);
@@ -1705,7 +1848,7 @@ export class MapController {
 
   // ─── Merge ─────────────────────────────────────────────────────────────────
 
-  async mergePolygons(id1: string, id2: string): Promise<void> {
+  async mergePolygons(id1: string, id2: string, nwsDataForMerged?: NWSData): Promise<void> {
     const p1 = this.polygons.find(p => p.id === id1);
     const p2 = this.polygons.find(p => p.id === id2);
     if (!p1 || !p2) return;
@@ -1734,7 +1877,10 @@ export class MapController {
     };
 
     const mergedCoords = (result.geometry.coordinates[0] as [number, number][]).map(([lng, lat]) => ({ lat, lng }));
-    const mergedName = `${p1.name} - ${p2.name}`;
+    // NWS name: use nwsDataForMerged if provided, otherwise fall back to "name1 - name2"
+    const mergedName = nwsDataForMerged
+      ? nwsDisplayName(nwsDataForMerged.Number, nwsDataForMerged.Suffix)
+      : `${p1.name} - ${p2.name}`;
     const groupId = p1.groupId;
     const color = p1.color;
     const textColor = p1.textColor;
@@ -1742,7 +1888,7 @@ export class MapController {
     this.deletePolygon(id1);
     this.deletePolygon(id2);
 
-    const newId = this.addImportedPolygon({ name: mergedName, groupId, rawCoordinates: mergedCoords, color, textColor });
+    const newId = this.addImportedPolygon({ name: mergedName, groupId, rawCoordinates: mergedCoords, color, textColor, nwsData: nwsDataForMerged });
     undoOp.createdPolygonIds.push(newId);
     this.undoStack.push(undoOp);
 
@@ -1907,6 +2053,7 @@ export class MapController {
     };
 
     const sourceName = sourcePoly.name;
+    const sourceNws = sourcePoly.nwsData;
     this.deletePolygon(sourcePoly.id);
 
     // Find or create "territoires enfants" group
@@ -1918,8 +2065,25 @@ export class MapController {
       undoOp.groupsCreated.push(gid);
     }
 
-    const id1 = this.addImportedPolygon({ name: `${sourceName}-1`, groupId: childGroup.id, rawCoordinates: poly1Coords });
-    const id2 = this.addImportedPolygon({ name: `${sourceName}-2`, groupId: childGroup.id, rawCoordinates: poly2Coords });
+    // Compute NWS data and names for the two halves
+    let nws1: NWSData | undefined;
+    let nws2: NWSData | undefined;
+    let name1: string;
+    let name2: string;
+
+    if (sourceNws) {
+      const baseSuffix = sourceNws.Suffix;
+      nws1 = { ...sourceNws, Suffix: baseSuffix + "1" };
+      nws2 = { ...sourceNws, Suffix: baseSuffix + "2" };
+      name1 = nwsDisplayName(nws1.Number, nws1.Suffix);
+      name2 = nwsDisplayName(nws2.Number, nws2.Suffix);
+    } else {
+      name1 = `${sourceName}-1`;
+      name2 = `${sourceName}-2`;
+    }
+
+    const id1 = this.addImportedPolygon({ name: name1, groupId: childGroup.id, rawCoordinates: poly1Coords, nwsData: nws1 });
+    const id2 = this.addImportedPolygon({ name: name2, groupId: childGroup.id, rawCoordinates: poly2Coords, nwsData: nws2 });
     undoOp.createdPolygonIds.push(id1, id2);
     this.undoStack.push(undoOp);
 
@@ -1953,6 +2117,8 @@ export class MapController {
         rawCoordinates: saved.rawCoordinates,
         color: saved.color,
         textColor: saved.textColor,
+        fillColor: saved.fillColor,
+        nwsData: saved.nwsData,
       });
     }
 

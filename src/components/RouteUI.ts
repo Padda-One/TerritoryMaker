@@ -16,8 +16,15 @@ import * as ApiKeyManager from "./ApiKeyManager.ts";
 import { MapController } from "./MapController.ts";
 import { buildKmlMulti, downloadKml, copyKml, getStats } from "./KmlExporter.ts";
 import { parseKmlFile } from "./KmlImporter.ts";
+import { parseNwsCsv, nwsDisplayName } from "./NwsCsvImporter.ts";
+import {
+  buildNwsCsv, buildSuppressionsCsv, buildSuppressionsXlsx,
+  buildSuppressionAFaire, buildSuppressionAControler,
+  downloadText, downloadBlob,
+  type SuppressionAFaire, type SuppressionAControler,
+} from "./NwsCsvExporter.ts";
 import type { Waypoint, ResolvedSegment, SegmentMode } from "./SegmentRouter.ts";
-import type { GroupInfo, MapProvider } from "./MapController.ts";
+import type { GroupInfo, MapProvider, NWSData } from "./MapController.ts";
 
 type MapTheme = "dark" | "light" | "satellite" | "terrain";
 type AppTheme = "dark" | "light" | "system";
@@ -30,6 +37,16 @@ export class RouteUI {
   private errorTimer: ReturnType<typeof setTimeout> | null = null;
   private isMapLoaded = false;
   private snapActive = false;
+
+  // NWS session state
+  private isNwsSession = false;
+  private nwsAccessMode: "yes" | "no" | null = null;
+  private suppressionAFaire: SuppressionAFaire[] = [];
+  private suppressionAControler: SuppressionAControler[] = [];
+  /** Pending merge IDs — set before showing the NWS access modal, consumed after user choice. */
+  private pendingMergeIds: [string, string] | null = null;
+  /** Resolve function for the merge modal promise. */
+  private pendingMergeResolve: ((proceed: boolean) => void) | null = null;
 
   // ─── Element accessors ───────────────────────────────────────────────────────
 
@@ -56,6 +73,8 @@ export class RouteUI {
     this.bindToggle();
     this.bindKmlButtons();
     this.bindKmlImport();
+    this.bindCsvExport();
+    this.bindLayerListResize();
     this.bindSnapToggle();
     this.bindProviderToggle();
     this.bindSidebarResize();
@@ -493,7 +512,7 @@ export class RouteUI {
     document.getElementById("btn-merge")?.addEventListener("click", () => {
       const ids = this.mapController?.getSelectedPolygonIds() ?? [];
       if (ids.length === 2) {
-        void this.mapController?.mergePolygons(ids[0]!, ids[1]!);
+        void this.handleMergeClick(ids[0]!, ids[1]!);
       }
     });
 
@@ -522,6 +541,240 @@ export class RouteUI {
     document.getElementById("btn-simplify-cancel")?.addEventListener("click", () => {
       (document.getElementById("simplify-confirm-modal") as HTMLElement).style.display = "none";
     });
+  }
+
+  // ─── NWS merge flow ──────────────────────────────────────────────────────────
+
+  /**
+   * Intercept merge to inject NWS workflow when a NWS session is active.
+   * Shows access modal on first merge, then keeps / control choice on every merge.
+   */
+  private async handleMergeClick(id1: string, id2: string): Promise<void> {
+    if (!this.isNwsSession) {
+      await this.mapController?.mergePolygons(id1, id2);
+      return;
+    }
+
+    if (this.nwsAccessMode === null) {
+      const mode = await this.askNwsAccess();
+      if (mode === null) return;
+      this.nwsAccessMode = mode;
+    }
+
+    const nws1 = this.mapController?.getPolygonNwsData(id1);
+    const nws2 = this.mapController?.getPolygonNwsData(id2);
+
+    if (this.nwsAccessMode === "yes") {
+      const keepId = await this.askNwsKeep(id1, id2);
+      if (keepId === null) return;
+
+      const otherId = keepId === id1 ? id2 : id1;
+      const nwsKept = this.mapController?.getPolygonNwsData(keepId);
+      const nwsDeleted = this.mapController?.getPolygonNwsData(otherId);
+
+      await this.mapController?.mergePolygons(id1, id2, nwsKept);
+
+      if (nwsDeleted && nwsKept) {
+        this.suppressionAFaire.push(buildSuppressionAFaire(nwsDeleted, nwsKept.TerritoryID));
+      }
+    } else {
+      await this.mapController?.mergePolygons(id1, id2, nws1);
+      if (nws1 && nws2) {
+        this.suppressionAControler.push(buildSuppressionAControler(nws1, nws2));
+      }
+    }
+  }
+
+  /** Show modal-nws-access and return "yes" | "no" | null (if closed without choosing). */
+  private askNwsAccess(): Promise<"yes" | "no" | null> {
+    return new Promise((resolve) => {
+      const modal = document.getElementById("modal-nws-access") as HTMLElement;
+      modal.style.display = "flex";
+
+      const cleanup = () => { modal.style.display = "none"; };
+      const btnYes = document.getElementById("btn-nws-access-yes")!;
+      const btnNo  = document.getElementById("btn-nws-access-no")!;
+
+      const onYes = () => {
+        cleanup();
+        btnYes.removeEventListener("click", onYes);
+        btnNo.removeEventListener("click", onNo);
+        resolve("yes");
+      };
+      const onNo = () => {
+        cleanup();
+        btnYes.removeEventListener("click", onYes);
+        btnNo.removeEventListener("click", onNo);
+        resolve("no");
+      };
+      btnYes.addEventListener("click", onYes);
+      btnNo.addEventListener("click", onNo);
+    });
+  }
+
+  /** Show modal-nws-keep with the two territory names. Returns the chosen id, or null if closed. */
+  private askNwsKeep(id1: string, id2: string): Promise<string | null> {
+    return new Promise((resolve) => {
+      const modal = document.getElementById("modal-nws-keep") as HTMLElement;
+      const optionsDiv = document.getElementById("nws-keep-options")!;
+      optionsDiv.replaceChildren();
+
+      const makeCard = (id: string, nws: NWSData | undefined) => {
+        const card = document.createElement("div");
+        card.style.cssText = "background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;cursor:pointer;transition:border-color .15s;";
+
+        const strong = document.createElement("strong");
+        strong.style.fontSize = "1rem";
+        strong.textContent = nws ? `N\u00b0\u00a0${nwsDisplayName(nws.Number, nws.Suffix)}` : id;
+        card.appendChild(strong);
+
+        if (nws) {
+          card.appendChild(document.createElement("br"));
+          const span = document.createElement("span");
+          span.style.cssText = "font-size:0.78rem;color:var(--color-text-muted);";
+          span.textContent = `TerritoryID\u00a0: ${nws.TerritoryID} \u2014 Cat\u00e9gorie\u00a0: ${nws.Category}`;
+          card.appendChild(span);
+        }
+
+        card.addEventListener("click", () => {
+          modal.style.display = "none";
+          optionsDiv.replaceChildren();
+          resolve(id);
+        });
+        card.addEventListener("mouseenter", () => { card.style.borderColor = "var(--color-accent-green)"; });
+        card.addEventListener("mouseleave", () => { card.style.borderColor = "var(--color-border)"; });
+        return card;
+      };
+
+      optionsDiv.appendChild(makeCard(id1, this.mapController?.getPolygonNwsData(id1)));
+      optionsDiv.appendChild(makeCard(id2, this.mapController?.getPolygonNwsData(id2)));
+      modal.style.display = "flex";
+    });
+  }
+
+  // ─── NWS CSV export ──────────────────────────────────────────────────────────
+
+  private bindCsvExport(): void {
+    document.getElementById("btn-export-csv")?.addEventListener("click", () => {
+      void this.handleCsvExport();
+    });
+
+    document.getElementById("btn-suppressions-csv")?.addEventListener("click", () => {
+      const csv = buildSuppressionsCsv(this.suppressionAFaire, this.suppressionAControler);
+      downloadText(csv, "Suppressions_NWS.csv");
+    });
+
+    document.getElementById("btn-suppressions-xlsx")?.addEventListener("click", () => {
+      const blob = buildSuppressionsXlsx(this.suppressionAFaire, this.suppressionAControler);
+      downloadBlob(blob, "Suppressions_NWS.xlsx");
+    });
+
+    document.getElementById("btn-suppressions-continue")?.addEventListener("click", () => {
+      (document.getElementById("modal-nws-suppressions") as HTMLElement).style.display = "none";
+      this.doExportCsv();
+    });
+  }
+
+  private async handleCsvExport(): Promise<void> {
+    const hasSuppresions = this.suppressionAFaire.length > 0 || this.suppressionAControler.length > 0;
+    if (hasSuppresions) {
+      this.renderSuppressionModal();
+    } else {
+      this.doExportCsv();
+    }
+  }
+
+  private doExportCsv(): void {
+    const polygons = this.mapController?.getAllPolygonsForExport() ?? [];
+    const csv = buildNwsCsv(polygons);
+    downloadText(csv, "Territoires_NWS.csv");
+  }
+
+  private renderSuppressionModal(): void {
+    const modal = document.getElementById("modal-nws-suppressions") as HTMLElement;
+    const content = document.getElementById("nws-suppressions-content")!;
+    content.replaceChildren();
+
+    const makeTable = (headers: string[], rows: string[][]): HTMLElement => {
+      const wrapper = document.createElement("div");
+      wrapper.style.cssText = "overflow-x:auto;";
+      const table = document.createElement("table");
+      table.style.cssText = "width:100%;border-collapse:collapse;font-size:0.78rem;";
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      for (const h of headers) {
+        const th = document.createElement("th");
+        th.textContent = h;
+        th.style.cssText = "padding:6px 10px;border-bottom:1px solid var(--color-border);text-align:left;white-space:nowrap;color:var(--color-text-muted);font-weight:600;";
+        headerRow.appendChild(th);
+      }
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      for (const row of rows) {
+        const tr = document.createElement("tr");
+        for (const cell of row) {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          td.style.cssText = "padding:6px 10px;border-bottom:1px solid var(--color-surface-2);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      return wrapper;
+    };
+
+    if (this.suppressionAFaire.length > 0) {
+      const section = document.createElement("div");
+
+      const title = document.createElement("p");
+      title.style.cssText = "font-weight:700;color:var(--color-accent-green);margin:0 0 8px;";
+      title.textContent = "Suppressions \u00e0 faire";
+      section.appendChild(title);
+
+      const note = document.createElement("p");
+      note.style.cssText = "font-size:0.78rem;color:var(--color-text-muted);margin:0 0 10px;";
+      note.textContent = "Ces territoires ont \u00e9t\u00e9 fusionn\u00e9s. Vous devez les supprimer dans NWS et mettre \u00e0 jour MyMaps.";
+      section.appendChild(note);
+
+      const rows = this.suppressionAFaire.map(r => [
+        r.TerritoryID, nwsDisplayName(r.Number, r.Suffix), r.Category, r.MergedInto_TerritoryID, r.Instructions_MyMaps,
+      ]);
+      section.appendChild(makeTable(["TerritoryID", "N\u00b0", "Cat\u00e9gorie", "Fusionn\u00e9 dans", "Instructions MyMaps"], rows));
+      content.appendChild(section);
+    }
+
+    if (this.suppressionAControler.length > 0) {
+      const section = document.createElement("div");
+
+      const title = document.createElement("p");
+      title.style.cssText = "font-weight:700;color:var(--color-accent-blue);margin:0 0 8px;";
+      title.textContent = "\u00c0 contr\u00f4ler dans NWS";
+      section.appendChild(title);
+
+      const note = document.createElement("p");
+      note.style.cssText = "font-size:0.78rem;color:var(--color-text-muted);margin:0 0 10px;";
+      note.textContent = "Ces fusions ont \u00e9t\u00e9 faites sans acc\u00e8s \u00e0 NWS. V\u00e9rifiez les dates d\u2019attribution avant de supprimer.";
+      section.appendChild(note);
+
+      const rows = this.suppressionAControler.map(r => [
+        r.TerritoryID_new, nwsDisplayName(r.Number_new, r.Suffix_new),
+        r.TerritoryID_old, nwsDisplayName(r.Number_old, r.Suffix_old),
+        r.Instructions,
+      ]);
+      section.appendChild(makeTable(["TerritoryID (nouveau)", "N\u00b0 (nouveau)", "TerritoryID (ancien)", "N\u00b0 (ancien)", "Instructions"], rows));
+      content.appendChild(section);
+    }
+
+    modal.style.display = "flex";
+  }
+
+  private updateCsvExportButton(): void {
+    const btn = document.getElementById("btn-export-csv") as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.style.display = this.isNwsSession ? "" : "none";
   }
 
   private updateSplitMergeButtons(groups: GroupInfo[]): void {
@@ -597,6 +850,7 @@ export class RouteUI {
       (this.mapController?.getAllPolygonsForExport().length ?? 0) === 0;
     this.updateVertexEditButton(this.mapController?.getGroups() ?? []);
     this.updateSimplifyAllButton();
+    this.updateCsvExportButton();
 
     // Enable "New polygon" button when there are no polygons, or when the active polygon is closed
     const polygonsCount = this.mapController?.getGroups().flatMap((g) => g.polygons).length ?? 0;
@@ -639,6 +893,41 @@ export class RouteUI {
   }
 
   // ─── Sidebar resize ──────────────────────────────────────────────────────────
+
+  private bindLayerListResize(): void {
+    const handle = document.getElementById("layer-list-resize");
+    const list = document.getElementById("polygon-layer-list");
+    if (!handle || !list) return;
+
+    const MIN_H = 80;
+    const MAX_H = 600;
+
+    // Restore saved height
+    const saved = localStorage.getItem("tm_layer_list_height");
+    if (saved) list.style.maxHeight = `${Math.max(MIN_H, Math.min(MAX_H, Number(saved)))}px`;
+
+    handle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      handle.classList.add("dragging");
+      document.body.classList.add("layer-list-resizing");
+      const startY = e.clientY;
+      const startH = list.offsetHeight;
+
+      const onMove = (mv: MouseEvent) => {
+        const h = Math.max(MIN_H, Math.min(MAX_H, startH + mv.clientY - startY));
+        list.style.maxHeight = `${h}px`;
+      };
+      const onUp = () => {
+        handle.classList.remove("dragging");
+        document.body.classList.remove("layer-list-resizing");
+        localStorage.setItem("tm_layer_list_height", String(list.offsetHeight));
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  }
 
   private bindSidebarResize(): void {
     const sidebar = document.getElementById("sidebar");
@@ -820,6 +1109,28 @@ export class RouteUI {
       icon.textContent = "📁";
       icon.style.fontSize = "0.8rem";
 
+      // Color dot — click to recolor all polygons in this group
+      const groupColorInput = document.createElement("input");
+      groupColorInput.type = "color";
+      groupColorInput.style.cssText = "position:absolute;width:0;height:0;opacity:0;pointer-events:none;";
+      const groupColorDot = document.createElement("span");
+      groupColorDot.className = "polygon-color-dot";
+      const groupColor = group.polygons[0]?.fillColor ?? "#000000";
+      groupColorDot.style.background = groupColor;
+      groupColorInput.value = groupColor;
+      groupColorDot.title = "Changer la couleur du dossier";
+      groupColorDot.appendChild(groupColorInput);
+      groupColorDot.addEventListener("click", (e) => {
+        e.stopPropagation();
+        groupColorInput.click();
+      });
+      groupColorInput.addEventListener("change", (e) => {
+        e.stopPropagation();
+        const newColor = groupColorInput.value;
+        groupColorDot.style.background = newColor;
+        this.mapController?.recolorGroup(group.id, newColor);
+      });
+
       // Group name (double-click to rename)
       const groupName = document.createElement("span");
       groupName.className = "group-name";
@@ -874,6 +1185,7 @@ export class RouteUI {
 
       groupRow.appendChild(chevron);
       groupRow.appendChild(icon);
+      groupRow.appendChild(groupColorDot);
       groupRow.appendChild(groupName);
       groupRow.appendChild(countBadge);
       groupRow.appendChild(groupKmlBtn);
@@ -996,12 +1308,14 @@ export class RouteUI {
         // Color dot
         const dot = document.createElement("span");
         dot.className = "polygon-color-dot";
-        dot.style.background = poly.color;
+        dot.style.background = poly.fillColor;
 
         // Name (double-click to rename)
         const name = document.createElement("span");
         name.style.cssText = "flex:1;font-size:0.8rem;font-weight:500;color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text;";
         name.title = "Double-clic pour renommer";
+        // For imported zones the name is already shown in the badge — hide the redundant span
+        if (poly.isImported) name.style.display = "none";
         name.textContent = poly.name;
         name.addEventListener("dblclick", (e) => {
           e.stopPropagation();
@@ -1026,7 +1340,7 @@ export class RouteUI {
         const badge = document.createElement("span");
         if (poly.isImported) {
           badge.style.cssText = "font-size:0.68rem;padding:2px 5px;border-radius:3px;background:rgba(251,191,36,0.15);color:#fbbf24;flex-shrink:0;";
-          badge.textContent = poly.vertexCount ? `Zone · ${poly.vertexCount} pts` : "Zone";
+          badge.textContent = poly.vertexCount ? `${poly.name} · ${poly.vertexCount} pts` : poly.name;
         } else {
           badge.style.cssText = `font-size:0.68rem;padding:2px 5px;border-radius:3px;background:${poly.isClosed ? "rgba(0,229,160,0.15)" : "rgba(129,140,248,0.15)"};color:${poly.isClosed ? "#00e5a0" : "#818cf8"};flex-shrink:0;`;
           badge.textContent = poly.isClosed ? "Tracé" : "En cours";
@@ -1120,8 +1434,9 @@ export class RouteUI {
       if (!file) return;
       input.value = ""; // allow re-selecting the same file
 
-      if (!file.name.toLowerCase().endsWith(".kml")) {
-        this.showError("Fichier invalide — seuls les fichiers .kml sont supportés.");
+      const lname = file.name.toLowerCase();
+      if (!lname.endsWith(".kml") && !lname.endsWith(".csv")) {
+        this.showError("Fichier invalide — seuls les fichiers .kml et .csv (NWS) sont supportés.");
         return;
       }
 
@@ -1129,27 +1444,44 @@ export class RouteUI {
       btn.setAttribute("disabled", "");
 
       try {
-        const polygons = await parseKmlFile(file, (p) => {
-          const pct = Math.round((p.parsed / p.total) * 100);
-          if (progressText) progressText.textContent = `${p.parsed} / ${p.total} — ${p.currentName}`;
-          if (progressBar) progressBar.style.width = `${pct}%`;
-        });
+        if (lname.endsWith(".csv")) {
+          // NWS CSV import
+          const text = await file.text();
+          if (progressText) progressText.textContent = "Analyse du CSV NWS…";
+          const rows = parseNwsCsv(text);
+          if (progressBar) progressBar.style.width = "100%";
+          this.mapController?.importNwsCsv(rows);
+          this.isNwsSession = true;
+          this.suppressionAFaire = [];
+          this.suppressionAControler = [];
+          this.nwsAccessMode = null;
+          this.updateActionButtons();
+          this.updateCsvExportButton();
+          if (progressText) progressText.textContent = `${rows.length} territoires importés`;
+        } else {
+          // KML import (existing flow)
+          const polygons = await parseKmlFile(file, (p) => {
+            const pct = Math.round((p.parsed / p.total) * 100);
+            if (progressText) progressText.textContent = `${p.parsed} / ${p.total} — ${p.currentName}`;
+            if (progressBar) progressBar.style.width = `${pct}%`;
+          });
 
-        if (polygons.length === 0) {
-          throw new Error("Aucun polygone trouvé dans ce fichier KML.");
+          if (polygons.length === 0) {
+            throw new Error("Aucun polygone trouvé dans ce fichier KML.");
+          }
+
+          const groupName = file.name.replace(/\.[^.]+$/, "").slice(0, 30) || "Import";
+          this.mapController?.importPolygons(polygons, groupName);
+          this.updateActionButtons();
+          if (progressText) progressText.textContent = `${polygons.length} polygones importés`;
         }
 
-        // Strip file extension for the group name, truncated to 30 chars
-        const groupName = file.name.replace(/\.[^.]+$/, "").slice(0, 30) || "Import";
-        this.mapController?.importPolygons(polygons, groupName);
-        this.updateActionButtons();
-        if (progressText) progressText.textContent = `${polygons.length} polygones importés`;
         setTimeout(() => {
           if (progressEl) progressEl.style.display = "none";
           if (progressBar) progressBar.style.width = "0%";
         }, 2000);
       } catch (err) {
-        this.showError(err instanceof Error ? err.message : "Erreur lors de l'import KML.");
+        this.showError(err instanceof Error ? err.message : "Erreur lors de l'import.");
         if (progressEl) progressEl.style.display = "none";
       } finally {
         btn.removeAttribute("disabled");

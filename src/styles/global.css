@@ -721,6 +721,11 @@ body {
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  position: relative;
+}
+
+.group-row .polygon-color-dot {
+  cursor: pointer;
 }
 
 /* ─── Tree-view layer panel ──────────────────────────────────────────────── */
@@ -884,6 +889,26 @@ body {
 body.sidebar-resizing {
   user-select: none;
   cursor: col-resize;
+}
+
+#layer-list-resize {
+  height: 6px;
+  margin: 0 -16px;
+  cursor: row-resize;
+  background: transparent;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+#layer-list-resize:hover,
+#layer-list-resize.dragging {
+  background: var(--color-accent-green);
+  opacity: 0.45;
+}
+
+body.layer-list-resizing {
+  user-select: none;
+  cursor: row-resize;
 }
 
 /* ─── Layer panel context menu ───────────────────────────────────────────── */
