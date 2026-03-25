@@ -119,6 +119,7 @@ import "leaflet/dist/leaflet.css";
           </div>
           <div class="lp-nav-links" id="lp-nav-links">
             <a href="/documentation" class="lp-nav-link">Documentation</a>
+            <a href="/faq" class="lp-nav-link">FAQ</a>
             <a
               href="https://github.com/Padda-One/TerritoryMaker"
               target="_blank"
@@ -437,6 +438,7 @@ import "leaflet/dist/leaflet.css";
               class="lp-footer-link">GitHub</a
             >
             <a href="/documentation" class="lp-footer-link">Documentation</a>
+            <a href="/faq" class="lp-footer-link">FAQ</a>
           </div>
           <div class="lp-footer-copy">
             Fait avec ❤️ par <a
@@ -602,6 +604,9 @@ import "leaflet/dist/leaflet.css";
             <a href="/documentation" class="guide-link">
               📖 Pas encore de clé ? Guide pas à pas →
             </a>
+            <a href="/faq" class="guide-link">
+              ❓ FAQ →
+            </a>
             <form
               id="key-form"
               style="display:flex;flex-direction:column;gap:8px;"
@@ -641,6 +646,9 @@ import "leaflet/dist/leaflet.css";
             </div>
             <a href="/documentation" class="guide-link">
               📖 Consulter la documentation →
+            </a>
+            <a href="/faq" class="guide-link">
+              ❓ FAQ →
             </a>
             <button
               id="btn-forget-key"
@@ -974,7 +982,7 @@ import "leaflet/dist/leaflet.css";
         <button id="btn-merge" class="snap-btn" title="Fusionner les polygones sélectionnés" style="display:none;">⊕</button>
 
         <!-- Undo Split/Merge -->
-        <button id="btn-undo-split-merge" class="snap-btn" title="Annuler la dernière opération Split/Merge" style="display:none;">↩</button>
+        <button id="btn-undo-split-merge" class="snap-btn" title="Annuler la dernière opération Split/Merge" style="display:none;">⊗</button>
       </div>
 
       <!-- Map loading overlay -->
@@ -1010,6 +1018,40 @@ import "leaflet/dist/leaflet.css";
       aria-label="Actions"
       hidden
     >
+    </div>
+
+    <!-- Modal de confirmation : convertir les tracés en zones avant simplification -->
+    <div
+      id="simplify-confirm-modal"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card" style="max-width:420px;">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('simplify-confirm-modal').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg
+          >
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1rem;">Convertir les tracés en zones ?</h2>
+          <p style="margin:0.75rem 0 0.5rem;">
+            <span id="simplify-drawn-count">0</span> tracé(s) fermé(s) ne peuvent pas être simplifiés
+            directement. Pour les inclure, ils doivent d'abord être convertis en zones.
+          </p>
+          <p style="margin:0 0 1.25rem;color:var(--color-accent-orange,#e67e22);font-size:0.85rem;">
+            ⚠ Cette action est irréversible — le tracé routier sera perdu.
+          </p>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+            <button id="btn-simplify-cancel" class="btn btn-secondary">Annuler</button>
+            <button id="btn-simplify-confirm" class="btn btn-danger">Convertir et simplifier</button>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
