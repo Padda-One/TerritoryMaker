@@ -1,0 +1,974 @@
+---
+import "../styles/global.css";
+import "leaflet/dist/leaflet.css";
+---
+
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="canonical" href="https://territory.paddaone.com/tool" />
+
+    <title>Territory Maker — Outil de cartographie KML</title>
+    <meta
+      name="description"
+      content="Tracez et exportez vos territoires en KML avec Territory Maker. Segments routiers, multi-polygones, import/export KML, compatibilité Google Earth et QGIS."
+    />
+    <meta name="robots" content="noindex, follow" />
+
+    <link rel="icon" type="image/svg+xml" href="/logo-TerritoryMaker.svg" />
+
+    <!-- Plausible Analytics (auto-hébergé, proxifié via Cloudflare Worker) -->
+    <script
+      defer
+      data-domain="territory.paddaone.com"
+      data-api="https://territory.paddaone.com/3wpjej9/event"
+      src="https://territory.paddaone.com/3wpjej9/script.outbound-links.js"
+      crossorigin="anonymous"></script>
+  </head>
+
+  <body
+    style="display:flex;height:100vh;overflow:hidden;background-color:var(--color-bg);color:var(--color-text);"
+  >
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         FALLBACK OVERLAY
+         Shown while loading config, or in fallback mode (quota atteint).
+         Uses the same IDs as the landing page so RouteUI.ts fonctionne tel quel.
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <div
+      id="landing-page"
+      style="position:fixed;inset:0;z-index:2000;background:var(--color-bg);display:flex;align-items:center;justify-content:center;"
+    >
+      <!-- Loading spinner (shown by default while fetchConfig() runs) -->
+      <div
+        id="landing-loading"
+        style="display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--color-text-muted);"
+      >
+        <div class="spinner"></div>
+        <p style="font-size:0.85rem;margin:0;">Chargement de la carte…</p>
+      </div>
+
+      <!-- Fallback form (hidden by default, shown by showFallbackNotice()) -->
+      <div
+        id="fallback-form-container"
+        style="display:none;width:100%;max-width:480px;padding:24px;display:none;"
+      >
+        <!-- Notice -->
+        <div
+          style="background:var(--color-surface);border:1px solid var(--color-accent-yellow,#eed49f);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;"
+        >
+          <span style="font-size:1.3rem;flex-shrink:0;">⚠️</span>
+          <div>
+            <strong style="font-size:0.88rem;color:var(--color-text);"
+              >Clé partagée temporairement indisponible</strong
+            >
+            <p
+              style="margin:6px 0 0;font-size:0.8rem;color:var(--color-text-muted);line-height:1.5;"
+            >
+              Le quota mensuel de la clé partagée est atteint. Pour continuer
+              à utiliser l'outil, saisissez votre propre clé Google Maps API
+              ci-dessous.
+            </p>
+          </div>
+        </div>
+
+        <!-- Key form card -->
+        <div class="glass-card" style="padding:24px;">
+          <form id="landing-key-form" novalidate>
+            <label
+              for="landing-key-input"
+              style="font-size:0.82rem;color:var(--color-text-muted);display:block;margin-bottom:8px;"
+            >
+              Clé Google Maps API
+            </label>
+            <input
+              id="landing-key-input"
+              type="password"
+              class="lp-form-input"
+              placeholder="AIza…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="landing-key-hint"
+              required
+            />
+            <p
+              id="landing-key-hint"
+              style="margin:6px 0 0;font-size:0.75rem;color:var(--color-text-muted);"
+            >
+              Nécessite <strong>Maps JavaScript API</strong> et <strong
+                >Directions API</strong
+              > activées dans Google Cloud Console.
+            </p>
+            <div
+              id="landing-error"
+              role="status"
+              aria-live="polite"
+              class="landing-error"
+              hidden
+            >
+            </div>
+            <button
+              type="submit"
+              class="lp-submit landing-submit lp-neon-hover"
+              style="margin-top:14px;width:100%;"
+            >
+              Utiliser ma clé API
+            </button>
+          </form>
+          <a href="/documentation" class="lp-form-guide" style="margin-top:12px;"
+            >Comment obtenir une clé Google Maps API →</a
+          >
+        </div>
+
+        <p
+          style="text-align:center;margin-top:16px;font-size:0.78rem;color:var(--color-text-muted);"
+        >
+          <a href="/" style="color:var(--color-accent-blue);"
+            >← Retour à l'accueil</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Legal modal ────────────────────────────────────────────────────── -->
+    <div
+      id="legal-modal"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('legal-modal').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
+          >
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title">Protocole Légal</h2>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Entité Éditrice</h3>
+            <p>
+              Plateforme opérée par <strong
+                style="color:var(--color-accent-blue)">Padda-One</strong
+              >.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Infrastructures</h3>
+            <p>
+              Déploiement via infrastructure <strong
+                style="color:var(--color-accent-blue)">Cloudflare Pages</strong
+              >. Aucun serveur applicatif persistant.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Données Personnelles</h3>
+            <p>
+              Aucune donnée personnelle n'est collectée, traitée ou transmise.
+              Les configurations sont encapsulées dans le périmètre local du
+              navigateur.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Clé API</h3>
+            <p>
+              En mode clé partagée, la clé est gérée côté serveur. En mode clé
+              personnelle, votre clé est stockée uniquement dans votre
+              navigateur, chiffrée AES-GCM 256 bits. Elle n'est jamais transmise
+              à l'éditeur ni à un tiers.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Cookies</h3>
+            <p>Aucun cookie d'aucune sorte.</p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Données Cartographiques</h3>
+            <p>
+              Tuiles fournies par Google Maps API et/ou OpenStreetMap. ©
+              Contributeurs OpenStreetMap, licence <a
+                href="https://opendatacommons.org/licenses/odbl/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="lp-inline-link">ODbL</a
+              >.
+            </p>
+          </div>
+          <div class="legal-section">
+            <h3 class="legal-section-title">Code Source</h3>
+            <p>
+              Public et auditable sur <a
+                href="https://github.com/Padda-One/TerritoryMaker"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="lp-inline-link"
+                >GitHub — https://github.com/Padda-One/TerritoryMaker</a
+              >.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <aside id="sidebar" class="sidebar">
+      <!-- Header -->
+      <div class="sidebar-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <a href="/">
+            <img src="/logo-TerritoryMaker.svg" width="50" height="50" alt="" />
+          </a>
+          <div>
+            <h1
+              style="font-size:0.95rem;font-weight:700;color:var(--color-text);margin:0;line-height:1.2;"
+            >
+              Territory Maker
+            </h1>
+            <p
+              style="font-size:0.68rem;color:var(--color-text-muted);margin:1px 0 0;"
+            >
+              Tracez · Exportez · KML
+            </p>
+          </div>
+        </div>
+        <button id="btn-settings-toggle" class="btn-icon" title="Paramètres"
+          >⚙</button
+        >
+      </div>
+
+      <!-- ─── SETTINGS PANEL ──────────────────────────────────────────────── -->
+      <div
+        id="settings-panel"
+        style="display:flex;flex-direction:column;flex:1;overflow-y:auto;"
+      >
+        <!-- API Key section -->
+        <div class="settings-section">
+          <p class="settings-section-title">Clé Google Maps API</p>
+
+          <!-- Shared key section (shown in shared mode) -->
+          <div
+            id="shared-key-section"
+            style="display:none;flex-direction:column;gap:10px;"
+          >
+            <div class="key-status-box">
+              <span style="font-size:1.2rem;">🔑</span>
+              <div>
+                <strong style="font-size:0.82rem;color:var(--color-text);"
+                  >Clé partagée active</strong
+                >
+                <p
+                  style="margin:3px 0 0;font-size:0.73rem;color:var(--color-text-muted);"
+                >
+                  Outil accessible sans configuration.<br />En cas de quota
+                  atteint, une clé personnelle sera demandée.
+                </p>
+              </div>
+            </div>
+            <a href="/documentation" class="guide-link">
+              📖 Consulter la documentation →
+            </a>
+            <a href="/faq" class="guide-link"> ❓ FAQ → </a>
+          </div>
+
+          <!-- Key form (shown when no key stored and in fallback mode) -->
+          <div
+            id="key-form-section"
+            style="display:flex;flex-direction:column;gap:10px;"
+          >
+            <p
+              style="font-size:0.75rem;color:var(--color-text-muted);margin:0;line-height:1.5;"
+            >
+              Nécessite l'activation de <strong style="color:var(--color-text);"
+                >Maps JavaScript API</strong
+              >
+              et <strong style="color:var(--color-text);">Directions API</strong
+              >.
+            </p>
+            <a href="/documentation" class="guide-link">
+              📖 Pas encore de clé ? Guide pas à pas →
+            </a>
+            <a href="/faq" class="guide-link"> ❓ FAQ → </a>
+            <form
+              id="key-form"
+              style="display:flex;flex-direction:column;gap:8px;"
+            >
+              <input
+                id="key-input"
+                type="password"
+                class="input-dark"
+                placeholder="AIza…"
+                autocomplete="off"
+                spellcheck="false"
+                required
+              />
+              <button type="submit" class="btn btn-primary" style="width:100%;">
+                Charger la carte
+              </button>
+            </form>
+          </div>
+
+          <!-- Key status (shown when key is stored) -->
+          <div
+            id="key-stored-section"
+            style="display:none;flex-direction:column;gap:10px;"
+          >
+            <div class="key-status-box">
+              <span style="font-size:1.2rem;">🔑</span>
+              <div>
+                <strong style="font-size:0.82rem;color:var(--color-text);"
+                  >Clé API enregistrée</strong
+                >
+                <p
+                  style="margin:3px 0 0;font-size:0.73rem;color:var(--color-text-muted);"
+                >
+                  Chiffrée localement (AES-GCM 256 bits).
+                </p>
+              </div>
+            </div>
+            <a href="/documentation" class="guide-link">
+              📖 Consulter la documentation →
+            </a>
+            <a href="/faq" class="guide-link"> ❓ FAQ → </a>
+            <button
+              id="btn-forget-key"
+              class="btn btn-danger"
+              style="width:100%;font-size:0.78rem;"
+            >
+              🗝 Oublier la clé API
+            </button>
+          </div>
+
+          <!-- Security notices -->
+          <div class="notice-box">
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span style="font-size:1rem;flex-shrink:0;">🔒</span>
+              <div>
+                <strong style="color:var(--color-text);font-size:0.78rem;"
+                  >Stockage local chiffré</strong
+                >
+                <p style="margin:4px 0 0;font-size:0.73rem;">
+                  Ta clé reste sur ton appareil. Elle n'est jamais envoyée à nos
+                  serveurs.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="notice-box notice-box-warning">
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span style="font-size:1rem;flex-shrink:0;">⚠️</span>
+              <div>
+                <strong
+                  style="color:var(--color-accent-yellow);font-size:0.78rem;"
+                  >Restreins ta clé API</strong
+                >
+                <p
+                  style="margin:4px 0 0;font-size:0.73rem;color:var(--color-text-muted);"
+                >
+                  Limite ta clé à ton domaine dans
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="color:var(--color-accent-blue);"
+                    >Google Cloud Console</a
+                  >
+                  pour éviter tout usage non autorisé.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appearance section -->
+        <div class="settings-section">
+          <p class="settings-section-title">Apparence</p>
+
+          <div>
+            <p class="settings-row-label">Thème de l'application</p>
+            <div class="theme-picker" id="app-theme-picker">
+              <button class="theme-btn" data-value="dark">🌙 Sombre</button>
+              <button class="theme-btn" data-value="light">☀️ Clair</button>
+              <button class="theme-btn" data-value="system">⚙ Système</button>
+            </div>
+          </div>
+
+          <div>
+            <p class="settings-row-label">Thème de la carte</p>
+            <div class="theme-picker" id="map-theme-picker">
+              <button class="theme-btn" data-value="dark">Sombre</button>
+              <button class="theme-btn" data-value="light">Clair</button>
+              <button class="theme-btn" data-value="satellite">Satellite</button
+              >
+              <button class="theme-btn" data-value="terrain">Relief</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer settings -->
+        <div
+          style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--color-border);display:flex;flex-direction:column;gap:6px;"
+        >
+          <button
+            class="lp-footer-link"
+            style="font-size:0.72rem;text-align:left;background:none;border:none;color:var(--color-text-muted);cursor:pointer;padding:0;"
+            onclick="document.getElementById('legal-modal').style.display='flex'"
+            >Mentions Légales</button
+          >
+          <a
+            href="https://github.com/Padda-One/TerritoryMaker"
+            target="_blank"
+            rel="noopener noreferrer"
+            style="font-size:0.72rem;color:var(--color-text-muted);">GitHub</a
+          >
+        </div>
+      </div><!-- /#settings-panel -->
+
+      <!-- ─── MAP PANEL ───────────────────────────────────────────────────── -->
+      <div
+        id="map-panel"
+        style="display:none;flex-direction:column;height:100%;overflow:hidden;"
+      >
+        <!-- Transport mode -->
+        <div class="panel-section">
+          <p class="section-label">Mode de transport (segments route)</p>
+          <div style="display:flex;gap:6px;">
+            <button
+              id="btn-transport-driving"
+              class="transport-btn active"
+              title="Voiture">🚗 Voiture</button
+            >
+            <button
+              id="btn-transport-walking"
+              class="transport-btn"
+              title="À pied">🚶 Pied</button
+            >
+            <button
+              id="btn-transport-bicycling"
+              class="transport-btn"
+              title="Vélo">🚴 Vélo</button
+            >
+          </div>
+        </div>
+
+        <!-- Layer panel -->
+        <div class="panel-section" style="flex-shrink:0;">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;gap:4px;"
+          >
+            <p class="section-label" style="margin:0;">Polygones</p>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <button
+                id="btn-import-kml"
+                class="btn btn-secondary"
+                style="font-size:0.72rem;padding:3px 8px;"
+                title="Importer un fichier KML ou CSV NWS"
+              >
+                ⬆ Importer
+              </button>
+              <input
+                id="input-kml-file"
+                type="file"
+                accept=".kml,.csv"
+                style="display:none;"
+              />
+              <button
+                id="btn-add-polygon"
+                class="btn btn-secondary"
+                style="font-size:0.72rem;padding:3px 8px;"
+                disabled
+              >
+                + Nouveau
+              </button>
+            </div>
+          </div>
+          <!-- Import progress bar (hidden by default) -->
+          <div id="import-progress" style="display:none;margin-top:6px;">
+            <p
+              id="import-progress-text"
+              style="font-size:0.7rem;color:var(--color-text-muted);margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+            >
+            </p>
+            <div
+              style="height:3px;background:var(--color-border);border-radius:2px;"
+            >
+              <div
+                id="import-progress-bar"
+                style="height:100%;width:0%;background:var(--color-accent-green);border-radius:2px;transition:width 0.15s;"
+              >
+              </div>
+            </div>
+          </div>
+          <!-- Filter + sort (visible once polygons are loaded) -->
+          <div style="display:flex;gap:4px;margin-top:6px;align-items:center;">
+            <input
+              id="layer-filter"
+              type="search"
+              placeholder="Filtrer les polygones…"
+              style="flex:1;min-width:0;font-size:0.75rem;background:var(--color-surface-2);color:var(--color-text);border:1px solid var(--color-border);border-radius:4px;padding:3px 7px;outline:none;box-sizing:border-box;"
+            />
+            <button
+              id="btn-sort-by-points"
+              title="Trier par nombre de points (décroissant)"
+              style="flex-shrink:0;font-size:0.7rem;padding:3px 6px;white-space:nowrap;background:var(--color-surface-2);color:var(--color-text-muted);border:1px solid var(--color-border);border-radius:4px;cursor:pointer;"
+              >⇅ pts</button
+            >
+          </div>
+          <div
+            id="polygon-layer-list"
+            style="margin-top:4px;display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto;"
+          >
+          </div>
+        </div>
+
+        <!-- Resize handle between layer list and waypoints -->
+        <div id="layer-list-resize" aria-hidden="true"></div>
+
+        <!-- Waypoints list -->
+        <div
+          class="panel-section"
+          style="flex:1;overflow-y:auto;min-height:80px;"
+        >
+          <p class="section-label">Points de passage</p>
+          <div
+            id="waypoint-list"
+            style="display:flex;flex-direction:column;gap:4px;"
+          >
+            <p
+              style="font-size:0.75rem;color:var(--color-text-muted);font-style:italic;text-align:center;padding:8px 0;"
+            >
+              Cliquez sur la carte pour ajouter des points
+            </p>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div
+          class="panel-section"
+          style="display:flex;flex-direction:column;gap:6px;"
+        >
+          <div style="display:flex;gap:6px;">
+            <button
+              id="btn-undo"
+              class="btn btn-secondary"
+              style="flex:1;"
+              disabled
+            >
+              ↩ Supprimer dernier
+            </button>
+            <button id="btn-clear" class="btn btn-danger" disabled>🗑</button>
+          </div>
+          <button
+            id="btn-simplify-all"
+            class="btn btn-secondary"
+            style="width:100%;"
+            disabled
+          >
+            ⬡ Simplifier les zones
+          </button>
+          <button
+            id="btn-export-kml"
+            class="btn btn-blue"
+            style="width:100%;"
+            disabled
+          >
+            🗺 Exporter la carte
+          </button>
+          <button
+            id="btn-export-csv"
+            class="btn btn-secondary"
+            style="width:100%;display:none;"
+          >
+            📋 Exporter CSV (NWS)
+          </button>
+        </div>
+
+        <!-- KML export panel (collapsible) -->
+        <div
+          id="kml-panel"
+          style="display:none;padding:12px 16px;border-top:1px solid var(--color-border);flex-direction:column;gap:8px;"
+        >
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;"
+          >
+            <p class="section-label" style="margin:0;">KML Polygon</p>
+            <button
+              id="btn-kml-close"
+              style="background:none;border:none;color:var(--color-text-muted);cursor:pointer;font-size:1rem;padding:0;line-height:1;"
+              >×</button
+            >
+          </div>
+          <div
+            id="kml-stats"
+            style="font-size:0.72rem;color:var(--color-text-muted);"
+          >
+          </div>
+          <textarea
+            id="kml-output"
+            class="kml-textarea"
+            rows="8"
+            readonly
+            spellcheck="false"></textarea>
+          <div style="display:flex;gap:6px;">
+            <button
+              id="btn-kml-copy"
+              class="btn btn-secondary"
+              style="flex:1;font-size:0.78rem;"
+            >
+              📋 Copier
+            </button>
+            <button
+              id="btn-kml-download"
+              class="btn btn-primary"
+              style="flex:1;font-size:0.78rem;"
+            >
+              ⬇ Télécharger .kml
+            </button>
+          </div>
+        </div>
+      </div><!-- /#map-panel -->
+
+      <!-- Sidebar resize handle -->
+      <div id="sidebar-resize" aria-hidden="true"></div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MAP AREA
+    ══════════════════════════════════════════════════════════════════════════ -->
+    <main style="position:relative;flex:1;overflow:hidden;z-index:0;">
+      <!-- Segment mode toggle -->
+      <div
+        style="position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:1000;"
+      >
+        <div class="toggle-pill" id="segment-toggle">
+          <button id="btn-mode-route" class="toggle-pill-btn active-route"
+            >🛣 Trajet</button
+          >
+          <button id="btn-mode-straight" class="toggle-pill-btn inactive"
+            >✈ Vol d'oiseau</button
+          >
+        </div>
+      </div>
+
+      <!-- ─── Right toolbar ──────────────────────────────────────────────── -->
+      <div
+        style="position:absolute;top:16px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:6px;"
+      >
+        <!-- Snap -->
+        <button
+          id="btn-snap-toggle"
+          class="snap-btn"
+          title="Outil aimant — accroche les nouveaux points sur les tracés existants"
+          >🧲</button
+        >
+
+        <!-- Map provider -->
+        <button
+          id="btn-provider-toggle"
+          class="snap-btn"
+          title="Basculer le fournisseur de carte (OpenStreetMap = affichage uniquement, calcul des trajets toujours via Google)"
+          ><img
+            id="btn-provider-icon"
+            src="/gm.avif"
+            alt="Google Maps"
+            style="width:22px;height:22px;display:block;border-radius:3px;"
+          /></button
+        >
+
+        <!-- Vertex edit (visible when an imported polygon is active) -->
+        <button
+          id="btn-vertex-edit"
+          class="snap-btn"
+          title="Éditer les coordonnées du polygone importé"
+          style="display:none;"
+          ><img
+            src="/images/tools/pencil.svg"
+            width="20"
+            height="20"
+            alt=""
+            aria-hidden="true"
+          /></button
+        >
+
+        <!-- Split (visible when a closed polygon is active) -->
+        <button
+          id="btn-split"
+          class="snap-btn"
+          title="Découper le polygone"
+          style="display:none;">✂</button
+        >
+
+        <!-- Merge (visible when exactly 2 polygons are selected) -->
+        <button
+          id="btn-merge"
+          class="snap-btn"
+          title="Fusionner les polygones sélectionnés"
+          style="display:none;">⊕</button
+        >
+
+        <!-- Undo Split/Merge -->
+        <button
+          id="btn-undo-split-merge"
+          class="snap-btn"
+          title="Annuler la dernière opération Split/Merge"
+          style="display:none;">⊗</button
+        >
+      </div>
+
+      <!-- Map loading overlay -->
+      <div id="map-loading" class="loading-overlay" style="display:none;">
+        <div class="spinner"></div>
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin:0;">
+          Chargement de la carte…
+        </p>
+      </div>
+
+      <!-- Hint overlay -->
+      <div
+        id="map-hint"
+        style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none;display:none;"
+      >
+        <div class="map-hint-inner">
+          <span id="map-hint-text"
+            >Cliquez sur la carte pour placer un point de passage</span
+          >
+        </div>
+      </div>
+
+      <!-- Google Maps / Leaflet container -->
+      <div id="map" style="height:100%;width:100%;position:relative;z-index:0;">
+      </div>
+    </main>
+
+    <!-- Context menu for layer panel -->
+    <div
+      id="layer-ctx-menu"
+      class="ctx-menu"
+      role="menu"
+      aria-label="Actions"
+      hidden
+    >
+    </div>
+
+    <!-- Modal de confirmation : convertir les tracés en zones avant simplification -->
+    <div
+      id="simplify-confirm-modal"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card" style="max-width:420px;">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('simplify-confirm-modal').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
+          >
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1rem;">
+            Convertir les tracés en zones ?
+          </h2>
+          <p style="margin:0.75rem 0 0.5rem;">
+            <span id="simplify-drawn-count">0</span> tracé(s) fermé(s) ne peuvent
+            pas être simplifiés directement. Pour les inclure, ils doivent d'abord
+            être convertis en zones.
+          </p>
+          <p
+            style="margin:0 0 1.25rem;color:var(--color-accent-orange,#e67e22);font-size:0.85rem;"
+          >
+            ⚠ Cette action est irréversible — le tracé routier sera perdu.
+          </p>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+            <button id="btn-simplify-cancel" class="btn btn-secondary"
+              >Annuler</button
+            >
+            <button id="btn-simplify-confirm" class="btn btn-danger"
+              >Convertir et simplifier</button
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NWS modal 1 : accès NWS ─────────────────────────────────────────── -->
+    <div
+      id="modal-nws-access"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card" style="max-width:480px;">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('modal-nws-access').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
+          >
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">
+            Fusion de territoires NWS
+          </h2>
+          <p style="color:var(--color-text-muted);font-size:0.9rem;margin:0;">
+            Avez-vous accès à NWS en ce moment ?
+          </p>
+          <p
+            style="color:var(--color-text-muted);font-size:0.78rem;margin:0;opacity:0.75;"
+          >
+            Cette réponse sera mémorisée pour toutes les fusions de cette
+            session.
+          </p>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button
+              id="btn-nws-access-yes"
+              class="btn btn-primary"
+              style="flex:1;">Oui, j'ai NWS sous la main</button
+            >
+            <button
+              id="btn-nws-access-no"
+              class="btn btn-secondary"
+              style="flex:1;">Non, je verrai plus tard</button
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NWS modal 2 : choix du territoire à conserver ──────────────────── -->
+    <div id="modal-nws-keep" class="lp-modal" style="display:none">
+      <div class="lp-modal-card" style="max-width:520px;">
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">
+            Quel territoire conserver ?
+          </h2>
+          <p style="color:var(--color-text-muted);font-size:0.84rem;margin:0;">
+            De préférence celui dont la <strong
+              >date d'attribution est la plus récente</strong
+            > dans NWS.
+          </p>
+          <div
+            id="nws-keep-options"
+            style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"
+          >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NWS modal 3 : suppressions ─────────────────────────────────────── -->
+    <div
+      id="modal-nws-suppressions"
+      class="lp-modal"
+      style="display:none"
+      onclick="if(event.target===this)this.style.display='none'"
+    >
+      <div class="lp-modal-card" style="max-width:900px;">
+        <button
+          class="lp-modal-close"
+          onclick="document.getElementById('modal-nws-suppressions').style.display='none'"
+          aria-label="Fermer"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
+          >
+        </button>
+        <div class="lp-modal-body">
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">
+            Suppressions à effectuer dans NWS
+          </h2>
+          <div
+            id="nws-suppressions-content"
+            style="display:flex;flex-direction:column;gap:24px;"
+          >
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button
+              id="btn-suppressions-csv"
+              class="btn btn-secondary"
+              style="font-size:0.82rem;">⬇ Télécharger CSV</button
+            >
+            <button
+              id="btn-suppressions-xlsx"
+              class="btn btn-secondary"
+              style="font-size:0.82rem;">⬇ Télécharger Excel</button
+            >
+            <button
+              id="btn-suppressions-print"
+              class="btn btn-secondary"
+              style="font-size:0.82rem;"
+              onclick="window.print()">🖨 Imprimer / PDF</button
+            >
+            <button
+              id="btn-suppressions-continue"
+              class="btn btn-primary"
+              style="font-size:0.82rem;margin-left:auto;"
+              >Continuer l'export →</button
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  import { RouteUI } from "../components/RouteUI.ts";
+
+  const ui = new RouteUI();
+  ui.init().catch(console.error);
+</script>

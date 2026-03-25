@@ -39,6 +39,7 @@ export class RouteUI {
   private snapActive = false;
 
   private sortByPoints = false;
+  private sharedMode = false;
 
   // NWS session state
   private isNwsSession = false;
@@ -83,7 +84,34 @@ export class RouteUI {
     this.bindContextMenu();
     this.bindLayerPanel();
 
-    // Try to restore a saved key — validate before hiding the landing
+    // Check server config (shared key or fallback mode)
+    const config = await this.fetchConfig();
+
+    if (config.mode === "shared" && config.mapsJsKey) {
+      this.sharedMode = true;
+      this.updateKeySection(true);
+      try {
+        await this.exitLanding(config.mapsJsKey);
+      } catch {
+        // Shared key rejected — fall back to user key flow
+        this.sharedMode = false;
+        this.showFallbackNotice();
+        this.updateKeySection(false);
+        const savedKey = await ApiKeyManager.loadKey().catch(() => null);
+        if (savedKey) {
+          await this.exitLanding(savedKey).catch(() => {
+            ApiKeyManager.forgetKey();
+            this.bindLandingForm();
+          });
+        } else {
+          this.bindLandingForm();
+        }
+      }
+      return;
+    }
+
+    // Fallback mode — show notice then try stored user key
+    this.showFallbackNotice();
     const savedKey = await ApiKeyManager.loadKey().catch(() => null);
     if (savedKey) {
       this.updateKeySection(true);
@@ -103,9 +131,29 @@ export class RouteUI {
       return;
     }
 
-    // No key — show landing form (landing overlay is already visible)
+    // No key — show landing form
     this.bindLandingForm();
     this.updateKeySection(false);
+  }
+
+  // ─── Server config ────────────────────────────────────────────────────────────
+
+  private async fetchConfig(): Promise<{ mode: "shared" | "fallback"; mapsJsKey?: string }> {
+    try {
+      const res = await fetch("/api/config");
+      if (!res.ok) return { mode: "fallback" };
+      return (await res.json()) as { mode: "shared" | "fallback"; mapsJsKey?: string };
+    } catch {
+      return { mode: "fallback" };
+    }
+  }
+
+  /** Hides the loading spinner and reveals the fallback key-entry form. */
+  private showFallbackNotice(): void {
+    const loading = document.getElementById("landing-loading");
+    if (loading) loading.style.display = "none";
+    const container = document.getElementById("fallback-form-container");
+    if (container) container.style.display = "";
   }
 
   // ─── Settings panel ──────────────────────────────────────────────────────────
@@ -149,6 +197,14 @@ export class RouteUI {
   private updateKeySection(hasKey: boolean): void {
     const formSection = document.getElementById("key-form-section");
     const storedSection = document.getElementById("key-stored-section");
+    const sharedSection = document.getElementById("shared-key-section");
+    if (this.sharedMode) {
+      if (formSection) formSection.style.display = "none";
+      if (storedSection) storedSection.style.display = "none";
+      if (sharedSection) sharedSection.style.display = "flex";
+      return;
+    }
+    if (sharedSection) sharedSection.style.display = "none";
     if (formSection) formSection.style.display = hasKey ? "none" : "flex";
     if (storedSection) storedSection.style.display = hasKey ? "flex" : "none";
   }
@@ -166,12 +222,6 @@ export class RouteUI {
   }
 
   // ─── Landing page ─────────────────────────────────────────────────────────────
-
-  /** Hides the landing overlay immediately (key was already stored). */
-  private hideLanding(): void {
-    const el = document.getElementById("landing-page");
-    if (el) el.style.display = "none";
-  }
 
   /** Animates the landing out, then initialises the map. */
   private async exitLanding(key: string): Promise<void> {
@@ -200,7 +250,8 @@ export class RouteUI {
     const errorEl = document.getElementById("landing-error") as HTMLElement | null;
     if (errorEl) errorEl.hidden = true;
     const btn = landing.querySelector<HTMLButtonElement>("button[type=submit]");
-    if (btn) { btn.disabled = false; btn.textContent = "Lancer Territory Maker →"; }
+    if (btn) btn.disabled = false;
+    this.showFallbackNotice();
     this.bindLandingForm();
   }
 
