@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.7.1",
+    "@cloudflare/workers-types": "^4.20260317.1",
     "@dendronhq/safe-npm": "^0.1.0",
     "@types/google.maps": "^3.58.1",
     "typescript": "^5.9.3"
