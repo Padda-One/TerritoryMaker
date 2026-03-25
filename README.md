@@ -23,7 +23,7 @@
 - **KML import** — import any KML 2.2 file, including large files (tested: 835 polygons, 1.3 MB); progress bar during import; all polygons from one file share a single color and folder
 - **Snap / magnet tool** — 🧲 snap new points onto existing polygon paths to create shared boundaries between adjacent territories
 - **Split polygon** — ✂ cut a closed polygon into two by drawing a dividing line (road-following or straight, using the current mode); the two resulting polygons are created in a "territoires enfants" folder; supports Ctrl+Z undo
-- **Merge polygons** — ⊕ Ctrl+click two polygons to select them, then click Merge to fuse them into one; uses selective vertex snapping to align shared borders (tolerance 5 m); blocks non-adjacent polygons with an error; supports Ctrl+Z undo
+- **Merge polygons** — ⊕ Ctrl+click two polygons to select them, then click Merge to fuse them into one; uses selective vertex snapping to align shared borders (tolerance 10 m); blocks non-adjacent polygons with an error; supports Ctrl+Z undo
 - **Multi-select** — Ctrl+click polygon rows in the layer panel or polygon fills on the map to select multiple polygons; selected polygons are highlighted in amber
 - **Waypoint editing** — double-click any existing point to drag it to a new position; adjacent segments are recalculated automatically
 - **Coordinate editing** — ✏ edit individual vertices of Zone polygons: drag to move, click to delete, click an edge to insert a new point
@@ -36,6 +36,8 @@
 - **Step-by-step API key guide** — built-in documentation page at `/documentation` for obtaining and configuring a Google Maps API key
 - **FAQ** — dedicated `/faq` page covering common questions (routing oddities, simplification, KML compatibility, API key cost and security, data privacy); includes FAQPage schema for Google rich snippets
 - **KML export** — export all polygons at once, per folder, or per polygon from the layer panel; supports copy to clipboard and `.kml` download
+- **NWS CSV import/export** — import a NWS-exported CSV file to load territory boundaries alongside all NWS metadata (TerritoryID, Category, Number, Suffix, etc.); edit boundaries freely (split, merge, vertex edit); export a new NWS-compatible CSV with updated boundaries; a suppression report (CSV + Excel) is generated automatically for merge operations to track territories to delete or cross-check in NWS
+- **Group recolor** — click the color dot on any folder header to change the color of all polygons in that folder at once (fill overlay + border)
 - **Encrypted local key storage** — your Google Maps API key is encrypted with AES-GCM 256-bit and stored in `localStorage` using a device-derived key (no password required)
 - **No backend** — everything runs in your browser; no data is sent to any server other than Google Maps APIs
 - **Desktop-first** — designed for desktop use (mouse + keyboard); not optimised for mobile or touch
@@ -152,7 +154,7 @@ The dividing line uses the **current segment mode** (road-following or straight 
 1. **Ctrl+click** a second polygon (on its fill or in the layer panel row) while another polygon is already active — both are highlighted in amber and the **⊕** merge button appears in the right toolbar
 2. Click **⊕** — the two polygons are fused into one, named `polygon1 - polygon2`
 
-Territory Maker automatically snaps shared border vertices (within 5 m) before merging, so polygons drawn on opposite sides of the same road join cleanly.
+Territory Maker automatically snaps shared border vertices (within 10 m) before merging, so polygons drawn on opposite sides of the same road join cleanly.
 
 > If the two polygons are not adjacent or overlapping, an error message is shown and no change is made.
 
@@ -179,6 +181,34 @@ Each polygon is exported as a separate `<Placemark>` inside a single KML `<Docum
 ### 13 — Resize the sidebar
 
 Drag the thin handle on the **right edge of the sidebar** left or right to adjust its width (180 px – 600 px). The width is remembered across sessions.
+
+### 14 — NWS CSV import/export
+
+If you work with NWS (territory management software), Territory Maker can import and export the NWS CSV format directly.
+
+**Import a NWS CSV file:**
+
+Click **⬆ Importer** and select a `.csv` file exported from NWS. Territory Maker reads all 12 NWS columns (`TerritoryID`, `CategoryCode`, `Category`, `Number`, `Suffix`, `Area`, `Type`, `Link1`, `Link2`, `CustomNotes1`, `CustomNotes2`, `Boundary`) and creates one folder per category. Territory names are displayed as `Number-Suffix` (e.g. `1-A`).
+
+**Editing territories:**
+
+Once imported, you can use all standard tools — split, merge, vertex edit, simplify — without losing the NWS metadata. The metadata travels with each polygon through all operations.
+
+**Export a NWS CSV file:**
+
+After editing, click **📋 Exporter CSV (NWS)** (visible only after a NWS CSV import). The exported file contains updated `Boundary` coordinates alongside all original NWS metadata, ready for re-import into NWS.
+
+**Merge workflow — with NWS access:**
+
+When you merge two NWS territories and you have NWS open, Territory Maker asks which territory to keep (select the one with the most recent assignment date). The other territory is added to the suppression report as "to delete in NWS".
+
+**Merge workflow — without NWS access:**
+
+If you don't have NWS open at the time, Territory Maker records both territories as "to cross-check later" with detailed instructions.
+
+**Suppression report:**
+
+Before exporting the CSV, if any merges were performed, a modal shows the list of territories to delete or cross-check. You can download it as CSV or Excel (`.xlsx`), or print it as PDF.
 
 ---
 
@@ -291,10 +321,12 @@ src/
     faq.astro             FAQ page (15 questions, FAQPage schema for SEO)
   components/
     ApiKeyManager.ts      AES-GCM encryption / localStorage
-    MapController.ts      Map init, markers, polylines, multi-polygon, groups, snap, drag-edit, vertex edit, split, merge, undo stack
+    MapController.ts      Map init, markers, polylines, multi-polygon, groups, snap, drag-edit, vertex edit, split, merge, undo stack, NWS metadata, group recolor
     SegmentRouter.ts      Directions API or straight-line routing
     KmlExporter.ts        KML Polygon XML construction + multi-polygon export + download
     KmlImporter.ts        KML 2.2 parsing (chunked, Douglas-Peucker simplification)
+    NwsCsvImporter.ts     NWS CSV parsing (TerritoryID, Category, Number, Suffix, Boundary)
+    NwsCsvExporter.ts     NWS CSV generation + suppression report (CSV + Excel via SheetJS)
     RouteUI.ts            Application orchestrator (UI, state, tree-view layer panel, sidebar resize, context menu)
   styles/
     global.css            Tailwind v4 + CSS variables (dark & light themes)
@@ -318,6 +350,7 @@ public/
 | Routing | Google Directions API |
 | Geometry | Google Maps Geometry library (`spherical.computeDistanceBetween`) |
 | Polygon geometry | [`@turf/union`](https://turfjs.org/) v7 — polygon union for the Merge operation |
+| Excel export | [SheetJS](https://sheetjs.com/) (`xlsx`) — suppression report for NWS merge operations |
 | Crypto | Web Crypto API (built-in browser API) |
 | Bundler | Vite (via Astro) |
 | Package install | [`safe-npm`](https://github.com/kevinslin/safe-npm) (`@dendronhq/safe-npm`) |
