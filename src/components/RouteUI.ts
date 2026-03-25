@@ -38,6 +38,8 @@ export class RouteUI {
   private isMapLoaded = false;
   private snapActive = false;
 
+  private sortByPoints = false;
+
   // NWS session state
   private isNwsSession = false;
   private nwsAccessMode: "yes" | "no" | null = null;
@@ -866,13 +868,14 @@ export class RouteUI {
   }
 
   private handleClosedChanged(closed: boolean): void {
+    const hintWrapper = document.getElementById("map-hint");
     const hint = document.getElementById("map-hint-text");
-    if (hint) {
-      hint.textContent = closed
-        ? "Polygone fermé — clique sur ↩ Rouvrir pour modifier"
-        : this.currentWaypoints.length >= 3
-          ? "Clique sur le point A pour fermer le polygone"
-          : "Clique sur la carte pour placer un point de passage";
+    if (closed) {
+      if (hintWrapper) hintWrapper.style.display = "none";
+    } else {
+      if (hint) hint.textContent = this.currentWaypoints.length >= 3
+        ? "Clique sur le point A pour fermer le polygone"
+        : "Clique sur la carte pour placer un point de passage";
     }
     this.updateActionButtons();
   }
@@ -882,6 +885,8 @@ export class RouteUI {
   private bindLayerPanel(): void {
     document.getElementById("btn-add-polygon")?.addEventListener("click", () => {
       this.mapController?.addPolygon();
+      const hint = document.getElementById("map-hint");
+      if (hint) hint.style.display = "";
     });
 
     document.getElementById("layer-filter")?.addEventListener("input", () => {
@@ -890,6 +895,17 @@ export class RouteUI {
         this.renderLayerPanel(groups);
       });
     });
+
+    const sortBtn = document.getElementById("btn-sort-by-points");
+    if (sortBtn) {
+      sortBtn.addEventListener("click", () => {
+        this.sortByPoints = !this.sortByPoints;
+        sortBtn.style.color = this.sortByPoints ? "var(--color-accent-green)" : "var(--color-text-muted)";
+        sortBtn.style.borderColor = this.sortByPoints ? "var(--color-accent-green)" : "var(--color-border)";
+        const groups = this.mapController?.getGroups() ?? [];
+        this.renderLayerPanel(groups);
+      });
+    }
   }
 
   // ─── Sidebar resize ──────────────────────────────────────────────────────────
@@ -1089,9 +1105,14 @@ export class RouteUI {
 
     for (const group of groups) {
       // Filter polygons within the group
-      const visiblePolys = filterText
+      let visiblePolys = filterText
         ? group.polygons.filter((p) => p.name.toLowerCase().includes(filterText))
-        : group.polygons;
+        : [...group.polygons];
+
+      // Sort by point count descending when active
+      if (this.sortByPoints) {
+        visiblePolys.sort((a, b) => (b.vertexCount ?? b.waypointCount) - (a.vertexCount ?? a.waypointCount));
+      }
 
       // Skip empty groups when filtering
       if (filterText && visiblePolys.length === 0) continue;
@@ -1410,6 +1431,15 @@ export class RouteUI {
           this.mapController?.selectPolygon(poly.id, multi);
           if (!multi) this.mapController?.fitToPolygon(poly.id);
         });
+
+        // Double-click on a Zone row: enter vertex edit mode directly
+        if (poly.isImported && poly.isClosed) {
+          row.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            this.mapController?.selectPolygon(poly.id, false);
+            this.mapController?.toggleVertexEdit(poly.id);
+          });
+        }
 
         children.appendChild(row);
       }
