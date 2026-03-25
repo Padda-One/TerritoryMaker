@@ -12,6 +12,19 @@
 
 ---
 
+## Native New World Scheduler Integration
+
+<img src="public/nws-logo.webp" alt="New World Scheduler" width="48" align="right" />
+
+Territory Maker has first-class support for **[New World Scheduler](https://newworldscheduler.com/)** (NWS), a widely used territory management application.
+
+- **Import NWS CSV** — load territory boundaries directly from a NWS-exported CSV file, including all metadata columns (`TerritoryID`, `CategoryCode`, `Category`, `Number`, `Suffix`, `Area`, `Type`, `Link1`, `Link2`, `CustomNotes1`, `CustomNotes2`, `Boundary`)
+- **Edit freely** — split, merge, or edit vertices on any imported territory; all NWS metadata travels with each polygon through every operation
+- **Export NWS CSV** — generate an updated CSV with corrected `Boundary` coordinates, ready for direct re-import into NWS
+- **Suppression report** — when territories are merged, Territory Maker automatically builds a list of territories to delete or cross-check in NWS, exportable as CSV or Excel (`.xlsx`)
+
+---
+
 ## Features
 
 - **Mixed segments** — alternate between 🛣 *Trajet* (road-following) and ✈ *Vol d'oiseau* (straight line) segments for each point you place
