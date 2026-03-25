@@ -471,9 +471,9 @@ export class MapController {
 
   private makeFillPolygon(path: [number, number][]): AnyPolygon {
     if (!this.isOsm) {
-      return new google.maps.Polygon({ paths: path.map(([lat, lng]) => ({ lat, lng })), map: this.gMap!, fillColor: "#000000", fillOpacity: 0.18, strokeColor: "#000000", strokeWeight: 0, zIndex: 0 });
+      return new google.maps.Polygon({ paths: path.map(([lat, lng]) => ({ lat, lng })), map: this.gMap!, fillColor: "#000000", fillOpacity: 0.18, strokeColor: "#000000", strokeWeight: 1, zIndex: 0 });
     }
-    return L.polygon(path, { fillColor: "#000000", fillOpacity: 0.18, weight: 0 }).addTo(this.lMap!);
+    return L.polygon(path, { fillColor: "#000000", fillOpacity: 0.18, weight: 1 }).addTo(this.lMap!);
   }
 
   private addFillClickHandler(fillPoly: AnyPolygon, id: string): void {
@@ -481,7 +481,6 @@ export class MapController {
       fillPoly.on("click", (e: L.LeafletMouseEvent) => {
         L.DomEvent.stop(e);
         if (this.splitState.active) {
-          // Forward click coordinates to split handler
           const ll = { lat: () => e.latlng.lat, lng: () => e.latlng.lng };
           void this.handleSplitClick(ll);
           return;
@@ -489,10 +488,14 @@ export class MapController {
         const ctrlKey = e.originalEvent.ctrlKey || e.originalEvent.metaKey;
         this.selectPolygon(id, ctrlKey);
       });
+      fillPoly.on("dblclick", (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stop(e);
+        const poly = this.polygons.find(p => p.id === id);
+        if (poly?.kind === "imported") this.toggleVertexEdit(id);
+      });
     } else {
       (fillPoly as google.maps.Polygon).addListener("click", (e: google.maps.PolyMouseEvent) => {
         if (this.splitState.active) {
-          // Forward click coordinates to split handler (polygon click doesn't bubble to map)
           if (e.latLng) void this.handleSplitClick(e.latLng);
           return;
         }
@@ -500,6 +503,14 @@ export class MapController {
         setTimeout(() => { this.ignoreNextMapClick = false; }, 50);
         const ctrlKey = !!(e.domEvent as MouseEvent)?.ctrlKey || !!(e.domEvent as MouseEvent)?.metaKey;
         this.selectPolygon(id, ctrlKey);
+      });
+      (fillPoly as google.maps.Polygon).addListener("dblclick", () => {
+        const poly = this.polygons.find(p => p.id === id);
+        if (poly?.kind === "imported") {
+          this.ignoreNextMapClick = true;
+          setTimeout(() => { this.ignoreNextMapClick = false; }, 50);
+          this.toggleVertexEdit(id);
+        }
       });
     }
   }
@@ -1089,7 +1100,7 @@ export class MapController {
       this.setPolylineColor(poly.closingPolyline, newColor, poly.closingSegment?.mode ?? "route");
       // Update fill color and stroke
       this.setFillColor(poly.fillPolygon, newColor);
-      this.setFillStroke(poly.fillPolygon, this.selectedPolygonIds.has(poly.id) || poly === this.polygons[this.activeIndex] ? 2 : 0, newColor);
+      this.setFillStroke(poly.fillPolygon, this.selectedPolygonIds.has(poly.id) || poly === this.polygons[this.activeIndex] ? 2 : 1, newColor);
       // Update vertex edit handles if active
       if (poly.vertexEditActive && poly.edgePolylines) {
         for (const ep of poly.edgePolylines) {
@@ -1113,7 +1124,7 @@ export class MapController {
   }
 
   /** Fit the map to a single polygon's bounds. No-op if the polygon has no coordinates. */
-  fitToPolygon(id: string, padding = 120): void {
+  fitToPolygon(id: string, padding = 220): void {
     const poly = this.polygons.find(p => p.id === id);
     if (!poly) return;
     const coords = poly.rawCoordinates ?? this.getPolygonFlatCoords(poly);
@@ -1610,7 +1621,7 @@ export class MapController {
       const strokeOp = isActive ? 1.0 : isSelected ? 0.7 : 0.35;
       const fillOp = isActive ? 0.38 : isSelected ? 0.28 : 0.18;
       this.setFillOpacity(poly.fillPolygon, fillOp);
-      this.setFillStroke(poly.fillPolygon, isActive || isSelected ? 2 : 0, poly.fillColor);
+      this.setFillStroke(poly.fillPolygon, isActive || isSelected ? 2 : 1, poly.fillColor);
       for (const wp of poly.waypoints) {
         this.setPolylineOpacity(wp.polyline, strokeOp, wp.segment?.mode ?? "route", poly.color);
       }
@@ -1827,7 +1838,7 @@ export class MapController {
         fillOpacity: 0.18,
         strokeColor: fillColor,
         strokeOpacity: 0.35,
-        strokeWeight: 0,
+        strokeWeight: 1,
         clickable: true,
         zIndex: 1,
       });
@@ -1837,7 +1848,7 @@ export class MapController {
         fillColor,
         fillOpacity: 0.18,
         opacity: 0.35,
-        weight: 0,
+        weight: 1,
         interactive: true,
       }).addTo(this.lMap!);
     }

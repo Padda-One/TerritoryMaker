@@ -26,7 +26,8 @@
 - **Merge polygons** — ⊕ Ctrl+click two polygons to select them, then click Merge to fuse them into one; uses selective vertex snapping to align shared borders (tolerance 10 m); blocks non-adjacent polygons with an error; supports Ctrl+Z undo
 - **Multi-select** — Ctrl+click polygon rows in the layer panel or polygon fills on the map to select multiple polygons; selected polygons are highlighted in amber
 - **Waypoint editing** — double-click any existing point to drag it to a new position; adjacent segments are recalculated automatically
-- **Coordinate editing** — ✏ edit individual vertices of Zone polygons: drag to move, click to delete, click an edge to insert a new point
+- **Coordinate editing** — ✏ edit individual vertices of Zone polygons: drag to move, click to delete, click an edge to insert a new point; double-click directly on a Zone polygon on the map to enter edit mode instantly
+- **Sort by point count** — click **⇅ pts** next to the layer filter to sort polygons within each folder by vertex count (descending), making it easy to identify heavy polygons that need simplification
 - **Polygon simplification** — ⬡ reduce the number of vertices of a Zone using Douglas-Peucker; each click applies one pass with a progressively larger tolerance; a ↺ restore button appears to revert to the original coordinates; a global "Simplifier les zones" button simplifies all zones at once
 - **Dual map backend** — choose between **Google Maps** and **OpenStreetMap** (Leaflet) as the display layer; routing always uses the Google Directions API
 - **Landing page** — first-launch welcome screen with project overview and API key form; skipped automatically when a key is already stored
@@ -52,7 +53,7 @@ On first launch the map is empty. Click **+ Nouveau** in the *Polygones* panel t
 
 The map cursor is a **crosshair** `✛` — click anywhere to place waypoints.
 
-> The hint bar at the bottom of the map tells you what to do next at every step.
+> A hint bar appears at the bottom of the map to guide you while drawing. It disappears once the polygon is closed.
 
 **Choosing the segment type** before each click:
 
@@ -99,7 +100,9 @@ Each polygon row shows:
 - **Right-click** anywhere in the panel for a context menu: create folder, rename folder, delete folder, move polygon to another folder
 - **Drag** a polygon row to reorder it (insert indicator appears as a green line) or drop it onto a folder header to move it
 
-Click any polygon row — or click directly on the polygon fill on the map — to switch the active polygon. The selected polygon is highlighted with a colored border and stronger fill; others are dimmed. Clicking a row in the layer panel also **fits the map view** to that polygon's bounds automatically.
+Click any polygon row — or click directly on the polygon fill on the map — to switch the active polygon. The selected polygon is highlighted with a colored border and stronger fill; others remain visible with a thinner border. Clicking a row in the layer panel also **fits the map view** to that polygon's bounds automatically.
+
+A **⇅ pts** button next to the filter field sorts polygons within each folder by vertex count (descending) — useful for identifying dense polygons before simplifying.
 
 ### 5 — Import a KML file
 
@@ -110,6 +113,8 @@ All polygons from the same import share a single color. Coordinate rings are aut
 ### 6 — Edit coordinates of a Zone polygon
 
 Select a Zone polygon (badge **Zone · N pts** in the layer panel). The **✏** button appears in the right toolbar.
+
+**Shortcut:** double-click directly on a Zone polygon **on the map** to enter edit mode instantly without going through the toolbar.
 
 Click **✏** to enter coordinate edit mode:
 - **Drag** a vertex marker to move it

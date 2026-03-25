@@ -801,13 +801,20 @@ import "leaflet/dist/leaflet.css";
               </div>
             </div>
           </div>
-          <!-- Filter (visible once polygons are loaded) -->
-          <input
-            id="layer-filter"
-            type="search"
-            placeholder="Filtrer les polygones…"
-            style="margin-top:6px;width:100%;font-size:0.75rem;background:var(--color-surface-2);color:var(--color-text);border:1px solid var(--color-border);border-radius:4px;padding:3px 7px;outline:none;box-sizing:border-box;"
-          />
+          <!-- Filter + sort (visible once polygons are loaded) -->
+          <div style="display:flex;gap:4px;margin-top:6px;align-items:center;">
+            <input
+              id="layer-filter"
+              type="search"
+              placeholder="Filtrer les polygones…"
+              style="flex:1;min-width:0;font-size:0.75rem;background:var(--color-surface-2);color:var(--color-text);border:1px solid var(--color-border);border-radius:4px;padding:3px 7px;outline:none;box-sizing:border-box;"
+            />
+            <button
+              id="btn-sort-by-points"
+              title="Trier par nombre de points (décroissant)"
+              style="flex-shrink:0;font-size:0.7rem;padding:3px 6px;white-space:nowrap;background:var(--color-surface-2);color:var(--color-text-muted);border:1px solid var(--color-border);border-radius:4px;cursor:pointer;"
+            >⇅ pts</button>
+          </div>
           <div
             id="polygon-layer-list"
             style="margin-top:4px;display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto;"
@@ -1006,7 +1013,7 @@ import "leaflet/dist/leaflet.css";
       <!-- Hint overlay -->
       <div
         id="map-hint"
-        style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none;"
+        style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none;display:none;"
       >
         <div class="map-hint-inner">
           <span id="map-hint-text"
