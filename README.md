@@ -20,7 +20,7 @@
 - **Folder management** — create, rename, delete folders; drag polygons between folders or reorder them within a folder; per-folder KML export
 - **Resizable sidebar** — drag the right edge of the sidebar to any width between 180 px and 600 px; preference persisted across sessions
 - **Multi-polygon layers** — draw multiple territories; each appears in its folder; click to select and highlight; active polygon gets a colored border to stand out
-- **KML import** — import any KML 2.2 file, including large files (tested: 835 polygons, 1.3 MB); progress bar during import; all polygons from one file share a single color and folder
+- **KML import** — import any KML 2.2 file, including large files (tested: 835 polygons, 1.3 MB); progress bar during import; all polygons from one file share a single color and folder; map automatically fits to the imported area
 - **Snap / magnet tool** — 🧲 snap new points onto existing polygon paths to create shared boundaries between adjacent territories
 - **Split polygon** — ✂ cut a closed polygon into two by drawing a dividing line (road-following or straight, using the current mode); the two resulting polygons are created in a "territoires enfants" folder; supports Ctrl+Z undo
 - **Merge polygons** — ⊕ Ctrl+click two polygons to select them, then click Merge to fuse them into one; uses selective vertex snapping to align shared borders (tolerance 10 m); blocks non-adjacent polygons with an error; supports Ctrl+Z undo
@@ -99,11 +99,11 @@ Each polygon row shows:
 - **Right-click** anywhere in the panel for a context menu: create folder, rename folder, delete folder, move polygon to another folder
 - **Drag** a polygon row to reorder it (insert indicator appears as a green line) or drop it onto a folder header to move it
 
-Click any polygon row — or click directly on the polygon fill on the map — to switch the active polygon. The selected polygon is highlighted with a colored border and stronger fill; others are dimmed.
+Click any polygon row — or click directly on the polygon fill on the map — to switch the active polygon. The selected polygon is highlighted with a colored border and stronger fill; others are dimmed. Clicking a row in the layer panel also **fits the map view** to that polygon's bounds automatically.
 
 ### 5 — Import a KML file
 
-Click **⬆ Importer** in the *Polygones* panel header and select a KML 2.2 file. A progress bar shows import status — large files (800+ polygons) are processed in chunks to keep the UI responsive.
+Click **⬆ Importer** in the *Polygones* panel header and select a KML 2.2 file. A progress bar shows import status — large files (800+ polygons) are processed in chunks to keep the UI responsive. The map automatically fits to the imported area when the import completes.
 
 All polygons from the same import share a single color. Coordinate rings are automatically simplified (Douglas-Peucker) for dense geometry.
 

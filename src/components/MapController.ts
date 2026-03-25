@@ -1100,6 +1100,26 @@ export class MapController {
     this.notifyPolygonsChanged();
   }
 
+  /** Fit the map view to encompass all given coordinates. No-op if the array is empty. */
+  fitToCoordinates(coords: { lat: number; lng: number }[], padding = 32): void {
+    if (coords.length === 0) return;
+    if (this.isOsm && this.lMap) {
+      this.lMap.fitBounds(L.latLngBounds(coords.map(c => [c.lat, c.lng] as [number, number])), { padding: [padding, padding] });
+    } else if (this.gMap) {
+      const bounds = new google.maps.LatLngBounds();
+      for (const c of coords) bounds.extend(c);
+      this.gMap.fitBounds(bounds, padding);
+    }
+  }
+
+  /** Fit the map to a single polygon's bounds. No-op if the polygon has no coordinates. */
+  fitToPolygon(id: string, padding = 120): void {
+    const poly = this.polygons.find(p => p.id === id);
+    if (!poly) return;
+    const coords = poly.rawCoordinates ?? this.getPolygonFlatCoords(poly);
+    this.fitToCoordinates(coords, padding);
+  }
+
   getAllPolygonsForExport(): PolygonExportData[] {
     return this.polygons.filter((p) => p.isClosed).map((p) => this.buildExportData(p));
   }
@@ -1136,6 +1156,7 @@ export class MapController {
       byCategory.get(key)!.push(row);
     }
 
+    const allCoords: { lat: number; lng: number }[] = [];
     for (const [categoryName, categoryRows] of byCategory) {
       // Re-use existing group if already present (e.g. multiple CSV imports)
       let group = this.groups.find(g => g.name === categoryName && g.kind === "imported");
@@ -1165,9 +1186,11 @@ export class MapController {
           rawCoordinates: row.coordinates,
           nwsData: row.nwsData,
         });
+        allCoords.push(...row.coordinates);
       }
     }
     this.notifyPolygonsChanged();
+    this.fitToCoordinates(allCoords);
   }
 
   /**
@@ -1184,6 +1207,7 @@ export class MapController {
     const groupId = this.createImportGroup(groupName);
     // All polygons from the same KML batch share one color
     const { color, textColor } = polygonColor(this.polygons.length);
+    const allCoords: { lat: number; lng: number }[] = [];
     for (const parsed of polygons) {
       const path: [number, number][] = parsed.coordinates.map((c) => [c.lat, c.lng]);
       const id = crypto.randomUUID();
@@ -1204,9 +1228,11 @@ export class MapController {
         isClosed: true,
         rawCoordinates: parsed.coordinates,
       });
+      allCoords.push(...parsed.coordinates);
     }
     // Notify once after the full batch (not once per polygon)
     this.notifyPolygonsChanged();
+    this.fitToCoordinates(allCoords);
   }
 
   // ─── Polygon simplification ───────────────────────────────────────────────
