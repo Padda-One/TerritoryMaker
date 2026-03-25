@@ -12,77 +12,101 @@ import "leaflet/dist/leaflet.css";
 
     <!-- SEO -->
     <title>Territory Maker — Tracez et exportez vos territoires en KML</title>
-    <meta name="description" content="Outil web client-side pour délimiter des territoires sur Google Maps : tracé routier ou vol d'oiseau, gestion multi-polygones, import/export KML. Sans tracking, clé API chiffrée localement. Open source MIT." />
+    <meta
+      name="description"
+      content="Outil web client-side pour délimiter des territoires sur Google Maps : tracé routier ou vol d'oiseau, gestion multi-polygones, import/export KML. Sans tracking, clé API chiffrée localement. Open source MIT."
+    />
     <meta name="author" content="Paddaone" />
-    <meta name="keywords" content="territory maker, tracé territoire, carte territoire, KML export, Google Maps territoire, polygone KML, cartographie territoire, QGIS KML, territoire géographique" />
+    <meta
+      name="keywords"
+      content="territory maker, tracé territoire, carte territoire, KML export, Google Maps territoire, polygone KML, cartographie territoire, QGIS KML, territoire géographique"
+    />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://territory.paddaone.com/" />
     <meta property="og:site_name" content="Territory Maker" />
-    <meta property="og:title" content="Territory Maker — Tracez et exportez vos territoires en KML" />
-    <meta property="og:description" content="Délimitez des territoires sur Google Maps avec précision. Tracé routier ou vol d'oiseau, export KML vers Google Earth et QGIS. 100% client-side, sans tracking." />
-    <meta property="og:image" content="https://territory.paddaone.com/og-preview.png" />
+    <meta
+      property="og:title"
+      content="Territory Maker — Tracez et exportez vos territoires en KML"
+    />
+    <meta
+      property="og:description"
+      content="Délimitez des territoires sur Google Maps avec précision. Tracé routier ou vol d'oiseau, export KML vers Google Earth et QGIS. 100% client-side, sans tracking."
+    />
+    <meta
+      property="og:image"
+      content="https://territory.paddaone.com/og-preview.png"
+    />
     <meta property="og:locale" content="fr_FR" />
 
     <!-- Twitter/X Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Territory Maker — Tracez et exportez vos territoires en KML" />
-    <meta name="twitter:description" content="Délimitez des territoires sur Google Maps. Export KML. 100% client-side, sans tracking." />
-    <meta name="twitter:image" content="https://territory.paddaone.com/og-preview.png" />
+    <meta
+      name="twitter:title"
+      content="Territory Maker — Tracez et exportez vos territoires en KML"
+    />
+    <meta
+      name="twitter:description"
+      content="Délimitez des territoires sur Google Maps. Export KML. 100% client-side, sans tracking."
+    />
+    <meta
+      name="twitter:image"
+      content="https://territory.paddaone.com/og-preview.png"
+    />
 
     <!-- Structured data -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Territory Maker",
-      "applicationCategory": "UtilitiesApplication",
-      "operatingSystem": "Web Browser",
-      "url": "https://territory.paddaone.com",
-      "description": "Outil web client-side pour délimiter des territoires géographiques sur Google Maps. Combine segments routiers (Google Directions API) et lignes droites. Gestion multi-polygones avec dossiers, import/export KML vers Google Earth et QGIS. Clé API chiffrée localement (AES-GCM 256-bit). Zéro tracking, zéro backend.",
-      "featureList": [
-        "Tracé routier via Google Directions API",
-        "Tracé en ligne droite (vol d'oiseau)",
-        "Gestion multi-polygones et dossiers",
-        "Import et export KML",
-        "Compatibilité Google Earth et QGIS",
-        "Chiffrement local AES-GCM 256-bit",
-        "Sans tracking publicitaire",
-        "100% client-side",
-        "Open source MIT"
-      ],
-      "author": {
-        "@type": "Person",
-        "name": "Paddaone",
-        "url": "https://github.com/Padda-One"
-      },
-      "license": "https://opensource.org/licenses/MIT",
-      "softwareVersion": "1.0",
-      "inLanguage": "fr",
-      "isAccessibleForFree": true,
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "EUR"
-      },
-      "codeRepository": "https://github.com/Padda-One/TerritoryMaker"
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Territory Maker",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web Browser",
+        "url": "https://territory.paddaone.com",
+        "description": "Outil web client-side pour délimiter des territoires géographiques sur Google Maps. Combine segments routiers (Google Directions API) et lignes droites. Gestion multi-polygones avec dossiers, import/export KML vers Google Earth et QGIS. Clé API chiffrée localement (AES-GCM 256-bit). Zéro tracking, zéro backend.",
+        "featureList": [
+          "Tracé routier via Google Directions API",
+          "Tracé en ligne droite (vol d'oiseau)",
+          "Gestion multi-polygones et dossiers",
+          "Import et export KML",
+          "Compatibilité Google Earth et QGIS",
+          "Chiffrement local AES-GCM 256-bit",
+          "Sans tracking publicitaire",
+          "100% client-side",
+          "Open source MIT"
+        ],
+        "author": {
+          "@type": "Person",
+          "name": "Paddaone",
+          "url": "https://github.com/Padda-One"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "softwareVersion": "1.0",
+        "inLanguage": "fr",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        },
+        "codeRepository": "https://github.com/Padda-One/TerritoryMaker"
+      }
     </script>
 
     <!-- Video structured data -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "VideoObject",
-      "name": "Territory Maker — Présentation",
-      "description": "Démonstration de Territory Maker : tracé de territoires sur Google Maps, gestion multi-polygones, import/export KML.",
-      "thumbnailUrl": "https://territory.paddaone.com/videos/Territory_Maker_poster.avif",
-      "uploadDate": "2026-03-24",
-      "duration": "PT34S",
-      "contentUrl": "https://territory.paddaone.com/videos/Territory_Maker.mp4",
-      "embedUrl": "https://territory.paddaone.com/"
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        "name": "Territory Maker — Présentation",
+        "description": "Démonstration de Territory Maker : tracé de territoires sur Google Maps, gestion multi-polygones, import/export KML.",
+        "thumbnailUrl": "https://territory.paddaone.com/videos/Territory_Maker_poster.avif",
+        "uploadDate": "2026-03-24",
+        "duration": "PT34S",
+        "contentUrl": "https://territory.paddaone.com/videos/Territory_Maker.mp4",
+        "embedUrl": "https://territory.paddaone.com/"
+      }
     </script>
 
     <link rel="icon" type="image/svg+xml" href="/logo-TerritoryMaker.svg" />
@@ -93,8 +117,7 @@ import "leaflet/dist/leaflet.css";
       data-domain="territory.paddaone.com"
       data-api="https://territory.paddaone.com/3wpjej9/event"
       src="https://territory.paddaone.com/3wpjej9/script.outbound-links.js"
-      crossorigin="anonymous"
-    ></script>
+      crossorigin="anonymous"></script>
   </head>
 
   <body
@@ -132,7 +155,12 @@ import "leaflet/dist/leaflet.css";
               >Commencer</button
             >
           </div>
-          <button class="lp-hamburger" id="lp-hamburger" aria-label="Ouvrir le menu" aria-expanded="false">
+          <button
+            class="lp-hamburger"
+            id="lp-hamburger"
+            aria-label="Ouvrir le menu"
+            aria-expanded="false"
+          >
             <span class="lp-hamburger-bar"></span>
             <span class="lp-hamburger-bar"></span>
             <span class="lp-hamburger-bar"></span>
@@ -162,7 +190,19 @@ import "leaflet/dist/leaflet.css";
                   et QGIS.
                 </p>
                 <p class="lp-desktop-notice">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    ><rect x="2" y="3" width="20" height="14" rx="2"
+                    ></rect><path d="M8 21h8M12 17v4"></path></svg
+                  >
                   Outil conçu pour une utilisation sur ordinateur.
                 </p>
               </div>
@@ -248,21 +288,35 @@ import "leaflet/dist/leaflet.css";
           <div class="lp-nws-inner">
             <div class="glass-card lp-nws-card">
               <div class="lp-nws-logo-wrap">
-                <img src="/nws-logo.webp" alt="New World Scheduler" width="70" height="68" />
+                <img
+                  src="/nws-logo.webp"
+                  alt="New World Scheduler"
+                  width="70"
+                  height="68"
+                />
               </div>
               <div class="lp-nws-body">
                 <span class="lp-badge">Intégration native</span>
-                <h2 class="lp-nws-title">Compatible <strong>New World Scheduler</strong></h2>
+                <h2 class="lp-nws-title">
+                  Compatible <strong>New World Scheduler</strong>
+                </h2>
                 <p class="lp-nws-desc">
-                  Importez les fichiers CSV exportés par NWS, modifiez librement les frontières
-                  (découpe, fusion, édition de vertices), puis réexportez un CSV directement
-                  réimportable dans NWS. Toutes les métadonnées sont préservées tout au long du processus.
+                  Importez les fichiers CSV exportés par NWS, modifiez librement
+                  les frontières (découpe, fusion, édition de vertices), puis
+                  réexportez un CSV directement réimportable dans NWS. Toutes
+                  les métadonnées sont préservées tout au long du processus.
                 </p>
                 <ul class="lp-nws-list">
-                  <li>Import CSV NWS — TerritoryID, Category, Number, Suffix, Boundary…</li>
-                  <li>Découpe, fusion et édition de vertices sans perte de métadonnées</li>
-                  <li>Export CSV compatible réimport NWS</li>
-                  <li>Rapport de suppressions (CSV + Excel) généré automatiquement lors des fusions</li>
+                  <li>Import CSV NWS</li>
+                  <li>
+                    Découpe, fusion et édition de territoires sans perte de
+                    métadonnées
+                  </li>
+                  <li>Export CSV prêts à être réimportés dans NWS</li>
+                  <li>
+                    Rapport de suppressions (CSV + Excel) généré automatiquement
+                    lors des fusions
+                  </li>
                 </ul>
               </div>
             </div>
@@ -367,9 +421,8 @@ import "leaflet/dist/leaflet.css";
                 <div class="lp-feature-text">
                   <h3 class="lp-feature-title">Zéro Tracking</h3>
                   <p class="lp-feature-desc">
-                    Aucun cookie, aucune balise tierce. Les
-                    données restent rigoureusement limitées aux requêtes
-                    cartographiques.
+                    Aucun cookie, aucune balise tierce. Les données restent
+                    rigoureusement limitées aux requêtes cartographiques.
                   </p>
                 </div>
               </div>
@@ -570,7 +623,8 @@ import "leaflet/dist/leaflet.css";
                 href="https://github.com/Padda-One/TerritoryMaker"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="lp-inline-link">GitHub — https://github.com/Padda-One/TerritoryMaker</a
+                class="lp-inline-link"
+                >GitHub — https://github.com/Padda-One/TerritoryMaker</a
               >.
             </p>
           </div>
@@ -630,9 +684,7 @@ import "leaflet/dist/leaflet.css";
             <a href="/documentation" class="guide-link">
               📖 Pas encore de clé ? Guide pas à pas →
             </a>
-            <a href="/faq" class="guide-link">
-              ❓ FAQ →
-            </a>
+            <a href="/faq" class="guide-link"> ❓ FAQ → </a>
             <form
               id="key-form"
               style="display:flex;flex-direction:column;gap:8px;"
@@ -673,9 +725,7 @@ import "leaflet/dist/leaflet.css";
             <a href="/documentation" class="guide-link">
               📖 Consulter la documentation →
             </a>
-            <a href="/faq" class="guide-link">
-              ❓ FAQ →
-            </a>
+            <a href="/faq" class="guide-link"> ❓ FAQ → </a>
             <button
               id="btn-forget-key"
               class="btn btn-danger"
@@ -839,7 +889,8 @@ import "leaflet/dist/leaflet.css";
               id="btn-sort-by-points"
               title="Trier par nombre de points (décroissant)"
               style="flex-shrink:0;font-size:0.7rem;padding:3px 6px;white-space:nowrap;background:var(--color-surface-2);color:var(--color-text-muted);border:1px solid var(--color-border);border-radius:4px;cursor:pointer;"
-            >⇅ pts</button>
+              >⇅ pts</button
+            >
           </div>
           <div
             id="polygon-layer-list"
@@ -1019,13 +1070,28 @@ import "leaflet/dist/leaflet.css";
         >
 
         <!-- Split (visible when a closed polygon is active) -->
-        <button id="btn-split" class="snap-btn" title="Découper le polygone" style="display:none;">✂</button>
+        <button
+          id="btn-split"
+          class="snap-btn"
+          title="Découper le polygone"
+          style="display:none;">✂</button
+        >
 
         <!-- Merge (visible when exactly 2 polygons are selected) -->
-        <button id="btn-merge" class="snap-btn" title="Fusionner les polygones sélectionnés" style="display:none;">⊕</button>
+        <button
+          id="btn-merge"
+          class="snap-btn"
+          title="Fusionner les polygones sélectionnés"
+          style="display:none;">⊕</button
+        >
 
         <!-- Undo Split/Merge -->
-        <button id="btn-undo-split-merge" class="snap-btn" title="Annuler la dernière opération Split/Merge" style="display:none;">⊗</button>
+        <button
+          id="btn-undo-split-merge"
+          class="snap-btn"
+          title="Annuler la dernière opération Split/Merge"
+          style="display:none;">⊗</button
+        >
       </div>
 
       <!-- Map loading overlay -->
@@ -1076,22 +1142,42 @@ import "leaflet/dist/leaflet.css";
           onclick="document.getElementById('simplify-confirm-modal').style.display='none'"
           aria-label="Fermer"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-            ><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
           >
         </button>
         <div class="lp-modal-body">
-          <h2 class="lp-modal-title" style="font-size:1rem;">Convertir les tracés en zones ?</h2>
+          <h2 class="lp-modal-title" style="font-size:1rem;">
+            Convertir les tracés en zones ?
+          </h2>
           <p style="margin:0.75rem 0 0.5rem;">
-            <span id="simplify-drawn-count">0</span> tracé(s) fermé(s) ne peuvent pas être simplifiés
-            directement. Pour les inclure, ils doivent d'abord être convertis en zones.
+            <span id="simplify-drawn-count">0</span> tracé(s) fermé(s) ne peuvent
+            pas être simplifiés directement. Pour les inclure, ils doivent d'abord
+            être convertis en zones.
           </p>
-          <p style="margin:0 0 1.25rem;color:var(--color-accent-orange,#e67e22);font-size:0.85rem;">
+          <p
+            style="margin:0 0 1.25rem;color:var(--color-accent-orange,#e67e22);font-size:0.85rem;"
+          >
             ⚠ Cette action est irréversible — le tracé routier sera perdu.
           </p>
           <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
-            <button id="btn-simplify-cancel" class="btn btn-secondary">Annuler</button>
-            <button id="btn-simplify-confirm" class="btn btn-danger">Convertir et simplifier</button>
+            <button id="btn-simplify-cancel" class="btn btn-secondary"
+              >Annuler</button
+            >
+            <button id="btn-simplify-confirm" class="btn btn-danger"
+              >Convertir et simplifier</button
+            >
           </div>
         </div>
       </div>
@@ -1110,37 +1196,67 @@ import "leaflet/dist/leaflet.css";
           onclick="document.getElementById('modal-nws-access').style.display='none'"
           aria-label="Fermer"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
+          >
         </button>
         <div class="lp-modal-body">
-          <h2 class="lp-modal-title" style="font-size:1.25rem;">Fusion de territoires NWS</h2>
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">
+            Fusion de territoires NWS
+          </h2>
           <p style="color:var(--color-text-muted);font-size:0.9rem;margin:0;">
             Avez-vous accès à NWS en ce moment ?
           </p>
-          <p style="color:var(--color-text-muted);font-size:0.78rem;margin:0;opacity:0.75;">
-            Cette réponse sera mémorisée pour toutes les fusions de cette session.
+          <p
+            style="color:var(--color-text-muted);font-size:0.78rem;margin:0;opacity:0.75;"
+          >
+            Cette réponse sera mémorisée pour toutes les fusions de cette
+            session.
           </p>
           <div style="display:flex;gap:10px;margin-top:8px;">
-            <button id="btn-nws-access-yes" class="btn btn-primary" style="flex:1;">Oui, j'ai NWS sous la main</button>
-            <button id="btn-nws-access-no" class="btn btn-secondary" style="flex:1;">Non, je verrai plus tard</button>
+            <button
+              id="btn-nws-access-yes"
+              class="btn btn-primary"
+              style="flex:1;">Oui, j'ai NWS sous la main</button
+            >
+            <button
+              id="btn-nws-access-no"
+              class="btn btn-secondary"
+              style="flex:1;">Non, je verrai plus tard</button
+            >
           </div>
         </div>
       </div>
     </div>
 
     <!-- ── NWS modal 2 : choix du territoire à conserver ──────────────────── -->
-    <div
-      id="modal-nws-keep"
-      class="lp-modal"
-      style="display:none"
-    >
+    <div id="modal-nws-keep" class="lp-modal" style="display:none">
       <div class="lp-modal-card" style="max-width:520px;">
         <div class="lp-modal-body">
-          <h2 class="lp-modal-title" style="font-size:1.25rem;">Quel territoire conserver ?</h2>
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">
+            Quel territoire conserver ?
+          </h2>
           <p style="color:var(--color-text-muted);font-size:0.84rem;margin:0;">
-            De préférence celui dont la <strong>date d'attribution est la plus récente</strong> dans NWS.
+            De préférence celui dont la <strong
+              >date d'attribution est la plus récente</strong
+            > dans NWS.
           </p>
-          <div id="nws-keep-options" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
+          <div
+            id="nws-keep-options"
+            style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"
+          >
+          </div>
         </div>
       </div>
     </div>
@@ -1158,21 +1274,57 @@ import "leaflet/dist/leaflet.css";
           onclick="document.getElementById('modal-nws-suppressions').style.display='none'"
           aria-label="Fermer"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            ><line x1="18" y1="6" x2="6" y2="18"></line><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"></line></svg
+          >
         </button>
         <div class="lp-modal-body">
-          <h2 class="lp-modal-title" style="font-size:1.25rem;">Suppressions à effectuer dans NWS</h2>
-          <div id="nws-suppressions-content" style="display:flex;flex-direction:column;gap:24px;"></div>
+          <h2 class="lp-modal-title" style="font-size:1.25rem;">
+            Suppressions à effectuer dans NWS
+          </h2>
+          <div
+            id="nws-suppressions-content"
+            style="display:flex;flex-direction:column;gap:24px;"
+          >
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-            <button id="btn-suppressions-csv" class="btn btn-secondary" style="font-size:0.82rem;">⬇ Télécharger CSV</button>
-            <button id="btn-suppressions-xlsx" class="btn btn-secondary" style="font-size:0.82rem;">⬇ Télécharger Excel</button>
-            <button id="btn-suppressions-print" class="btn btn-secondary" style="font-size:0.82rem;" onclick="window.print()">🖨 Imprimer / PDF</button>
-            <button id="btn-suppressions-continue" class="btn btn-primary" style="font-size:0.82rem;margin-left:auto;">Continuer l'export →</button>
+            <button
+              id="btn-suppressions-csv"
+              class="btn btn-secondary"
+              style="font-size:0.82rem;">⬇ Télécharger CSV</button
+            >
+            <button
+              id="btn-suppressions-xlsx"
+              class="btn btn-secondary"
+              style="font-size:0.82rem;">⬇ Télécharger Excel</button
+            >
+            <button
+              id="btn-suppressions-print"
+              class="btn btn-secondary"
+              style="font-size:0.82rem;"
+              onclick="window.print()">🖨 Imprimer / PDF</button
+            >
+            <button
+              id="btn-suppressions-continue"
+              class="btn btn-primary"
+              style="font-size:0.82rem;margin-left:auto;"
+              >Continuer l'export →</button
+            >
           </div>
         </div>
       </div>
     </div>
-
   </body>
 </html>
 
@@ -1195,10 +1347,13 @@ import "leaflet/dist/leaflet.css";
       navLinks.classList.remove("open");
       hamburger.classList.remove("open");
       hamburger.setAttribute("aria-expanded", "false");
-    })
+    }),
   );
   document.addEventListener("click", (e) => {
-    if (!hamburger.contains(e.target as Node) && !navLinks.contains(e.target as Node)) {
+    if (
+      !hamburger.contains(e.target as Node) &&
+      !navLinks.contains(e.target as Node)
+    ) {
       navLinks.classList.remove("open");
       hamburger.classList.remove("open");
       hamburger.setAttribute("aria-expanded", "false");
