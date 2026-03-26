@@ -2216,7 +2216,7 @@ export function loadGoogleMapsScript(apiKey: string): Promise<void> {
     }, 15_000);
 
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=geometry&callback=${callbackName}`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=geometry&callback=${callbackName}&loading=async`;
     script.async = true;
     script.defer = true;
     script.onerror = () => {

@@ -40,6 +40,7 @@ export class RouteUI {
 
   private sortByPoints = false;
   private sharedMode = false;
+  private sharedApiKey: string | null = null;
 
   // NWS session state
   private isNwsSession = false;
@@ -89,6 +90,7 @@ export class RouteUI {
 
     if (config.mode === "shared" && config.mapsJsKey) {
       this.sharedMode = true;
+      this.sharedApiKey = config.mapsJsKey;
       this.updateKeySection(true);
       try {
         await this.exitLanding(config.mapsJsKey);
@@ -432,7 +434,9 @@ export class RouteUI {
     this.isMapLoaded = false;
     this.currentWaypoints = [];
     this.currentSegments = [];
-    const apiKey = await ApiKeyManager.loadKey().catch(() => null);
+    const apiKey = (this.sharedMode && this.sharedApiKey)
+      ? this.sharedApiKey
+      : await ApiKeyManager.loadKey().catch(() => null);
     if (apiKey) await this.initMap(apiKey, viewState);
   }
 
@@ -717,8 +721,8 @@ export class RouteUI {
       downloadText(csv, "Suppressions_NWS.csv");
     });
 
-    document.getElementById("btn-suppressions-xlsx")?.addEventListener("click", () => {
-      const blob = buildSuppressionsXlsx(this.suppressionAFaire, this.suppressionAControler);
+    document.getElementById("btn-suppressions-xlsx")?.addEventListener("click", async () => {
+      const blob = await buildSuppressionsXlsx(this.suppressionAFaire, this.suppressionAControler);
       downloadBlob(blob, "Suppressions_NWS.xlsx");
     });
 

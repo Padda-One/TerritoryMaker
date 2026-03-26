@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.3.0] — 2026-03-26
+
+### Added
+
+- **Favicon** — multi-size `.ico` (16 × 32 × 48 px), `favicon-48x48.png`, and `apple-touch-icon.png` added to satisfy Google Search favicon requirements. Declared in `<head>` of all pages alongside the existing SVG.
+- **HTTP security headers** — `public/_headers` (Cloudflare Pages) now sets `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and `Strict-Transport-Security` on all responses.
+- **CORS origin restriction on `/api/config`** — requests carrying an `Origin` header other than `https://territory.paddaone.com` are rejected with HTTP 403. Responses include `Access-Control-Allow-Origin` and `Vary: Origin`.
+
+### Changed
+
+- **Excel export migrated from SheetJS to `write-excel-file`** — removes two unpatched vulnerabilities (Prototype Pollution, ReDoS) present in SheetJS 0.18.x; bundle size reduced by ~770 KB. API is identical from the user's perspective.
+- **Google Maps SDK loaded with `loading=async`** — suppresses the suboptimal-performance warning in the browser console.
+
+### Fixed
+
+- **OSM provider toggle broken in shared API key mode** — switching the map provider triggered a full map re-initialisation that called `ApiKeyManager.loadKey()`, which returns `null` in shared mode (key comes from `/api/config`, not local storage). The shared key is now stored in `RouteUI.sharedApiKey` and used as fallback in `switchProvider()`.
+- **Webhook Bearer token comparison** — replaced `===` string comparison with `crypto.subtle.timingSafeEqual()` to prevent timing-based secret inference. A length pre-check avoids the exception thrown when buffers differ in size.
+- **TypeScript: `timingSafeEqual` not found on `SubtleCrypto`** — added `"lib": ["ES2022"]` to `functions/tsconfig.json` to exclude conflicting DOM type definitions and let `@cloudflare/workers-types` be the sole source for Web API types.
+
+---
+
 ## [0.2.0] — 2026-03-25
 
 ### Added
