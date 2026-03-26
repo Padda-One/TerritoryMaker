@@ -6,7 +6,8 @@
 import type { NWSData } from "./NwsCsvImporter.ts";
 import { nwsDisplayName } from "./NwsCsvImporter.ts";
 import type { PolygonExportData } from "./MapController.ts";
-import * as XLSX from "xlsx";
+import writeXlsxFile from "write-excel-file/browser";
+import type { Row } from "write-excel-file/browser";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -230,64 +231,46 @@ export function buildSuppressionsCsv(
 
 // ─── Suppression report — Excel ───────────────────────────────────────────────
 
-export function buildSuppressionsXlsx(
+function buildSheet(headers: string[], records: Record<string, string>[]): Row[] {
+  return [
+    headers.map(h => ({ value: h, fontWeight: "bold" as const })),
+    ...records.map(r => headers.map(h => r[h] ?? "")),
+  ];
+}
+
+export async function buildSuppressionsXlsx(
   aFaire: SuppressionAFaire[],
   aControler: SuppressionAControler[],
-): Blob {
-  const wb = XLSX.utils.book_new();
+): Promise<Blob> {
+  const sheets: Row[][] = [];
+  const sheetNames: string[] = [];
 
   if (aFaire.length > 0) {
-    const data = aFaire.map(r => ({
-      TerritoryID: r.TerritoryID,
-      CategoryCode: r.CategoryCode,
-      Category: r.Category,
-      Number: r.Number,
-      Suffix: r.Suffix,
-      Area: r.Area,
-      Type: r.Type,
-      Link1: r.Link1,
-      Link2: r.Link2,
-      CustomNotes1: r.CustomNotes1,
-      CustomNotes2: r.CustomNotes2,
-      MergedInto_TerritoryID: r.MergedInto_TerritoryID,
-      Instructions_MyMaps: r.Instructions_MyMaps,
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "Suppressions à faire");
+    sheets.push(buildSheet(
+      ["TerritoryID","CategoryCode","Category","Number","Suffix","Area","Type",
+       "Link1","Link2","CustomNotes1","CustomNotes2","MergedInto_TerritoryID","Instructions_MyMaps"],
+      aFaire as unknown as Record<string, string>[],
+    ));
+    sheetNames.push("Suppressions à faire");
   }
 
   if (aControler.length > 0) {
-    const data = aControler.map(r => ({
-      TerritoryID_new: r.TerritoryID_new,
-      CategoryCode_new: r.CategoryCode_new,
-      Category_new: r.Category_new,
-      Number_new: r.Number_new,
-      Suffix_new: r.Suffix_new,
-      Area_new: r.Area_new,
-      Type_new: r.Type_new,
-      Link1_new: r.Link1_new,
-      Link2_new: r.Link2_new,
-      CustomNotes1_new: r.CustomNotes1_new,
-      CustomNotes2_new: r.CustomNotes2_new,
-      TerritoryID_old: r.TerritoryID_old,
-      CategoryCode_old: r.CategoryCode_old,
-      Category_old: r.Category_old,
-      Number_old: r.Number_old,
-      Suffix_old: r.Suffix_old,
-      Area_old: r.Area_old,
-      Type_old: r.Type_old,
-      Link1_old: r.Link1_old,
-      Link2_old: r.Link2_old,
-      CustomNotes1_old: r.CustomNotes1_old,
-      CustomNotes2_old: r.CustomNotes2_old,
-      Instructions: r.Instructions,
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "À contrôler dans NWS");
+    sheets.push(buildSheet(
+      ["TerritoryID_new","CategoryCode_new","Category_new","Number_new","Suffix_new",
+       "Area_new","Type_new","Link1_new","Link2_new","CustomNotes1_new","CustomNotes2_new",
+       "TerritoryID_old","CategoryCode_old","Category_old","Number_old","Suffix_old",
+       "Area_old","Type_old","Link1_old","Link2_old","CustomNotes1_old","CustomNotes2_old",
+       "Instructions"],
+      aControler as unknown as Record<string, string>[],
+    ));
+    sheetNames.push("À contrôler dans NWS");
   }
 
-  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-  return new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  if (sheets.length === 0) {
+    return new Blob([], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  }
+
+  return writeXlsxFile(sheets, { sheets: sheetNames });
 }
 
 // ─── File download helper ─────────────────────────────────────────────────────

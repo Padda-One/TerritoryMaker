@@ -42,7 +42,17 @@ interface BudgetAlertPayload {
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const auth = request.headers.get("Authorization");
-  if (!env.WEBHOOK_SECRET || auth !== `Bearer ${env.WEBHOOK_SECRET}`) {
+  if (!env.WEBHOOK_SECRET || !auth) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const enc = new TextEncoder();
+  const provided = enc.encode(auth);
+  const expected = enc.encode(`Bearer ${env.WEBHOOK_SECRET}`);
+  if (provided.length !== expected.length) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const match = crypto.subtle.timingSafeEqual(provided, expected);
+  if (!match) {
     return new Response("Unauthorized", { status: 401 });
   }
 
