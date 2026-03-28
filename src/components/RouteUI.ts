@@ -23,8 +23,8 @@ import {
   downloadText, downloadBlob,
   type SuppressionAFaire, type SuppressionAControler,
 } from "./NwsCsvExporter.ts";
-import type { Waypoint, ResolvedSegment, SegmentMode } from "./SegmentRouter.ts";
-import type { GroupInfo, MapProvider, NWSData } from "./MapController.ts";
+import type { Waypoint, ResolvedSegment, SegmentMode, TravelMode } from "./SegmentRouter.ts";
+import type { GroupInfo, MapProvider, NWSData, RoutingProvider } from "./MapController.ts";
 
 type MapTheme = "dark" | "light" | "satellite" | "terrain";
 type AppTheme = "dark" | "light" | "system";
@@ -41,6 +41,8 @@ export class RouteUI {
   private sortByPoints = false;
   private sharedMode = false;
   private sharedApiKey: string | null = null;
+  private orsApiKey = "";
+  private routingProvider: RoutingProvider = "ors";
 
   // NWS session state
   private isNwsSession = false;
@@ -81,13 +83,27 @@ export class RouteUI {
     this.bindLayerListResize();
     this.bindSnapToggle();
     this.bindProviderToggle();
+    this.bindRoutingProviderToggle();
     this.bindSidebarResize();
     this.bindContextMenu();
     this.bindLayerPanel();
 
-    // Check server config (shared key or fallback mode)
+    // Always fetch config first (ORS key + shared Google Maps key)
     const config = await this.fetchConfig();
+    this.orsApiKey = config.orsKey ?? "";
 
+    const mapProvider = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
+    this.routingProvider = (localStorage.getItem("tm_routing_provider") ?? "ors") as RoutingProvider;
+    const needsGoogleKey = mapProvider === "google" || this.routingProvider === "google";
+
+    // ── OSM map + ORS routing — no Google key needed, load immediately ─────────
+    if (!needsGoogleKey) {
+      this.updateKeySection(true);
+      await this.exitLanding(null);
+      return;
+    }
+
+    // ── Google key needed — existing shared/fallback flow ───────────────────────
     if (config.mode === "shared" && config.mapsJsKey) {
       this.sharedMode = true;
       this.sharedApiKey = config.mapsJsKey;
@@ -123,7 +139,7 @@ export class RouteUI {
         // Saved key is invalid — clear it, rebind form first (clones DOM), then show error
         ApiKeyManager.forgetKey();
         this.updateKeySection(false);
-        this.bindLandingForm(); // replaces #landing-error node — must run before touching it
+        this.bindLandingForm();
         const errorEl = document.getElementById("landing-error");
         if (errorEl) {
           errorEl.textContent = err instanceof Error ? err.message : "Clé API invalide.";
@@ -140,11 +156,11 @@ export class RouteUI {
 
   // ─── Server config ────────────────────────────────────────────────────────────
 
-  private async fetchConfig(): Promise<{ mode: "shared" | "fallback"; mapsJsKey?: string }> {
+  private async fetchConfig(): Promise<{ mode: "shared" | "fallback"; mapsJsKey?: string; orsKey?: string }> {
     try {
       const res = await fetch("/api/config");
       if (!res.ok) return { mode: "fallback" };
-      return (await res.json()) as { mode: "shared" | "fallback"; mapsJsKey?: string };
+      return (await res.json()) as { mode: "shared" | "fallback"; mapsJsKey?: string; orsKey?: string };
     } catch {
       return { mode: "fallback" };
     }
@@ -197,6 +213,15 @@ export class RouteUI {
   }
 
   private updateKeySection(hasKey: boolean): void {
+    const mapProvider = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
+    const routingProvider = (localStorage.getItem("tm_routing_provider") ?? "ors") as RoutingProvider;
+    const needsGoogleKey = mapProvider === "google" || routingProvider === "google";
+
+    const googleKeySection = document.getElementById("google-key-section");
+    if (googleKeySection) googleKeySection.style.display = needsGoogleKey ? "" : "none";
+
+    if (!needsGoogleKey) return;
+
     const formSection = document.getElementById("key-form-section");
     const storedSection = document.getElementById("key-stored-section");
     const sharedSection = document.getElementById("shared-key-section");
@@ -226,7 +251,7 @@ export class RouteUI {
   // ─── Landing page ─────────────────────────────────────────────────────────────
 
   /** Animates the landing out, then initialises the map. */
-  private async exitLanding(key: string): Promise<void> {
+  private async exitLanding(key: string | null): Promise<void> {
     // rethrow=true: errors surface to the caller (form handler or init startup)
     await this.initMap(key, undefined, true);
     const landing = document.getElementById("landing-page");
@@ -371,9 +396,10 @@ export class RouteUI {
   // ─── Map init ────────────────────────────────────────────────────────────────
 
   private async initMap(
-    apiKey: string,
+    apiKey: string | null,
     initialView?: { center: { lat: number; lng: number }; zoom: number },
     rethrow = false,
+    routingProvider?: RoutingProvider,
   ): Promise<void> {
     const mapEl = this.el("map");
     this.showMapPanel();
@@ -400,8 +426,10 @@ export class RouteUI {
       this.mapController.onLoadingChange = (loading) => this.showMapLoading(loading);
       this.mapController.onClosedChanged = (closed) => this.handleClosedChanged(closed);
 
-      const provider = (localStorage.getItem("tm_map_provider") ?? "google") as MapProvider;
-      await this.mapController.init(apiKey, mapEl, provider, initialView);
+      const provider = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
+      const rp = routingProvider ?? this.routingProvider;
+      await this.mapController.init(apiKey, mapEl, provider, rp, initialView);
+      this.mapController.setOrsApiKey(this.orsApiKey);
 
       // Apply saved map theme
       const savedMapTheme = (localStorage.getItem("tm_map_theme") ?? "dark") as MapTheme;
@@ -434,10 +462,29 @@ export class RouteUI {
     this.isMapLoaded = false;
     this.currentWaypoints = [];
     this.currentSegments = [];
+
+    const mapProvider = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
+    const needsGoogleKey = mapProvider === "google" || this.routingProvider === "google";
+
+    if (!needsGoogleKey) {
+      await this.initMap(null, viewState);
+      return;
+    }
+
+    // Google key needed
     const apiKey = (this.sharedMode && this.sharedApiKey)
       ? this.sharedApiKey
       : await ApiKeyManager.loadKey().catch(() => null);
-    if (apiKey) await this.initMap(apiKey, viewState);
+
+    if (apiKey) {
+      await this.initMap(apiKey, viewState);
+    } else {
+      // No key available — prompt user in settings panel
+      this.updateKeySection(false);
+      this.showSettingsPanel();
+      this.showFallbackNotice();
+      this.bindLandingForm();
+    }
   }
 
   // ─── Segment mode toggle ─────────────────────────────────────────────────────
@@ -478,9 +525,7 @@ export class RouteUI {
     for (const { id, mode } of buttons) {
       document.getElementById(id)?.addEventListener("click", () => {
         if (!this.mapController) return;
-        const travelMode =
-          google.maps.TravelMode[mode as keyof typeof google.maps.TravelMode];
-        this.mapController.setTravelMode(travelMode);
+        this.mapController.setTravelMode(mode as TravelMode);
         this.renderTransportButtons(mode);
       });
     }
@@ -1593,13 +1638,14 @@ export class RouteUI {
   private bindProviderToggle(): void {
     const btn = document.getElementById("btn-provider-toggle");
     if (!btn) return;
-    const saved = (localStorage.getItem("tm_map_provider") ?? "google") as MapProvider;
+    const saved = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
     this.updateProviderBtn(btn, saved);
     btn.addEventListener("click", async () => {
-      const current = (localStorage.getItem("tm_map_provider") ?? "google") as MapProvider;
+      const current = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
       const next: MapProvider = current === "google" ? "osm" : "google";
       localStorage.setItem("tm_map_provider", next);
       this.updateProviderBtn(btn, next);
+      this.updateKeySection(this.isMapLoaded);
       if (this.isMapLoaded) await this.switchProvider();
     });
   }
@@ -1611,6 +1657,69 @@ export class RouteUI {
       img.alt = provider === "google" ? "Google Maps" : "OpenStreetMap";
     }
     btn.classList.toggle("active-provider-osm", provider === "osm");
+  }
+
+  // ─── Routing provider toggle ─────────────────────────────────────────────────
+
+  private bindRoutingProviderToggle(): void {
+    const picker = document.getElementById("routing-provider-picker");
+    if (!picker) return;
+    const saved = (localStorage.getItem("tm_routing_provider") ?? "ors") as RoutingProvider;
+    this.routingProvider = saved;
+    this.updateRoutingBtn(saved);
+    picker.querySelectorAll<HTMLButtonElement>(".theme-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const next = btn.dataset.value as RoutingProvider;
+        if (next === this.routingProvider) return;
+        localStorage.setItem("tm_routing_provider", next);
+        this.routingProvider = next;
+        this.updateRoutingBtn(next);
+        this.updateKeySection(this.isMapLoaded);
+        if (this.isMapLoaded) await this.switchRoutingProvider();
+      });
+    });
+  }
+
+  private updateRoutingBtn(provider: RoutingProvider): void {
+    const picker = document.getElementById("routing-provider-picker");
+    if (!picker) return;
+    picker.querySelectorAll<HTMLButtonElement>(".theme-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.value === provider);
+    });
+  }
+
+  private async switchRoutingProvider(): Promise<void> {
+    const routingProvider = (localStorage.getItem("tm_routing_provider") ?? "ors") as RoutingProvider;
+    const mapProvider = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
+    const needsGoogleKey = mapProvider === "google" || routingProvider === "google";
+
+    if (!needsGoogleKey) {
+      // Switch to ORS: just update routing provider on controller, no Google needed
+      this.mapController?.setRoutingProvider("ors");
+      this.updateKeySection(true);
+      return;
+    }
+
+    // Switching to Google routing: need Google SDK + key
+    // We must recreate the map controller with new routing provider
+    const viewState = this.mapController?.getViewState() ?? undefined;
+    this.mapController?.destroy();
+    this.mapController = null;
+    this.isMapLoaded = false;
+    this.currentWaypoints = [];
+    this.currentSegments = [];
+
+    const apiKey = (this.sharedMode && this.sharedApiKey)
+      ? this.sharedApiKey
+      : await ApiKeyManager.loadKey().catch(() => null);
+    if (apiKey) {
+      await this.initMap(apiKey, viewState, false, routingProvider);
+    } else {
+      this.updateKeySection(false);
+      this.showSettingsPanel();
+      this.showFallbackNotice();
+      this.bindLandingForm();
+    }
   }
 
   // ─── Waypoint list ───────────────────────────────────────────────────────────

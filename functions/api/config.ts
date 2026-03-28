@@ -1,6 +1,7 @@
 interface Env {
   TERRITORY_CONFIG: KVNamespace;
   GOOGLE_MAPS_JS_KEY: string;
+  ORS_KEY: string;
 }
 
 /**
@@ -29,12 +30,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
   const fallback = (await env.TERRITORY_CONFIG.get("fallback_mode")) === "true";
 
+  const orsKey = env.ORS_KEY ?? undefined;
+
   if (fallback || !env.GOOGLE_MAPS_JS_KEY) {
-    return Response.json({ mode: "fallback" }, { headers: corsHeaders });
+    return Response.json({ mode: "fallback", orsKey }, { headers: corsHeaders });
   }
 
   return Response.json(
-    { mode: "shared", mapsJsKey: env.GOOGLE_MAPS_JS_KEY },
+    { mode: "shared", mapsJsKey: env.GOOGLE_MAPS_JS_KEY, orsKey },
     { headers: corsHeaders },
   );
 };
