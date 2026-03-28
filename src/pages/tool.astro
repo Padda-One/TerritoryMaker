@@ -99,9 +99,7 @@ import "leaflet/dist/leaflet.css";
               id="landing-key-hint"
               style="margin:6px 0 0;font-size:0.75rem;color:var(--color-text-muted);"
             >
-              Nécessite <strong>Maps JavaScript API</strong> et <strong
-                >Directions API</strong
-              > activées dans Google Cloud Console.
+              Nécessite <strong>Maps JavaScript API</strong> activée dans Google Cloud Console.
             </p>
             <div
               id="landing-error"
@@ -262,8 +260,8 @@ import "leaflet/dist/leaflet.css";
         id="settings-panel"
         style="display:flex;flex-direction:column;flex:1;overflow-y:auto;"
       >
-        <!-- API Key section -->
-        <div class="settings-section">
+        <!-- API Key section (only relevant for Google Maps provider) -->
+        <div id="google-key-section" class="settings-section">
           <p class="settings-section-title">Clé Google Maps API</p>
 
           <!-- Shared key section (shown in shared mode) -->
@@ -301,8 +299,6 @@ import "leaflet/dist/leaflet.css";
             >
               Nécessite l'activation de <strong style="color:var(--color-text);"
                 >Maps JavaScript API</strong
-              >
-              et <strong style="color:var(--color-text);">Directions API</strong
               >.
             </p>
             <a href="/documentation" class="guide-link">
@@ -398,6 +394,30 @@ import "leaflet/dist/leaflet.css";
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Routing provider section -->
+        <div class="settings-section">
+          <p class="settings-section-title">Calcul d'itinéraires</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <p class="settings-row-label" style="margin:0;">Fournisseur</p>
+            <div class="theme-picker" id="routing-provider-picker">
+              <button
+                id="btn-routing-ors"
+                class="theme-btn"
+                data-value="ors"
+              >ORS</button>
+              <button
+                id="btn-routing-google"
+                class="theme-btn"
+                data-value="google"
+              >Google</button>
+            </div>
+          </div>
+          <p style="margin:6px 0 0;font-size:0.73rem;color:var(--color-text-muted);line-height:1.5;">
+            ORS (OpenRouteService) : gratuit, sans clé requise.<br>
+            Google : nécessite une clé Maps JavaScript API.
+          </p>
         </div>
 
         <!-- Appearance section -->
@@ -686,7 +706,7 @@ import "leaflet/dist/leaflet.css";
         <button
           id="btn-provider-toggle"
           class="snap-btn"
-          title="Basculer le fournisseur de carte (OpenStreetMap = affichage uniquement, calcul des trajets toujours via Google)"
+          title="Basculer le fournisseur de carte (affichage uniquement)"
           ><img
             id="btn-provider-icon"
             src="/gm.avif"

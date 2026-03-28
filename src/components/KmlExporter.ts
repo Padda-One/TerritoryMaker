@@ -31,7 +31,7 @@ function buildCoordinates(segments: ResolvedSegment[]): string {
     const start = i === 0 ? 0 : 1;
     for (let j = start; j < seg.path.length; j++) {
       const pt = seg.path[j]!;
-      coords.push(`${pt.lng().toFixed(7)},${pt.lat().toFixed(7)},0`);
+      coords.push(`${pt.lng.toFixed(7)},${pt.lat.toFixed(7)},0`);
     }
   }
 

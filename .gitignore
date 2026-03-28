@@ -39,6 +39,7 @@ scripts/handoff.sh
 
 # Cloudflare / Wrangler
 .wrangler/
+.dev.vars
 
 # TypeScript cache
 *.tsbuildinfo
