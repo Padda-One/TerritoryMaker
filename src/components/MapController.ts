@@ -1489,6 +1489,16 @@ export class MapController {
 
   // ─── Snap / magnet tool ────────────────────────────────────────────────────
 
+  /** Haversine distance in metres between two LatLng-like objects. */
+  private distanceMeters(a: { lat(): number; lng(): number }, b: { lat(): number; lng(): number }): number {
+    const R = 6_371_000;
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const φ1 = toRad(a.lat()), φ2 = toRad(b.lat());
+    const Δφ = toRad(b.lat() - a.lat()), Δλ = toRad(b.lng() - a.lng());
+    const s = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+  }
+
   setSnapMode(enabled: boolean): void {
     this.snapMode = enabled;
     if (enabled) {
@@ -1541,18 +1551,18 @@ export class MapController {
       if (p.id === poly.id || p.waypoints.length === 0) continue;
       for (const wp of p.waypoints) {
         const vertex = new google.maps.LatLng(wp.lat, wp.lng);
-        const dist = google.maps.geometry.spherical.computeDistanceBetween(mousePos, vertex);
+        const dist = this.distanceMeters(mousePos, vertex);
         if (dist < threshold && dist < closestDist) { closestDist = dist; closest = vertex; }
         if (wp.segment) {
           for (const pt of wp.segment.path) {
-            const d = google.maps.geometry.spherical.computeDistanceBetween(mousePos, pt);
+            const d = this.distanceMeters(mousePos, pt);
             if (d < threshold && d < closestDist) { closestDist = d; closest = pt; }
           }
         }
       }
       if (p.closingSegment) {
         for (const pt of p.closingSegment.path) {
-          const d = google.maps.geometry.spherical.computeDistanceBetween(mousePos, pt);
+          const d = this.distanceMeters(mousePos, pt);
           if (d < threshold && d < closestDist) { closestDist = d; closest = pt; }
         }
       }
@@ -1569,7 +1579,7 @@ export class MapController {
     let closestDist = Infinity;
 
     const checkPt = (pt: google.maps.LatLng) => {
-      const d = google.maps.geometry.spherical.computeDistanceBetween(mousePos, pt);
+      const d = this.distanceMeters(mousePos, pt);
       if (d < threshold && d < closestDist) { closestDist = d; closest = pt; }
     };
 
@@ -2216,7 +2226,7 @@ export function loadGoogleMapsScript(apiKey: string): Promise<void> {
     }, 15_000);
 
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=geometry&callback=${callbackName}&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&callback=${callbackName}&loading=async`;
     script.async = true;
     script.defer = true;
     script.onerror = () => {
