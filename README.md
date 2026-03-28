@@ -4,7 +4,7 @@
 
 # Territory Maker
 
-**Territory Maker** is an open-source, fully client-side web app that lets you draw geographic territories on a map by mixing road-following segments (via the Google Directions API) and straight-line segments, then export the result as KML Polygon files ready for use in Google Earth, QGIS, or any GIS tool.
+**Territory Maker** is an open-source, fully client-side web app that lets you draw geographic territories on a map by mixing road-following segments (via OpenRouteService by default, or Google Directions API optionally) and straight-line segments, then export the result as KML Polygon files ready for use in Google Earth, QGIS, or any GIS tool.
 
 <div align="center">
   <video src="https://github.com/user-attachments/assets/b585b192-0841-433e-9e08-6ddf5bb7a77c" width="300" autoplay muted loop playsinline></video>
@@ -42,8 +42,8 @@ Territory Maker has first-class support for **[New World Scheduler](https://neww
 - **Coordinate editing** — ✏ edit individual vertices of Zone polygons: drag to move, click to delete, click an edge to insert a new point; double-click directly on a Zone polygon on the map to enter edit mode instantly
 - **Sort by point count** — click **⇅ pts** next to the layer filter to sort polygons within each folder by vertex count (descending), making it easy to identify heavy polygons that need simplification
 - **Polygon simplification** — ⬡ reduce the number of vertices of a Zone using Douglas-Peucker; each click applies one pass with a progressively larger tolerance; a ↺ restore button appears to revert to the original coordinates; a global "Simplifier les zones" button simplifies all zones at once
-- **Dual map backend** — choose between **Google Maps** and **OpenStreetMap** (Leaflet) as the display layer; routing always uses the Google Directions API
-- **Landing page** — first-launch welcome screen with project overview and API key form; skipped automatically when a key is already stored
+- **Dual map backend** — choose between **Google Maps** and **OpenStreetMap** (Leaflet) as the display layer; routing uses OpenRouteService (ORS) by default; Google Directions API is available as an opt-in option in settings
+- **App loads immediately in OSM+ORS mode** — no API key required by default; Google Maps display and/or Google Directions routing are opt-in via the ⚙ settings panel
 - **App themes** — switch between Dark, Light, and System (follows OS preference) — persisted in `localStorage`
 - **Map themes** — independently choose between Dark, Light, Satellite, and Terrain map styles
 - **Settings panel** — API key management and appearance settings accessible via the ⚙ button; shows only the key status (not the key itself) once a key is stored
@@ -182,7 +182,7 @@ Territory Maker automatically snaps shared border vertices (within 10 m) before 
 
 Click the map icon button (Google Maps / OpenStreetMap) in the right toolbar to switch the display layer. Your drawn polygons are preserved across switches.
 
-> Routing (road-following segments) always uses the Google Directions API regardless of the display provider.
+> The map provider toggle controls the display layer only. Routing uses OpenRouteService (ORS) by default; to switch the routing provider, open the ⚙ settings panel and look for the "Calcul d'itinéraires" section.
 
 ### 12 — Export
 
@@ -235,7 +235,7 @@ Before exporting the CSV, if any merges were performed, a modal shows the list o
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) 18 or later
-- A Google Maps API key with **Maps JavaScript API** and **Directions API** enabled
+- No API key required for default OSM+ORS mode. A Google Maps API key (**Maps JavaScript API**) is only needed if you want to use Google Maps as the display layer or Google Directions for routing.
 - [`safe-npm`](https://github.com/kevinslin/safe-npm) — recommended to protect against supply-chain attacks
 
 ### Install safe-npm (one-time, global)
@@ -255,7 +255,7 @@ safe-npm install
 npm run dev
 ```
 
-Open [http://localhost:4321](http://localhost:4321) in your browser.
+Open [http://localhost:4321](http://localhost:4321) in your browser. The app loads immediately in OSM+ORS mode — no API key is required to start using it.
 
 ### Build for production
 
@@ -288,6 +288,8 @@ Territory Maker is a fully static site (Astro SSG) and deploys to Cloudflare Pag
 
 5. Click **Save and Deploy**.
 
+> **ORS_KEY secret:** Add an `ORS_KEY` environment variable (encrypted) with your [OpenRouteService API key](https://openrouteservice.org/) (free, no credit card required) — this enables road routing without any Google key. In the Cloudflare Pages project settings, go to **Settings → Environment variables** and add it as a secret.
+
 ### Via Wrangler CLI
 
 ```bash
@@ -304,9 +306,8 @@ See the built-in guide at `/documentation` for a full step-by-step walkthrough, 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/).
 2. Create a new project (or select an existing one).
 3. Navigate to **APIs & Services → Library**.
-4. Search for and enable both:
+4. Search for and enable:
    - **Maps JavaScript API**
-   - **Directions API**
 5. Navigate to **APIs & Services → Credentials**.
 6. Click **Create Credentials → API key**.
 7. Copy the generated key.
@@ -322,7 +323,6 @@ An unrestricted API key can be used by anyone who finds it in your browser's net
    - `http://localhost:4321/*` (for local development)
 4. Under **API restrictions**, select **Restrict key** and choose:
    - Maps JavaScript API
-   - Directions API
 5. Click **Save**.
 
 > **Note:** The Maps JavaScript API requires the key to be present in the browser. Restricting the key to your domain is the primary defence against unauthorised use — see [SECURITY.md](./SECURITY.md) for details.
@@ -365,8 +365,8 @@ public/
 | Styling | [Tailwind CSS](https://tailwindcss.com/) v4 via `@tailwindcss/vite` |
 | Language | TypeScript (strict) |
 | Maps display | Google Maps JavaScript API v3 **or** [Leaflet](https://leafletjs.com/) + OpenStreetMap |
-| Routing | Google Directions API |
-| Geometry | Google Maps Geometry library (`spherical.computeDistanceBetween`) |
+| Routing | [OpenRouteService](https://openrouteservice.org/) (ORS) — default; Google Directions API — opt-in |
+| Geometry | Haversine formula (local implementation) |
 | Polygon geometry | [`@turf/union`](https://turfjs.org/) v7 — polygon union for the Merge operation |
 | Excel export | [SheetJS](https://sheetjs.com/) (`xlsx`) — suppression report for NWS merge operations |
 | Crypto | Web Crypto API (built-in browser API) |

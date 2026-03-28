@@ -108,7 +108,7 @@ import "../styles/global.css";
               </li>
               <li>
                 <a href="#ch1-3" class="sidebar-sub-link"
-                  >Activer les deux APIs</a
+                  >Activer l'API</a
                 >
               </li>
               <li>
@@ -125,7 +125,7 @@ import "../styles/global.css";
             </a>
             <ol class="sidebar-sub-list">
               <li>
-                <a href="#ch2-1" class="sidebar-sub-link">Saisir sa clé API</a>
+                <a href="#ch2-1" class="sidebar-sub-link">Première ouverture</a>
               </li>
               <li>
                 <a href="#ch2-2" class="sidebar-sub-link">Sécurité : stockage</a
@@ -323,12 +323,14 @@ import "../styles/global.css";
           </section>
 
           <section id="ch1-3" class="doc-section">
-            <h3 class="section-title">1.3 Activer les deux APIs</h3>
+            <h3 class="section-title">1.3 Activer l'API</h3>
             <div class="step-card">
               <div class="step-body">
                 <p>
-                  Territory Maker utilise précisément deux APIs Google Maps.
-                  Commence par activer la facturation, puis active chaque API.
+                  La clé Google Maps n'est nécessaire que si vous souhaitez utiliser
+                  Google Maps comme fond de carte ou Google Directions pour le routage.
+                  Le mode par défaut (OSM + OpenRouteService) fonctionne sans clé.
+                  Si vous avez besoin d'une clé, activez l'API suivante :
                 </p>
                 <ol class="step-list">
                   <li>
@@ -345,11 +347,6 @@ import "../styles/global.css";
                     Recherchez <strong>Maps JavaScript API</strong>, cliquez
                     dessus, puis cliquez sur <kbd>Activer</kbd>
                   </li>
-                  <li>
-                    Revenez à la bibliothèque, recherchez <strong
-                      >Directions API</strong
-                    >, cliquez dessus, puis cliquez sur <kbd>Activer</kbd>
-                  </li>
                 </ol>
                 <div
                   style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;"
@@ -357,17 +354,6 @@ import "../styles/global.css";
                   <div class="api-badge api-badge-green">
                     <span>✓</span> Maps JavaScript API
                   </div>
-                  <div class="api-badge api-badge-blue">
-                    <span>✓</span> Directions API
-                  </div>
-                </div>
-                <div class="step-notice" style="margin-top:12px;">
-                  <span>💡</span>
-                  <span
-                    >La Directions API coûte ~0,005 $ par requête — il faudrait
-                    40 000 trajets calculés pour atteindre les 200 $ de crédits
-                    gratuits.</span
-                  >
                 </div>
               </div>
             </div>
@@ -459,24 +445,19 @@ import "../styles/global.css";
           </div>
 
           <section id="ch2-1" class="doc-section">
-            <h3 class="section-title">2.1 Saisir sa clé API</h3>
+            <h3 class="section-title">2.1 Première ouverture</h3>
             <div class="step-card">
               <div class="step-body">
-                <ol class="step-list">
-                  <li>Ouvrez Territory Maker dans votre navigateur</li>
-                  <li>
-                    Cliquez sur l'icône ⚙️ en haut de la barre latérale pour
-                    ouvrir les paramètres
-                  </li>
-                  <li>
-                    Collez votre clé dans le champ <strong
-                      >Clé Google Maps API</strong
-                    >
-                  </li>
-                  <li>
-                    Appuyez sur <kbd>Entrée</kbd> — la carte se charge automatiquement
-                  </li>
-                </ol>
+                <p>
+                  Territory Maker se charge directement en mode <strong>OSM + OpenRouteService</strong> —
+                  aucune clé API n'est requise. La carte OpenStreetMap et le calcul
+                  d'itinéraires ORS sont disponibles immédiatement.
+                </p>
+                <p style="margin-top:8px;">
+                  Pour utiliser Google Maps comme fond de carte ou Google Directions
+                  pour le routage, ouvrez le panneau ⚙️ (paramètres) et saisissez
+                  votre clé Google Maps API dans le champ prévu.
+                </p>
                 <div class="step-notice">
                   <span>💡</span>
                   <span
@@ -550,18 +531,19 @@ import "../styles/global.css";
                 <ul class="step-list">
                   <li>
                     <strong>Route</strong> — chaque segment suit le réseau routier
-                    réel via la Directions API
+                    réel via le fournisseur de routage actif (OpenRouteService par défaut,
+                    ou Google Directions si activé dans les paramètres ⚙️)
                   </li>
                   <li>
                     <strong>Ligne droite</strong> — les points sont reliés en ligne
-                    directe (vol d'oiseau), sans appel API
+                    directe (vol d'oiseau), sans appel au service de routage
                   </li>
                 </ul>
                 <div class="step-notice">
                   <span>💡</span>
                   <span
                     >Utilisez le mode <strong>Ligne droite</strong> pour les zones
-                    sans routes (champs, forêts) ou pour économiser des requêtes API.</span
+                    sans routes (champs, forêts) ou pour éviter les appels au service de routage.</span
                   >
                 </div>
               </div>
@@ -716,8 +698,8 @@ import "../styles/global.css";
                   <li>
                     <strong>Tracé</strong> (badge vert) — polygone dessiné à la
                     main dans l'application. Il est composé de <em>waypoints</em>
-                    reliés par des segments routiers (via l'API Directions) ou
-                    des lignes droites. Les waypoints restent éditables et les
+                    reliés par des segments routiers (via le service de routage actif)
+                    ou des lignes droites. Les waypoints restent éditables et les
                     segments peuvent être recalculés.
                   </li>
                   <li>
