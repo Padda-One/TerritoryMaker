@@ -1,7 +1,7 @@
 /**
- * MapController — manages the map display layer (Google Maps OR Leaflet/OSM)
- * while always loading Google Maps SDK headlessly for routing (DirectionsService)
- * and geometry (spherical distance for snap tool).
+ * MapController — manages the map display layer (Google Maps OR Leaflet/OSM).
+ * Routing uses ORS (default) or Google Directions (opt-in) based on routingProvider.
+ * Snap distances use a local Haversine implementation.
  *
  * Supports multiple polygons with layer management and snap/magnet tool.
  */
@@ -9,13 +9,13 @@
 import * as L from "leaflet";
 import turfUnion from "@turf/union";
 import { polygon as turfPolygon, featureCollection } from "@turf/helpers";
-import { resolveSegment, RoutingError } from "./SegmentRouter.ts";
-import type { SegmentMode, Waypoint, ResolvedSegment } from "./SegmentRouter.ts";
+import { resolveSegment, resolveSegmentGoogle, RoutingError } from "./SegmentRouter.ts";
+import type { SegmentMode, TravelMode, Waypoint, ResolvedSegment, RoutingProvider } from "./SegmentRouter.ts";
 import { douglasPeucker } from "./KmlImporter.ts";
 import type { NWSData, NWSRow } from "./NwsCsvImporter.ts";
 import { nwsDisplayName } from "./NwsCsvImporter.ts";
 
-export type { SegmentMode, Waypoint, ResolvedSegment };
+export type { SegmentMode, TravelMode, Waypoint, ResolvedSegment, RoutingProvider };
 export type { NWSData };
 export type MapProvider = "google" | "osm";
 
@@ -247,8 +247,8 @@ function lMarkerIconEdit(label: string, color: string, textColor: string): L.Div
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
-function toLL(p: google.maps.LatLng): [number, number] {
-  return [p.lat(), p.lng()];
+function toLL(p: { lat: number; lng: number }): [number, number] {
+  return [p.lat, p.lng];
 }
 
 // ─── MapController ────────────────────────────────────────────────────────────
@@ -270,7 +270,10 @@ export class MapController {
   private groups: PolygonGroup[] = [];
   private polygons: PolygonData[] = [];
   private activeIndex = 0;
-  private travelMode = "DRIVING" as google.maps.TravelMode;
+  private travelMode: TravelMode = "DRIVING";
+  private orsApiKey = "";
+  private routingProvider: RoutingProvider = "ors";
+  private directionsService: google.maps.DirectionsService | null = null;
   // Prevents the map click handler from firing a waypoint add when a fill
   // polygon click (Google Maps) selects a polygon — the two events are
   // independent and both fire; this flag swallows the map click.
@@ -279,7 +282,7 @@ export class MapController {
   // Snap / magnet tool
   private snapMarkerG: google.maps.Marker | null = null;
   private snapMarkerL: L.CircleMarker | null = null;
-  private snapTarget: google.maps.LatLng | null = null;
+  private snapTarget: { lat: number; lng: number } | null = null;
   private snapMode = false;
 
   // Multi-select
@@ -318,33 +321,47 @@ export class MapController {
   }
 
   async init(
-    apiKey: string,
+    apiKey: string | null,
     mapEl: HTMLElement,
-    provider: MapProvider = "google",
+    provider: MapProvider = "osm",
+    routingProvider: RoutingProvider = "ors",
     initialView?: { center: { lat: number; lng: number }; zoom: number },
   ): Promise<void> {
     this.provider = provider;
+    this.routingProvider = routingProvider;
 
-    // loadGoogleMapsScript sets its own gm_authFailure during script loading.
-    // We wait for it to finish, THEN set our handler so it isn't overwritten.
-    await loadGoogleMapsScript(apiKey);
+    const needsGoogleSdk = provider === "google" || routingProvider === "google";
 
-    // Auth check only happens when a Map is created — set handler now, after script loaded.
-    const authFailure = new Promise<never>((_, reject) => {
-      (window as unknown as Record<string, unknown>)["gm_authFailure"] = () => {
-        reject(new Error(
-          "Clé API invalide ou APIs non activées. Vérifie que Maps JavaScript API et Directions API sont activées dans Google Cloud Console.",
-        ));
-      };
-    });
+    if (needsGoogleSdk) {
+      if (!apiKey) throw new Error("Une clé Google Maps API est requise pour ce fournisseur.");
 
-    if (provider === "google") {
+      // loadGoogleMapsScript sets its own gm_authFailure during script loading.
+      // We wait for it to finish, THEN set our handler so it isn't overwritten.
+      await loadGoogleMapsScript(apiKey);
+
+      // Auth check only happens when a Map is created — set handler now, after script loaded.
+      const authFailure = new Promise<never>((_, reject) => {
+        (window as unknown as Record<string, unknown>)["gm_authFailure"] = () => {
+          reject(new Error(
+            "Clé API invalide ou Maps JavaScript API non activée. Vérifie ta clé dans Google Cloud Console.",
+          ));
+        };
+      });
+
       // Validate auth with an off-screen element above the landing overlay (z-index:101).
-      // Google Maps needs a visible container for IntersectionObserver to work.
       await this.validateGoogleAuth(authFailure);
-      // Auth confirmed — create the real map (synchronous, landing will be hidden by caller)
-      this.createGoogleMap(mapEl, initialView);
+
+      if (routingProvider === "google") {
+        this.directionsService = new google.maps.DirectionsService();
+      }
+
+      if (provider === "google") {
+        this.createGoogleMap(mapEl, initialView);
+      } else {
+        this.createLeafletMap(mapEl, initialView);
+      }
     } else {
+      // OSM map + ORS routing — no Google SDK needed
       this.createLeafletMap(mapEl, initialView);
     }
   }
@@ -388,7 +405,7 @@ export class MapController {
       draggableCursor: "crosshair",
     });
     this.gClickListener = this.gMap.addListener("click", (e: google.maps.MapMouseEvent) => {
-      if (e.latLng) this.handleMapClick(e.latLng);
+      if (e.latLng) this.handleMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
     });
   }
 
@@ -404,7 +421,7 @@ export class MapController {
     this.lTileLayer = L.tileLayer(url, { attribution, maxZoom: 19 }).addTo(this.lMap);
     this.lMap.getContainer().style.cursor = "crosshair";
     this.lClickHandler = (e: L.LeafletMouseEvent) => {
-      this.handleMapClick(new google.maps.LatLng(e.latlng.lat, e.latlng.lng));
+      this.handleMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
     };
     this.lMap.on("click", this.lClickHandler);
   }
@@ -481,8 +498,7 @@ export class MapController {
       fillPoly.on("click", (e: L.LeafletMouseEvent) => {
         L.DomEvent.stop(e);
         if (this.splitState.active) {
-          const ll = { lat: () => e.latlng.lat, lng: () => e.latlng.lng };
-          void this.handleSplitClick(ll);
+          void this.handleSplitClick({ lat: e.latlng.lat, lng: e.latlng.lng });
           return;
         }
         const ctrlKey = e.originalEvent.ctrlKey || e.originalEvent.metaKey;
@@ -496,7 +512,7 @@ export class MapController {
     } else {
       (fillPoly as google.maps.Polygon).addListener("click", (e: google.maps.PolyMouseEvent) => {
         if (this.splitState.active) {
-          if (e.latLng) void this.handleSplitClick(e.latLng);
+          if (e.latLng) void this.handleSplitClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
           return;
         }
         this.ignoreNextMapClick = true;
@@ -565,7 +581,7 @@ export class MapController {
 
   // ─── Click handler ─────────────────────────────────────────────────────────
 
-  private async handleMapClick(rawLatLng: google.maps.LatLng): Promise<void> {
+  private async handleMapClick(rawLatLng: { lat: number; lng: number }): Promise<void> {
     if (this.ignoreNextMapClick) { this.ignoreNextMapClick = false; return; }
     if (this.polygons.length === 0) return;
 
@@ -581,7 +597,7 @@ export class MapController {
     this.snapTarget = null;
 
     const label = String.fromCharCode(65 + poly.waypoints.length);
-    await this.addWaypoint({ lat: latLng.lat(), lng: latLng.lng(), label, segmentMode: this.currentMode });
+    await this.addWaypoint({ lat: latLng.lat, lng: latLng.lng, label, segmentMode: this.currentMode });
   }
 
   // ─── Add waypoint ──────────────────────────────────────────────────────────
@@ -626,7 +642,7 @@ export class MapController {
 
       this.onLoadingChange?.(true);
       try {
-        segment = await resolveSegment(prevWaypoint, waypoint, this.travelMode);
+        segment = await this.resolveRoute(prevWaypoint, waypoint);
         polyline = this.makePolyline(segment, poly.color);
       } catch (err) {
         this.removeObj(marker);
@@ -699,7 +715,7 @@ export class MapController {
     if (wpIndex > 0) {
       const prev = poly.waypoints[wpIndex - 1]!;
       this.removeObj(wp.polyline);
-      const seg = await resolveSegment({ lat: prev.lat, lng: prev.lng, label: prev.label, segmentMode: prev.segmentMode }, thisWp, this.travelMode);
+      const seg = await this.resolveRoute({ lat: prev.lat, lng: prev.lng, label: prev.label, segmentMode: prev.segmentMode }, thisWp);
       wp.segment = seg;
       wp.polyline = this.makePolyline(seg, poly.color);
     }
@@ -707,7 +723,7 @@ export class MapController {
     if (wpIndex < poly.waypoints.length - 1) {
       const next = poly.waypoints[wpIndex + 1]!;
       this.removeObj(next.polyline);
-      const seg = await resolveSegment(thisWp, { lat: next.lat, lng: next.lng, label: next.label, segmentMode: next.segmentMode }, this.travelMode);
+      const seg = await this.resolveRoute(thisWp, { lat: next.lat, lng: next.lng, label: next.label, segmentMode: next.segmentMode });
       next.segment = seg;
       next.polyline = this.makePolyline(seg, poly.color);
     }
@@ -716,10 +732,9 @@ export class MapController {
       const first = poly.waypoints[0]!;
       const last = poly.waypoints[poly.waypoints.length - 1]!;
       this.removeObj(poly.closingPolyline);
-      const seg = await resolveSegment(
+      const seg = await this.resolveRoute(
         { lat: last.lat, lng: last.lng, label: last.label, segmentMode: last.segmentMode },
         { lat: first.lat, lng: first.lng, label: first.label, segmentMode: poly.closingSegment?.mode ?? "route" },
-        this.travelMode,
       );
       poly.closingPolyline = this.makePolyline(seg, poly.color);
       poly.closingSegment = seg;
@@ -756,6 +771,15 @@ export class MapController {
     }
   }
 
+  // ─── Routing dispatch ──────────────────────────────────────────────────────
+
+  private async resolveRoute(from: Waypoint, to: Waypoint): Promise<ResolvedSegment> {
+    if (this.routingProvider === "google" && this.directionsService) {
+      return resolveSegmentGoogle(from, to, this.travelMode, this.directionsService);
+    }
+    return resolveSegment(from, to, this.travelMode, this.orsApiKey);
+  }
+
   // ─── Polygon closure ───────────────────────────────────────────────────────
 
   private async closePolygon(): Promise<void> {
@@ -767,10 +791,9 @@ export class MapController {
 
     this.onLoadingChange?.(true);
     try {
-      const segment = await resolveSegment(
+      const segment = await this.resolveRoute(
         { lat: last.lat, lng: last.lng, label: last.label, segmentMode: last.segmentMode },
         { lat: first.lat, lng: first.lng, label: first.label, segmentMode: this.currentMode },
-        this.travelMode,
       );
       poly.closingPolyline = this.makePolyline(segment, poly.color);
       poly.closingSegment = segment;
@@ -1489,12 +1512,12 @@ export class MapController {
 
   // ─── Snap / magnet tool ────────────────────────────────────────────────────
 
-  /** Haversine distance in metres between two LatLng-like objects. */
-  private distanceMeters(a: { lat(): number; lng(): number }, b: { lat(): number; lng(): number }): number {
+  /** Haversine distance in metres between two {lat, lng} points. */
+  private distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
     const R = 6_371_000;
     const toRad = (d: number) => (d * Math.PI) / 180;
-    const φ1 = toRad(a.lat()), φ2 = toRad(b.lat());
-    const Δφ = toRad(b.lat() - a.lat()), Δλ = toRad(b.lng() - a.lng());
+    const φ1 = toRad(a.lat), φ2 = toRad(b.lat);
+    const Δφ = toRad(b.lat - a.lat), Δλ = toRad(b.lng - a.lng);
     const s = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
   }
@@ -1505,11 +1528,11 @@ export class MapController {
       if (this.gMouseMoveListener || this.lMouseMoveHandler) return; // already enabled
       if (!this.isOsm && this.gMap) {
         this.gMouseMoveListener = this.gMap.addListener("mousemove", (e: google.maps.MapMouseEvent) => {
-          if (e.latLng) this.handleMouseMove(e.latLng);
+          if (e.latLng) this.handleMouseMove({ lat: e.latLng.lat(), lng: e.latLng.lng() });
         });
       } else if (this.isOsm && this.lMap) {
         this.lMouseMoveHandler = (e: L.LeafletMouseEvent) => {
-          this.handleMouseMove(new google.maps.LatLng(e.latlng.lat, e.latlng.lng));
+          this.handleMouseMove({ lat: e.latlng.lat, lng: e.latlng.lng });
         };
         this.lMap.on("mousemove", this.lMouseMoveHandler);
       }
@@ -1528,7 +1551,7 @@ export class MapController {
     return ((156543.03392 * Math.cos((lat * Math.PI) / 180)) / Math.pow(2, zoom)) * 20;
   }
 
-  private handleMouseMove(mousePos: google.maps.LatLng): void {
+  private handleMouseMove(mousePos: { lat: number; lng: number }): void {
     // Split mode: snap only to the active polygon's own contour
     if (this.splitState.active) {
       this.handleSplitMouseMove(mousePos);
@@ -1544,13 +1567,13 @@ export class MapController {
     }
 
     const threshold = this.snapThresholdMeters();
-    let closest: google.maps.LatLng | null = null;
+    let closest: { lat: number; lng: number } | null = null;
     let closestDist = Infinity;
 
     for (const p of this.polygons) {
       if (p.id === poly.id || p.waypoints.length === 0) continue;
       for (const wp of p.waypoints) {
-        const vertex = new google.maps.LatLng(wp.lat, wp.lng);
+        const vertex = { lat: wp.lat, lng: wp.lng };
         const dist = this.distanceMeters(mousePos, vertex);
         if (dist < threshold && dist < closestDist) { closestDist = dist; closest = vertex; }
         if (wp.segment) {
@@ -1572,22 +1595,22 @@ export class MapController {
   }
 
   /** Snap scan used during split mode: targets the active polygon's own contour. */
-  private handleSplitMouseMove(mousePos: google.maps.LatLng): void {
+  private handleSplitMouseMove(mousePos: { lat: number; lng: number }): void {
     const poly = this.active;
     const threshold = this.snapThresholdMeters();
-    let closest: google.maps.LatLng | null = null;
+    let closest: { lat: number; lng: number } | null = null;
     let closestDist = Infinity;
 
-    const checkPt = (pt: google.maps.LatLng) => {
+    const checkPt = (pt: { lat: number; lng: number }) => {
       const d = this.distanceMeters(mousePos, pt);
       if (d < threshold && d < closestDist) { closestDist = d; closest = pt; }
     };
 
     if (poly.kind === "imported" && poly.rawCoordinates) {
-      for (const rc of poly.rawCoordinates) checkPt(new google.maps.LatLng(rc.lat, rc.lng));
+      for (const rc of poly.rawCoordinates) checkPt(rc);
     } else {
       for (const wp of poly.waypoints) {
-        checkPt(new google.maps.LatLng(wp.lat, wp.lng));
+        checkPt({ lat: wp.lat, lng: wp.lng });
         if (wp.segment) { for (const pt of wp.segment.path) checkPt(pt); }
       }
       if (poly.closingSegment) { for (const pt of poly.closingSegment.path) checkPt(pt); }
@@ -1596,10 +1619,10 @@ export class MapController {
     this.updateSnapMarker(closest);
   }
 
-  private updateSnapMarker(closest: google.maps.LatLng | null): void {
+  private updateSnapMarker(closest: { lat: number; lng: number } | null): void {
     if (closest) {
       this.snapTarget = closest;
-      const pos: [number, number] = [closest.lat(), closest.lng()];
+      const pos: [number, number] = [closest.lat, closest.lng];
       if (!this.isOsm) {
         if (!this.snapMarkerG) {
           this.snapMarkerG = new google.maps.Marker({ map: this.gMap!, position: { lat: pos[0], lng: pos[1] }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#fbbf24", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 }, clickable: false, zIndex: 20 });
@@ -1657,8 +1680,10 @@ export class MapController {
 
   // ─── Travel mode ───────────────────────────────────────────────────────────
 
-  setTravelMode(mode: google.maps.TravelMode): void { this.travelMode = mode; }
-  getTravelMode(): google.maps.TravelMode { return this.travelMode; }
+  setTravelMode(mode: TravelMode): void { this.travelMode = mode; }
+  getTravelMode(): TravelMode { return this.travelMode; }
+  setOrsApiKey(key: string): void { this.orsApiKey = key; }
+  setRoutingProvider(p: RoutingProvider): void { this.routingProvider = p; }
 
   // ─── Accessors ─────────────────────────────────────────────────────────────
 
@@ -1716,14 +1741,16 @@ export class MapController {
         // wp.segment goes FROM the previous waypoint TO this one.
         // path[0] duplicates the previous position already in coords, so skip it.
         for (let i = 1; i < wp.segment.path.length; i++) {
-          coords.push({ lat: wp.segment.path[i]!.lat(), lng: wp.segment.path[i]!.lng() });
+          const p = wp.segment.path[i]!;
+          coords.push({ lat: p.lat, lng: p.lng });
         }
       }
     }
     if (poly.closingSegment) {
       // Closing segment: last waypoint → first waypoint. Skip path[0] (= last waypoint).
       for (let i = 1; i < poly.closingSegment.path.length; i++) {
-        coords.push({ lat: poly.closingSegment.path[i]!.lat(), lng: poly.closingSegment.path[i]!.lng() });
+        const p = poly.closingSegment.path[i]!;
+        coords.push({ lat: p.lat, lng: p.lng });
       }
     }
     return coords;
@@ -1796,7 +1823,7 @@ export class MapController {
     for (let s = 0; s < segments.length; s++) {
       const seg = segments[s]!;
       const start = s === 0 ? 0 : 1; // skip duplicate join point
-      for (let i = start; i < seg.path.length; i++) pts.push({ lat: seg.path[i]!.lat(), lng: seg.path[i]!.lng() });
+      for (let i = start; i < seg.path.length; i++) pts.push(seg.path[i]!);
     }
     return pts;
   }
@@ -2019,11 +2046,9 @@ export class MapController {
     }
   }
 
-  async handleSplitClick(rawLatLng: { lat(): number; lng(): number }): Promise<void> {
-    const snapped = this.snapTarget ?? rawLatLng;
+  async handleSplitClick(rawLatLng: { lat: number; lng: number }): Promise<void> {
+    const pt = this.snapTarget ?? rawLatLng;
     this.snapTarget = null;
-
-    const pt = { lat: snapped.lat(), lng: snapped.lng() };
     const contour = this.getPolygonFlatCoords(this.active);
 
     if (!this.splitState.startPoint) {
@@ -2039,21 +2064,16 @@ export class MapController {
     }
 
     // Resolve segment from last waypoint to current point
-    const prevPt = this.splitState.dividingSegments.length > 0
-      ? (() => { const last = this.splitState.dividingSegments.at(-1)!; const lastPt = last.path.at(-1)!; return lastPt; })()
-      : new google.maps.LatLng(this.splitState.startPoint.lat, this.splitState.startPoint.lng);
+    const prevPt: { lat: number; lng: number } = this.splitState.dividingSegments.length > 0
+      ? this.splitState.dividingSegments.at(-1)!.path.at(-1)!
+      : this.splitState.startPoint;
 
-    const prevLatLng = prevPt instanceof google.maps.LatLng
-      ? prevPt
-      : new google.maps.LatLng((prevPt as { lat: number; lng: number }).lat, (prevPt as { lat: number; lng: number }).lng);
-
-    const seg = await resolveSegment(
-      { lat: prevLatLng.lat(), lng: prevLatLng.lng(), segmentMode: this.currentMode, label: "" },
+    const seg = await this.resolveRoute(
+      { ...prevPt, segmentMode: this.currentMode, label: "" },
       { lat: pt.lat, lng: pt.lng, segmentMode: this.currentMode, label: "" },
-      this.travelMode
     );
     this.splitState.dividingSegments.push(seg);
-    this.drawTempPolyline(seg.path.map(p => ({ lat: p.lat(), lng: p.lng() })));
+    this.drawTempPolyline(seg.path);
 
     if (this.isPointOnContour(pt, contour)) {
       // End click on contour — execute split
