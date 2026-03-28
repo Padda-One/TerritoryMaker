@@ -8,7 +8,7 @@ import "../styles/global.css";
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="canonical" href="https://territory.paddaone.com/documentation" />
-    <meta name="description" content="Documentation complète de Territory Maker : tutoriel d'utilisation, guide d'obtention de la clé Google Maps API, et référence des fonctionnalités." />
+    <meta name="description" content="Documentation complète de Territory Maker : utilisation immédiate sans clé API, choix des fournisseurs de carte et de routage (OSM/Google, ORS/Directions), et référence des fonctionnalités." />
     <meta name="author" content="Paddaone" />
 
     <!-- Open Graph -->
@@ -16,14 +16,14 @@ import "../styles/global.css";
     <meta property="og:url" content="https://territory.paddaone.com/documentation" />
     <meta property="og:site_name" content="Territory Maker" />
     <meta property="og:title" content="Documentation — Territory Maker" />
-    <meta property="og:description" content="Guide complet pour utiliser Territory Maker : obtenir une clé API Google Maps, tracer des territoires, gérer des polygones et exporter en KML." />
+    <meta property="og:description" content="Guide complet pour utiliser Territory Maker : utilisation immédiate sans clé API, fournisseurs de carte et de routage, tracer des territoires, gérer des polygones et exporter en KML." />
     <meta property="og:image" content="https://territory.paddaone.com/og-preview.png" />
     <meta property="og:locale" content="fr_FR" />
 
     <!-- Twitter/X Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Documentation — Territory Maker" />
-    <meta name="twitter:description" content="Guide complet pour utiliser Territory Maker : clé API Google Maps, tracé de territoires, export KML." />
+    <meta name="twitter:description" content="Guide complet pour utiliser Territory Maker : démarrage sans clé API, fournisseurs carte et routage, tracé de territoires, export KML." />
     <meta name="twitter:image" content="https://territory.paddaone.com/og-preview.png" />
 
     <!-- Structured data -->
@@ -100,37 +100,20 @@ import "../styles/global.css";
               <span>Démarrage</span>
             </a>
             <ol class="sidebar-sub-list">
-              <li><a href="#ch1-1" class="sidebar-sub-link">Prérequis</a></li>
-              <li>
-                <a href="#ch1-2" class="sidebar-sub-link"
-                  >Créer un projet Google Cloud</a
-                >
-              </li>
-              <li>
-                <a href="#ch1-3" class="sidebar-sub-link"
-                  >Activer l'API</a
-                >
-              </li>
-              <li>
-                <a href="#ch1-4" class="sidebar-sub-link"
-                  >Générer et restreindre la clé</a
-                >
-              </li>
+              <li><a href="#ch1-1" class="sidebar-sub-link">Utilisation immédiate</a></li>
+              <li><a href="#ch1-2" class="sidebar-sub-link">Sécurité : stockage</a></li>
             </ol>
           </li>
           <li>
             <a href="#ch2" class="sidebar-chapter-link">
               <span class="sidebar-num">2</span>
-              <span>Première utilisation</span>
+              <span>Carte et routage</span>
             </a>
             <ol class="sidebar-sub-list">
-              <li>
-                <a href="#ch2-1" class="sidebar-sub-link">Première ouverture</a>
-              </li>
-              <li>
-                <a href="#ch2-2" class="sidebar-sub-link">Sécurité : stockage</a
-                >
-              </li>
+              <li><a href="#ch2-1" class="sidebar-sub-link">Fournisseur de carte</a></li>
+              <li><a href="#ch2-2" class="sidebar-sub-link">Fournisseur de routage</a></li>
+              <li><a href="#ch2-3" class="sidebar-sub-link">Limites et fallback ORS</a></li>
+              <li><a href="#ch2-4" class="sidebar-sub-link">Obtenir une clé Google Maps</a></li>
             </ol>
           </li>
           <li>
@@ -259,8 +242,8 @@ import "../styles/global.css";
             Guide complet — Territory Maker
           </h1>
           <p style="font-size:0.95rem;color:#94a3b8;margin:0;line-height:1.6;">
-            De la configuration de la clé API jusqu'à l'export de vos
-            territoires en KML.
+            Utilisation immédiate sans clé API — et tout ce qu'il faut savoir pour
+            personnaliser les fournisseurs de carte et de routage.
           </p>
         </div>
 
@@ -272,28 +255,212 @@ import "../styles/global.css";
           </div>
 
           <section id="ch1-1" class="doc-section">
-            <h3 class="section-title">1.1 Prérequis</h3>
-            <div class="notice-box">
-              <div style="display:flex;gap:8px;align-items:flex-start;">
-                <span style="font-size:1rem;flex-shrink:0;">ℹ️</span>
-                <div>
-                  <p style="margin:0;font-size:0.82rem;line-height:1.5;">
-                    Un <strong style="color:#e2e8f0;">compte Google</strong> et une
-                    <strong style="color:#e2e8f0;">carte bancaire valide</strong
-                    > sont nécessaires pour activer la facturation Google Cloud. Google
-                    offre <strong style="color:#e2e8f0;"
-                      >200 $ de crédits gratuits par mois</strong
-                    > — l'utilisation normale de Territory Maker reste largement dans
-                    cette limite.
-                  </p>
+            <h3 class="section-title">1.1 Utilisation immédiate</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Territory Maker se charge directement, sans aucune configuration préalable.
+                  La carte <strong>OpenStreetMap</strong> et le calcul d'itinéraires
+                  <strong>OpenRouteService (ORS)</strong> sont disponibles immédiatement —
+                  aucun compte, aucune clé API, aucune carte bancaire ne sont requis.
+                </p>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    Les fournisseurs de carte et de routage sont configurables dans le
+                    panneau ⚙️ (Paramètres). L'utilisation de Google Maps ou Google Directions
+                    nécessite une clé API personnelle — voir le chapitre 2.
+                  </span>
                 </div>
+                <p style="margin-top:10px;">
+                  Si vous saisissez une clé Google Maps API, elle est retenue entre les
+                  sessions : vous n'avez pas à la ressaisir à chaque visite.
+                </p>
               </div>
             </div>
           </section>
 
           <section id="ch1-2" class="doc-section">
-            <h3 class="section-title">1.2 Créer un projet Google Cloud</h3>
+            <h3 class="section-title">1.2 Sécurité : comment la clé est stockée</h3>
             <div class="step-card">
+              <div class="step-body">
+                <ul class="step-list">
+                  <li>
+                    La clé est chiffrée en <strong>AES-GCM 256 bits</strong> avant
+                    d'être sauvegardée dans le <code>localStorage</code> de votre navigateur
+                  </li>
+                  <li>
+                    Elle n'est <strong>jamais envoyée</strong> à un serveur — tout
+                    reste sur votre appareil
+                  </li>
+                  <li>
+                    Pour l'effacer, cliquez sur le bouton <strong>Oublier la clé</strong>
+                    dans les paramètres
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 2 ─── -->
+        <section id="ch2" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">2</div>
+            <h2 class="chapter-title">Carte et routage</h2>
+          </div>
+
+          <section id="ch2-1" class="doc-section">
+            <h3 class="section-title">2.1 Fournisseur de carte</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Le toggle <strong>OSM / Google</strong> dans la barre d'outils
+                  change le fond de carte. Les deux options proposent quatre thèmes
+                  visuels (Sombre, Clair, Satellite, Relief).
+                </p>
+                <ul class="step-list">
+                  <li>
+                    <strong>OSM (OpenStreetMap)</strong> — fond de carte libre et
+                    open source. Aucune clé requise, chargement immédiat. Données
+                    communautaires mises à jour en continu. Adapté à la majorité des usages.
+                  </li>
+                  <li>
+                    <strong>Google Maps</strong> — fond de carte Google. Nécessite
+                    une clé Google Maps API (voir §&nbsp;2.4). Rendu plus soigné en
+                    zone dense ; vue satellite haute résolution.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch2-2" class="doc-section">
+            <h3 class="section-title">2.2 Fournisseur de routage</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Le fournisseur de routage détermine comment les segments sont
+                  calculés en mode <strong>Route</strong>. Il se configure dans
+                  le panneau ⚙️ (Paramètres → Calcul d'itinéraires), indépendamment
+                  du fond de carte.
+                </p>
+                <ul class="step-list">
+                  <li>
+                    <strong>ORS (OpenRouteService)</strong> — moteur de routage
+                    open source basé sur les données OpenStreetMap. Actif par défaut.
+                    Aucune clé requise de votre part. Supporte voiture, marche à pied
+                    et vélo.
+                  </li>
+                  <li>
+                    <strong>Google Directions</strong> — service de routage Google.
+                    Disponible sans clé personnelle dans la limite du quota de la clé
+                    mutualisée fournie gracieusement (voir §&nbsp;2.3). Au-delà, ou pour
+                    le fond de carte Google Maps, une clé personnelle est nécessaire.
+                    Peut donner de meilleurs résultats en zone urbaine dense où les
+                    données Google sont plus détaillées.
+                  </li>
+                </ul>
+                <div class="step-notice">
+                  <span>💡</span>
+                  <span>
+                    Les deux fournisseurs se combinent librement : OSM + Google Directions
+                    ou Google Maps + ORS fonctionnent tous les deux.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch2-3" class="doc-section">
+            <h3 class="section-title">2.3 Clé ORS mutualisée — limites et fallback</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Pour que le routage ORS fonctionne sans configuration de votre part,
+                  Territory Maker utilise une <strong>clé ORS mutualisée</strong> fournie
+                  gracieusement. Cette clé est soumise à un quota journalier de
+                  <strong>2 000 requêtes</strong> partagées entre tous les utilisateurs.
+                </p>
+                <p style="margin-top:8px;">
+                  Si ce quota est atteint dans la journée (usage intensif cumulé),
+                  les calculs de route ORS échouent temporairement jusqu'à la
+                  réinitialisation du quota le lendemain.
+                </p>
+              </div>
+            </div>
+            <div
+              class="step-card"
+              style="border-color:rgba(251,191,36,0.3);margin-top:12px;"
+            >
+              <div
+                class="step-header"
+                style="border-bottom-color:rgba(251,191,36,0.2);"
+              >
+                <div
+                  class="step-number"
+                  style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);color:#fbbf24;"
+                >
+                  !
+                </div>
+                <h4 class="step-title">Que faire si ORS est temporairement indisponible ?</h4>
+              </div>
+              <div class="step-body">
+                <p>Quatre options s'offrent à vous, dans l'ordre de complexité croissante :</p>
+                <ol class="step-list">
+                  <li>
+                    <strong>Patienter jusqu'au lendemain</strong> — le quota se
+                    réinitialise chaque jour à minuit UTC.
+                  </li>
+                  <li>
+                    <strong>Passer en mode Ligne droite</strong> — les segments ne
+                    font plus appel au service de routage.
+                  </li>
+                  <li>
+                    <strong>Basculer sur Google Directions sans clé personnelle</strong> —
+                    dans le panneau ⚙️, sélectionnez <strong>Google</strong> comme fournisseur
+                    de routage. Une clé Google mutualisée est fournie gracieusement et prend
+                    le relais immédiatement, sans aucune configuration de votre part, dans
+                    la limite de son propre quota journalier.
+                  </li>
+                  <li>
+                    <strong>Configurer votre propre clé Google Maps API</strong> — si le quota
+                    mutualisé Google est lui aussi atteint, saisissez votre clé personnelle dans
+                    le panneau ⚙️. Elle n'est soumise qu'à vos propres quotas
+                    (200&nbsp;$ de crédits offerts par mois, largement suffisant pour un usage normal).
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch2-4" class="doc-section">
+            <h3 class="section-title">2.4 Obtenir une clé Google Maps API</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Une clé Google Maps API personnelle est nécessaire uniquement si vous
+                  souhaitez utiliser <strong>Google Maps</strong> comme fond de carte, ou
+                  si le quota de la clé mutualisée Google Directions est épuisé. Pour le
+                  routage seul, la clé mutualisée suffit dans la plupart des cas — voir §&nbsp;2.3.
+                </p>
+                <div class="step-notice step-notice-warning">
+                  <span>⚠️</span>
+                  <span>
+                    Un compte Google et une carte bancaire valide sont nécessaires pour
+                    activer la facturation Google Cloud. Google offre
+                    <strong>200 $ de crédits gratuits par mois</strong> — l'utilisation
+                    normale de Territory Maker reste très en deçà de cette limite.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-card" style="margin-top:12px;">
+              <div class="step-header">
+                <div class="step-number">1</div>
+                <h4 class="step-title">Créer un projet Google Cloud</h4>
+              </div>
               <div class="step-body">
                 <p>
                   Rendez-vous sur <a
@@ -320,23 +487,17 @@ import "../styles/global.css";
                 </ol>
               </div>
             </div>
-          </section>
 
-          <section id="ch1-3" class="doc-section">
-            <h3 class="section-title">1.3 Activer l'API</h3>
-            <div class="step-card">
+            <div class="step-card" style="margin-top:12px;">
+              <div class="step-header">
+                <div class="step-number">2</div>
+                <h4 class="step-title">Activer la Maps JavaScript API</h4>
+              </div>
               <div class="step-body">
-                <p>
-                  La clé Google Maps n'est nécessaire que si vous souhaitez utiliser
-                  Google Maps comme fond de carte ou Google Directions pour le routage.
-                  Le mode par défaut (OSM + OpenRouteService) fonctionne sans clé.
-                  Si vous avez besoin d'une clé, activez l'API suivante :
-                </p>
                 <ol class="step-list">
                   <li>
-                    Dans le menu latéral, cliquez sur <strong
-                      >Facturation</strong
-                    > et associez un compte de facturation à votre projet
+                    Dans le menu latéral, cliquez sur <strong>Facturation</strong>
+                    et associez un compte de facturation à votre projet
                   </li>
                   <li>
                     Cliquez sur <strong>APIs et services</strong> → <strong
@@ -348,22 +509,20 @@ import "../styles/global.css";
                     dessus, puis cliquez sur <kbd>Activer</kbd>
                   </li>
                 </ol>
-                <div
-                  style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;"
-                >
+                <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
                   <div class="api-badge api-badge-green">
                     <span>✓</span> Maps JavaScript API
                   </div>
                 </div>
               </div>
             </div>
-          </section>
 
-          <section id="ch1-4" class="doc-section">
-            <h3 class="section-title">1.4 Générer et restreindre la clé API</h3>
-            <div class="step-card">
+            <div class="step-card" style="margin-top:12px;">
+              <div class="step-header">
+                <div class="step-number">3</div>
+                <h4 class="step-title">Générer la clé</h4>
+              </div>
               <div class="step-body">
-                <p><strong>Créer la clé :</strong></p>
                 <ol class="step-list">
                   <li>
                     Dans le menu, cliquez sur <strong>APIs et services</strong> →
@@ -377,11 +536,12 @@ import "../styles/global.css";
                   <li>
                     Une clé est générée immédiatement au format <code
                       >AIzaSy…</code
-                    > — copiez-la
+                    > — copiez-la et saisissez-la dans le panneau ⚙️ de Territory Maker
                   </li>
                 </ol>
               </div>
             </div>
+
             <div
               class="step-card"
               style="border-color:rgba(251,191,36,0.3);margin-top:12px;"
@@ -427,70 +587,11 @@ import "../styles/global.css";
                 <div class="step-notice step-notice-warning">
                   <span>⚠️</span>
                   <span
-                    >Les restrictions peuvent prendre quelques minutes pour
-                    prendre effet. Si la carte ne charge pas immédiatement,
-                    attendez 5 minutes et réessayez.</span
+                    >Les restrictions peuvent prendre quelques minutes pour prendre
+                    effet. Si la carte ne charge pas immédiatement, attendez 5 minutes
+                    et réessayez.</span
                   >
                 </div>
-              </div>
-            </div>
-          </section>
-        </section>
-
-        <!-- ─── CHAPITRE 2 ─── -->
-        <section id="ch2" style="margin-bottom:56px;">
-          <div class="chapter-header">
-            <div class="chapter-number">2</div>
-            <h2 class="chapter-title">Première utilisation</h2>
-          </div>
-
-          <section id="ch2-1" class="doc-section">
-            <h3 class="section-title">2.1 Première ouverture</h3>
-            <div class="step-card">
-              <div class="step-body">
-                <p>
-                  Territory Maker se charge directement en mode <strong>OSM + OpenRouteService</strong> —
-                  aucune clé API n'est requise. La carte OpenStreetMap et le calcul
-                  d'itinéraires ORS sont disponibles immédiatement.
-                </p>
-                <p style="margin-top:8px;">
-                  Pour utiliser Google Maps comme fond de carte ou Google Directions
-                  pour le routage, ouvrez le panneau ⚙️ (paramètres) et saisissez
-                  votre clé Google Maps API dans le champ prévu.
-                </p>
-                <div class="step-notice">
-                  <span>💡</span>
-                  <span
-                    >La clé est retenue entre les sessions : vous n'avez pas à
-                    la ressaisir à chaque visite.</span
-                  >
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section id="ch2-2" class="doc-section">
-            <h3 class="section-title">
-              2.2 Sécurité : comment la clé est stockée
-            </h3>
-            <div class="step-card">
-              <div class="step-body">
-                <ul class="step-list">
-                  <li>
-                    La clé est chiffrée en <strong>AES-GCM 256 bits</strong> avant
-                    d'être sauvegardée dans le <code>localStorage</code> de votre
-                    navigateur
-                  </li>
-                  <li>
-                    Elle n'est <strong>jamais envoyée</strong> à un serveur — tout
-                    reste sur votre appareil
-                  </li>
-                  <li>
-                    Pour l'effacer, cliquez sur le bouton <strong
-                      >Oublier la clé</strong
-                    > dans les paramètres
-                  </li>
-                </ul>
               </div>
             </div>
           </section>
@@ -887,7 +988,7 @@ import "../styles/global.css";
                   <li>
                     <strong>Sombre</strong> — carte en niveaux de gris sombres
                   </li>
-                  <li><strong>Clair</strong> — carte classique Google Maps</li>
+                  <li><strong>Clair</strong> — fond de carte clair</li>
                   <li><strong>Satellite</strong> — vue aérienne</li>
                   <li><strong>Relief</strong> — topographie et terrain</li>
                 </ul>
