@@ -1646,7 +1646,10 @@ export class RouteUI {
       localStorage.setItem("tm_map_provider", next);
       this.updateProviderBtn(btn, next);
       this.updateKeySection(this.isMapLoaded);
-      if (this.isMapLoaded) await this.switchProvider();
+      // Always switch if map is loaded, OR if switching to a no-key provider
+      // while waiting for a key (isMapLoaded=false but no key needed anymore).
+      const needsKey = next === "google" || this.routingProvider === "google";
+      if (this.isMapLoaded || !needsKey) await this.switchProvider();
     });
   }
 
@@ -1675,7 +1678,8 @@ export class RouteUI {
         this.routingProvider = next;
         this.updateRoutingBtn(next);
         this.updateKeySection(this.isMapLoaded);
-        if (this.isMapLoaded) await this.switchRoutingProvider();
+        const needsKey = (localStorage.getItem("tm_map_provider") ?? "osm") === "google" || next === "google";
+        if (this.isMapLoaded || !needsKey) await this.switchRoutingProvider();
       });
     });
   }
