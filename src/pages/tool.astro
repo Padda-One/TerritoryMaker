@@ -250,9 +250,13 @@ import "leaflet/dist/leaflet.css";
             </p>
           </div>
         </div>
-        <button id="btn-settings-toggle" class="btn-icon" title="Paramètres"
-          >⚙</button
-        >
+        <button id="btn-sidebar-close" class="btn-icon sidebar-close-btn" aria-label="Fermer le menu">✕</button>
+      </div>
+
+      <!-- Sidebar tabs (desktop only) -->
+      <div class="sidebar-tabs">
+        <button id="tab-tools" class="sidebar-tab">Outils</button>
+        <button id="tab-settings" class="sidebar-tab active">Paramètres</button>
       </div>
 
       <!-- ─── SETTINGS PANEL ──────────────────────────────────────────────── -->
@@ -672,6 +676,57 @@ import "leaflet/dist/leaflet.css";
       <div id="sidebar-resize" aria-hidden="true"></div>
     </aside>
 
+    <!-- Mobile sidebar toggle + backdrop -->
+    <button id="btn-sidebar-toggle" aria-label="Ouvrir le menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div id="sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- Floating map toolbar (mobile/tablet only) -->
+    <div id="map-toolbar" aria-label="Barre d'outils carte" role="toolbar">
+      <!-- Transport mode — collapsed picker -->
+      <div class="toolbar-group tb-transport" id="tb-transport">
+        <button id="tb-transport-current" class="tb-btn" aria-expanded="false" aria-label="Mode de transport">
+          <span class="tb-icon" id="tb-transport-icon">🚗</span>
+          <span class="tb-label" id="tb-transport-label">Voiture</span>
+        </button>
+        <div class="tb-transport-options" id="tb-transport-options" aria-hidden="true">
+          <button class="tb-btn tb-transport-opt" data-mode="driving" data-target="btn-transport-driving">
+            <span class="tb-icon">🚗</span><span class="tb-label">Voiture</span>
+          </button>
+          <button class="tb-btn tb-transport-opt" data-mode="walking" data-target="btn-transport-walking">
+            <span class="tb-icon">🚶</span><span class="tb-label">Pied</span>
+          </button>
+          <button class="tb-btn tb-transport-opt" data-mode="bicycling" data-target="btn-transport-bicycling">
+            <span class="tb-icon">🚴</span><span class="tb-label">Vélo</span>
+          </button>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="toolbar-group">
+        <button id="tb-new" class="tb-btn" data-target="btn-add-polygon">
+          <span class="tb-icon">＋</span><span class="tb-label">Nouveau</span>
+        </button>
+        <button id="tb-import" class="tb-btn" data-target="btn-import-kml">
+          <span class="tb-icon">⬆</span><span class="tb-label">Import</span>
+        </button>
+        <button id="tb-undo" class="tb-btn" data-target="btn-undo">
+          <span class="tb-icon">↩</span><span class="tb-label">Annuler</span>
+        </button>
+        <button id="tb-simplify" class="tb-btn" data-target="btn-simplify-all">
+          <span class="tb-icon">⬡</span><span class="tb-label">Simplif.</span>
+        </button>
+        <button id="tb-export" class="tb-btn">
+          <span class="tb-icon">🗺</span><span class="tb-label">Export</span>
+        </button>
+        <button id="tb-zones" class="tb-btn">
+          <span class="tb-icon">≡</span><span class="tb-label">Zones</span>
+        </button>
+      </div>
+    </div>
+
     <!-- ═══════════════════════════════════════════════════════════════════════
          MAP AREA
     ══════════════════════════════════════════════════════════════════════════ -->
@@ -986,6 +1041,18 @@ import "leaflet/dist/leaflet.css";
         </div>
       </div>
     </div>
+    <!-- Zones bottom sheet (mobile/tablet only) -->
+    <div id="zones-sheet" class="zones-sheet" aria-hidden="true">
+      <div class="zones-sheet-handle" aria-hidden="true"></div>
+      <div class="zones-sheet-header">
+        <span class="zones-sheet-title">Zones</span>
+        <button id="btn-zones-sheet-close" class="btn-icon" aria-label="Fermer les zones">✕</button>
+      </div>
+      <div class="zones-sheet-body">
+        <div id="zones-sheet-list"></div>
+      </div>
+    </div>
+    <div id="zones-sheet-backdrop" aria-hidden="true"></div>
   </body>
 </html>
 

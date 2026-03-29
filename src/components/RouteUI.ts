@@ -88,6 +88,9 @@ export class RouteUI {
     this.bindSidebarResize();
     this.bindContextMenu();
     this.bindLayerPanel();
+    this.bindMobileUI();
+    this.bindSidebarTabs();
+    this.bindMapToolbar();
 
     // Always fetch config first (ORS key + shared Google Maps key)
     const config = await this.fetchConfig();
@@ -201,16 +204,6 @@ export class RouteUI {
       this.showLandingAfterForget();
     });
 
-    // Settings toggle
-    this.el("btn-settings-toggle").addEventListener("click", () => {
-      const settingsVisible = this.el("settings-panel").style.display !== "none";
-      if (settingsVisible && this.isMapLoaded) {
-        this.showMapPanel();
-      } else if (!settingsVisible) {
-        this.showSettingsPanel();
-      }
-      // If settings visible but no map → do nothing (can't close without a loaded map)
-    });
   }
 
   private updateKeySection(hasKey: boolean): void {
@@ -240,13 +233,15 @@ export class RouteUI {
   private showSettingsPanel(): void {
     this.el("settings-panel").style.display = "flex";
     this.el("map-panel").style.display = "none";
-    this.el("btn-settings-toggle").classList.add("active");
+    document.getElementById("tab-settings")?.classList.add("active");
+    document.getElementById("tab-tools")?.classList.remove("active");
   }
 
   private showMapPanel(): void {
     this.el("settings-panel").style.display = "none";
     this.el("map-panel").style.display = "flex";
-    this.el("btn-settings-toggle").classList.remove("active");
+    document.getElementById("tab-tools")?.classList.add("active");
+    document.getElementById("tab-settings")?.classList.remove("active");
   }
 
   // ─── Landing page ─────────────────────────────────────────────────────────────
@@ -970,8 +965,8 @@ export class RouteUI {
     const hint = document.getElementById("map-hint-text");
     if (hint && !closed) {
       hint.textContent = count >= 3
-        ? "Clique sur le point A pour fermer le polygone"
-        : "Clique sur la carte pour placer un point de passage";
+        ? `${this.tap("Clique")} sur le point A pour fermer le polygone`
+        : `${this.tap("Clique")} sur la carte pour placer un point de passage`;
     }
   }
 
@@ -982,8 +977,8 @@ export class RouteUI {
       if (hintWrapper) hintWrapper.style.display = "none";
     } else {
       if (hint) hint.textContent = this.currentWaypoints.length >= 3
-        ? "Clique sur le point A pour fermer le polygone"
-        : "Clique sur la carte pour placer un point de passage";
+        ? `${this.tap("Clique")} sur le point A pour fermer le polygone`
+        : `${this.tap("Clique")} sur la carte pour placer un point de passage`;
     }
     this.updateActionButtons();
   }
@@ -1016,6 +1011,198 @@ export class RouteUI {
     }
   }
 
+  /** Use touch-friendly verbs when the device has a touchscreen */
+  private readonly isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  private tap(verb: string): string {
+    if (!this.isTouch) return verb;
+    const map: Record<string, string> = { "Clique": "Touche", "Cliquez": "Touchez" };
+    return map[verb] ?? verb;
+  }
+
+  // ─── Mobile drawer toggle ────────────────────────────────────────────────────
+
+  private bindMobileUI(): void {
+    const sidebar = document.getElementById("sidebar");
+    const toggle = document.getElementById("btn-sidebar-toggle");
+    const backdrop = document.getElementById("sidebar-backdrop");
+    if (!sidebar || !toggle || !backdrop) return;
+
+    const open = () => {
+      sidebar.classList.add("open");
+      backdrop.classList.add("visible");
+    };
+    const close = () => {
+      sidebar.classList.remove("open");
+      backdrop.classList.remove("visible");
+    };
+
+    toggle.addEventListener("click", () => {
+      sidebar.classList.contains("open") ? close() : open();
+    });
+    backdrop.addEventListener("click", close);
+    document.getElementById("btn-sidebar-close")?.addEventListener("click", close);
+  }
+
+  // ─── Sidebar tabs (desktop) ──────────────────────────────────────────────────
+
+  private bindSidebarTabs(): void {
+    const tabTools = document.getElementById("tab-tools");
+    const tabSettings = document.getElementById("tab-settings");
+    if (!tabTools || !tabSettings) return;
+
+    tabTools.addEventListener("click", () => {
+      if (this.isMapLoaded) this.showMapPanel();
+    });
+    tabSettings.addEventListener("click", () => {
+      this.showSettingsPanel();
+    });
+  }
+
+  // ─── Floating map toolbar (mobile/tablet) ────────────────────────────────────
+
+  private bindMapToolbar(): void {
+    // Proxy buttons → trigger their sidebar counterparts
+    document.querySelectorAll<HTMLButtonElement>("#map-toolbar [data-target]").forEach(tbBtn => {
+      const target = document.getElementById(tbBtn.dataset.target!) as HTMLButtonElement | null;
+      if (!target) return;
+      tbBtn.addEventListener("click", () => target.click());
+      // Sync initial disabled state
+      tbBtn.disabled = target.disabled;
+      // Sync disabled state on changes
+      new MutationObserver(() => {
+        tbBtn.disabled = target.disabled;
+      }).observe(target, { attributes: true, attributeFilter: ["disabled"] });
+    });
+
+    // Transport picker
+    const picker = document.getElementById("tb-transport");
+    const currentBtn = document.getElementById("tb-transport-current");
+    const currentIcon = document.getElementById("tb-transport-icon");
+    const currentLabel = document.getElementById("tb-transport-label");
+
+    const MODES = [
+      { mode: "driving",   icon: "🚗", label: "Voiture" },
+      { mode: "walking",   icon: "🚶", label: "Pied"    },
+      { mode: "bicycling", icon: "🚴", label: "Vélo"    },
+    ] as const;
+
+    const syncPickerIcon = () => {
+      for (const { mode, icon, label } of MODES) {
+        if (document.getElementById(`btn-transport-${mode}`)?.classList.contains("active")) {
+          if (currentIcon) currentIcon.textContent = icon;
+          if (currentLabel) currentLabel.textContent = label;
+        }
+      }
+    };
+
+    const closePicker = () => {
+      picker?.classList.remove("expanded");
+      currentBtn?.setAttribute("aria-expanded", "false");
+      document.getElementById("tb-transport-options")?.setAttribute("aria-hidden", "true");
+    };
+
+    currentBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isExpanded = picker?.classList.contains("expanded");
+      if (isExpanded) {
+        closePicker();
+      } else {
+        picker?.classList.add("expanded");
+        currentBtn.setAttribute("aria-expanded", "true");
+        document.getElementById("tb-transport-options")?.setAttribute("aria-hidden", "false");
+      }
+    });
+
+    document.querySelectorAll<HTMLButtonElement>(".tb-transport-opt").forEach(opt => {
+      const target = document.getElementById(opt.dataset.target!) as HTMLButtonElement | null;
+      if (!target) return;
+      // Initial active state
+      opt.classList.toggle("active", target.classList.contains("active"));
+      // Click → trigger real button, sync icon, collapse
+      opt.addEventListener("click", (e) => {
+        e.stopPropagation();
+        target.click();
+        syncPickerIcon();
+        closePicker();
+      });
+      // Sync active class when real button changes
+      new MutationObserver(() => {
+        opt.classList.toggle("active", target.classList.contains("active"));
+        syncPickerIcon();
+      }).observe(target, { attributes: true, attributeFilter: ["class"] });
+    });
+
+    // Close picker on outside click
+    document.addEventListener("click", (e) => {
+      if (!picker?.contains(e.target as Node)) closePicker();
+    });
+
+    syncPickerIcon();
+
+    // Export button → direct download (kml-panel is hidden on mobile)
+    const tbExport = document.getElementById("tb-export") as HTMLButtonElement | null;
+    const realExportBtn = document.getElementById("btn-export-kml") as HTMLButtonElement | null;
+    const downloadBtn = document.getElementById("btn-kml-download") as HTMLButtonElement | null;
+    if (tbExport && realExportBtn && downloadBtn) {
+      tbExport.disabled = realExportBtn.disabled;
+      tbExport.addEventListener("click", () => downloadBtn.click());
+      new MutationObserver(() => {
+        tbExport.disabled = realExportBtn.disabled;
+      }).observe(realExportBtn, { attributes: true, attributeFilter: ["disabled"] });
+    }
+
+    // Zones button → open bottom sheet
+    document.getElementById("tb-zones")?.addEventListener("click", () => {
+      this.openZonesSheet();
+    });
+  }
+
+  // ─── Zones bottom sheet ──────────────────────────────────────────────────────
+
+  private openZonesSheet(): void {
+    const sheet = document.getElementById("zones-sheet");
+    const backdrop = document.getElementById("zones-sheet-backdrop");
+    const sheetList = document.getElementById("zones-sheet-list");
+    const sourceList = document.getElementById("polygon-layer-list");
+    if (!sheet || !backdrop || !sheetList || !sourceList) return;
+
+    // Clone current layer list content
+    sheetList.replaceChildren(sourceList.cloneNode(true));
+
+    // Wire up polygon row clicks: select real item and close sheet
+    sheetList.querySelectorAll<HTMLElement>(".polygon-layer-row[data-id]").forEach(clonedRow => {
+      const polyId = clonedRow.dataset.id;
+      clonedRow.addEventListener("click", () => {
+        const realRow = sourceList.querySelector<HTMLElement>(`.polygon-layer-row[data-id="${polyId}"]`);
+        realRow?.click();
+        this.closeZonesSheet();
+      });
+    });
+
+    // Wire up group row clicks: collapse/expand via real row
+    sheetList.querySelectorAll<HTMLElement>(".group-row[data-group-id]").forEach(clonedRow => {
+      const groupId = clonedRow.dataset.groupId;
+      clonedRow.addEventListener("click", () => {
+        const realRow = sourceList.querySelector<HTMLElement>(`[data-group-id="${groupId}"]`);
+        realRow?.click();
+      });
+    });
+
+    sheet.classList.add("open");
+    sheet.setAttribute("aria-hidden", "false");
+    backdrop.classList.add("visible");
+    document.getElementById("btn-zones-sheet-close")?.addEventListener("click", () => this.closeZonesSheet(), { once: true });
+    backdrop.addEventListener("click", () => this.closeZonesSheet(), { once: true });
+  }
+
+  private closeZonesSheet(): void {
+    const sheet = document.getElementById("zones-sheet");
+    const backdrop = document.getElementById("zones-sheet-backdrop");
+    sheet?.classList.remove("open");
+    sheet?.setAttribute("aria-hidden", "true");
+    backdrop?.classList.remove("visible");
+  }
+
   // ─── Sidebar resize ──────────────────────────────────────────────────────────
 
   private bindLayerListResize(): void {
@@ -1030,27 +1217,36 @@ export class RouteUI {
     const saved = localStorage.getItem("tm_layer_list_height");
     if (saved) list.style.maxHeight = `${Math.max(MIN_H, Math.min(MAX_H, Number(saved)))}px`;
 
-    handle.addEventListener("mousedown", (e) => {
-      e.preventDefault();
+    const startDrag = (startY: number) => {
       handle.classList.add("dragging");
       document.body.classList.add("layer-list-resizing");
-      const startY = e.clientY;
       const startH = list.offsetHeight;
 
-      const onMove = (mv: MouseEvent) => {
-        const h = Math.max(MIN_H, Math.min(MAX_H, startH + mv.clientY - startY));
+      const move = (y: number) => {
+        const h = Math.max(MIN_H, Math.min(MAX_H, startH + y - startY));
         list.style.maxHeight = `${h}px`;
       };
-      const onUp = () => {
+      const end = () => {
         handle.classList.remove("dragging");
         document.body.classList.remove("layer-list-resizing");
         localStorage.setItem("tm_layer_list_height", String(list.offsetHeight));
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
+        document.removeEventListener("mousemove", onMouse);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.removeEventListener("touchmove", onTouch);
+        document.removeEventListener("touchend", onTouchEnd);
       };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    });
+      const onMouse = (mv: MouseEvent) => move(mv.clientY);
+      const onMouseUp = end;
+      const onTouch = (mv: TouchEvent) => move(mv.touches[0].clientY);
+      const onTouchEnd = end;
+      document.addEventListener("mousemove", onMouse);
+      document.addEventListener("mouseup", onMouseUp);
+      document.addEventListener("touchmove", onTouch, { passive: true });
+      document.addEventListener("touchend", onTouchEnd);
+    };
+
+    handle.addEventListener("mousedown", (e) => { e.preventDefault(); startDrag(e.clientY); });
+    handle.addEventListener("touchstart", (e) => { e.preventDefault(); startDrag(e.touches[0].clientY); });
   }
 
   private bindSidebarResize(): void {
@@ -1062,27 +1258,36 @@ export class RouteUI {
     const saved = localStorage.getItem("tm_sidebar_width");
     if (saved) sidebar.style.width = `${Math.max(180, Math.min(600, Number(saved)))}px`;
 
-    handle.addEventListener("mousedown", (e) => {
-      e.preventDefault();
+    const startDrag = (startX: number) => {
       handle.classList.add("dragging");
       document.body.classList.add("sidebar-resizing");
-      const startX = e.clientX;
       const startW = sidebar.offsetWidth;
 
-      const onMove = (mv: MouseEvent) => {
-        const w = Math.max(180, Math.min(600, startW + mv.clientX - startX));
+      const move = (x: number) => {
+        const w = Math.max(180, Math.min(600, startW + x - startX));
         sidebar.style.width = `${w}px`;
       };
-      const onUp = () => {
+      const end = () => {
         handle.classList.remove("dragging");
         document.body.classList.remove("sidebar-resizing");
         localStorage.setItem("tm_sidebar_width", String(sidebar.offsetWidth));
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
+        document.removeEventListener("mousemove", onMouse);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.removeEventListener("touchmove", onTouch);
+        document.removeEventListener("touchend", onTouchEnd);
       };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    });
+      const onMouse = (mv: MouseEvent) => move(mv.clientX);
+      const onMouseUp = end;
+      const onTouch = (mv: TouchEvent) => move(mv.touches[0].clientX);
+      const onTouchEnd = end;
+      document.addEventListener("mousemove", onMouse);
+      document.addEventListener("mouseup", onMouseUp);
+      document.addEventListener("touchmove", onTouch, { passive: true });
+      document.addEventListener("touchend", onTouchEnd);
+    };
+
+    handle.addEventListener("mousedown", (e) => { e.preventDefault(); startDrag(e.clientX); });
+    handle.addEventListener("touchstart", (e) => { e.preventDefault(); startDrag(e.touches[0].clientX); });
   }
 
   // ─── Context menu ─────────────────────────────────────────────────────────────
@@ -1204,7 +1409,7 @@ export class RouteUI {
     if (totalPolygons === 0) {
       const hint = document.createElement("p");
       hint.style.cssText = "font-size:0.75rem;color:var(--color-text-muted);font-style:italic;text-align:center;padding:8px 0;margin:0;";
-      hint.textContent = "Cliquez sur + Nouveau ou ⬆ Importer pour commencer";
+      hint.textContent = `${this.tap("Cliquez")} sur + Nouveau ou ⬆ Importer pour commencer`;
       list.appendChild(hint);
       return;
     }
