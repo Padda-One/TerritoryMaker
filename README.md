@@ -48,7 +48,8 @@ Territory Maker has first-class support for **[New World Scheduler](https://neww
 - **Runtime Google quota handling** — if the shared Google key hits its quota mid-session, a modal prompts for a personal API key; all drawn territories and imported polygons are preserved and restored automatically after the key change
 - **App themes** — switch between Dark, Light, and System (follows OS preference) — persisted in `localStorage`
 - **Map themes** — independently choose between Dark, Light, Satellite, and Terrain map styles
-- **Settings panel** — API key management and appearance settings accessible via the ⚙ button; shows only the key status (not the key itself) once a key is stored
+- **Settings panel** — API key management and appearance settings accessible via the *Paramètres* tab (desktop) or the hamburger menu (mobile); shows only the key status (not the key itself) once a key is stored
+- **Mobile & tablet UI** — fully responsive on screens ≤ 768 px: floating left toolbar gives one-tap access to all drawing tools; collapsible transport mode picker; zones bottom sheet; hamburger drawer for settings
 - **Step-by-step API key guide** — built-in documentation page at `/documentation` for obtaining and configuring a Google Maps API key
 - **FAQ** — dedicated `/faq` page covering common questions (routing oddities, simplification, KML compatibility, API key cost and security, data privacy); includes FAQPage schema for Google rich snippets
 - **KML export** — export all polygons at once, per folder, or per polygon from the layer panel; supports copy to clipboard and `.kml` download
@@ -56,7 +57,7 @@ Territory Maker has first-class support for **[New World Scheduler](https://neww
 - **Group recolor** — click the color dot on any folder header to change the color of all polygons in that folder at once (fill overlay + border)
 - **Encrypted local key storage** — your Google Maps API key is encrypted with AES-GCM 256-bit and stored in `localStorage` using a device-derived key (no password required)
 - **No backend** — everything runs in your browser; no data is sent to any server other than Google Maps APIs
-- **Desktop-first** — designed for desktop use (mouse + keyboard); not optimised for mobile or touch
+- **Desktop & mobile** — optimised for desktop (mouse + keyboard) and fully usable on phones and tablets via the responsive toolbar layout
 
 ---
 

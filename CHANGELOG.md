@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.0.0] — 2026-03-29
+
+### Added
+- **Mobile & tablet support** — full responsive redesign for screens ≤ 768 px
+  - Floating vertical toolbar on the left of the map: transport mode picker, new zone, import, undo, simplify, export, zones list
+  - Transport mode picker collapses to a single button showing the active mode; tap to expand all three options, tap a choice to switch and collapse
+  - Zones bottom sheet — swipes up from the bottom of the screen; tap any zone to select it and close the sheet
+  - Hamburger drawer shows Settings only (API key, themes, routing provider); tools are on the map toolbar
+  - ✕ close button inside the drawer fixes the hamburger-can't-be-closed bug
+- **Sidebar tabs (desktop)** — *Outils* and *Paramètres* tabs replace the ⚙ toggle button; always visible and labelled
+
+### Changed
+- Desktop sidebar: ⚙ toggle replaced by *Outils | Paramètres* tab strip
+- Mobile export button triggers direct KML download (bypasses the hidden sidebar panel)
+
+---
+
 ## [1.3.0] — 2026-03-28
 
 ### Added
@@ -65,6 +82,7 @@ Initial public release.
 - AES-GCM 256-bit encryption for the API key stored in `localStorage`
 - Deployed on Cloudflare Pages — fully client-side, no data sent to any server
 
+[2.0.0]: https://github.com/Padda-One/TerritoryMaker/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/Padda-One/TerritoryMaker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Padda-One/TerritoryMaker/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Padda-One/TerritoryMaker/compare/v1.0.0...v1.1.0

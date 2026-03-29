@@ -683,6 +683,42 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Sidebar tabs (desktop) ─────────────────────────────────────────────── */
+
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(68, 71, 91, 0.35);
+  flex-shrink: 0;
+}
+
+.sidebar-tab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.03em;
+}
+
+.sidebar-tab:hover {
+  color: var(--color-text);
+}
+
+.sidebar-tab.active {
+  color: var(--color-accent-green);
+  border-bottom-color: var(--color-accent-green);
+}
+
+/* Close button — hidden on desktop, visible on mobile */
+.sidebar-close-btn {
+  display: none;
+}
+
 /* ─── Layer panel ────────────────────────────────────────────────────────── */
 
 .polygon-layer-row {
@@ -2804,5 +2840,354 @@ body.layer-list-resizing {
     transition: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOOL PAGE — TABLET & MOBILE RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Hamburger button — hidden on desktop */
+#btn-sidebar-toggle {
+  display: none;
+}
+
+/* Backdrop — hidden by default */
+#sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1499;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#sidebar-backdrop.visible {
+  display: block;
+  opacity: 1;
+}
+
+/* ─── Map floating toolbar — hidden on desktop ───────────────────────────── */
+#map-toolbar {
+  display: none;
+}
+
+/* ─── Zones bottom sheet — hidden by default ─────────────────────────────── */
+.zones-sheet {
+  display: none;
+}
+
+#zones-sheet-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1399;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#zones-sheet-backdrop.visible {
+  display: block;
+  opacity: 1;
+}
+
+/* ─── ≤ 768px : sidebar → drawer overlay ────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  /* Sidebar becomes a fixed drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1500;
+    width: 288px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Hamburger toggle */
+  #btn-sidebar-toggle {
+    display: flex;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1001;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(30, 32, 48, 0.75);
+    border: 1px solid rgba(68, 71, 91, 0.4);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  [data-theme="light"] #btn-sidebar-toggle {
+    background: rgba(230, 233, 239, 0.85);
+  }
+
+  #btn-sidebar-toggle:hover,
+  #btn-sidebar-toggle:active {
+    border-color: var(--color-accent-green);
+    color: var(--color-accent-green);
+  }
+
+  /* Close button visible on mobile */
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  /* Tabs hidden on mobile (drawer = settings only) */
+  .sidebar-tabs {
+    display: none;
+  }
+
+  /* Map panel hidden on mobile (toolbar replaces it) */
+  #map-panel {
+    display: none !important;
+  }
+
+  /* Settings panel always visible in the mobile drawer (JS tab-switching doesn't apply) */
+  #settings-panel {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  /* Hide sidebar resize handle on mobile */
+  #sidebar-resize {
+    display: none;
+  }
+
+  /* ─── Floating map toolbar ─────────────────────────────────────────────── */
+
+  #map-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: fixed;
+    top: 70px;
+    left: 8px;
+    z-index: 1000;
+  }
+
+  .toolbar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(30, 32, 48, 0.85);
+    border: 1px solid rgba(68, 71, 91, 0.4);
+    border-radius: 10px;
+    padding: 4px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  [data-theme="light"] .toolbar-group {
+    background: rgba(230, 233, 239, 0.92);
+  }
+
+  .tb-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    min-height: 44px;
+    padding: 4px 2px;
+    background: none;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    transition: background 0.15s, color 0.15s;
+    gap: 2px;
+  }
+
+  .tb-btn:hover,
+  .tb-btn:active {
+    background: rgba(0, 229, 160, 0.1);
+    color: var(--color-accent-green);
+  }
+
+  .tb-btn.active {
+    color: var(--color-accent-green);
+    background: rgba(0, 229, 160, 0.12);
+  }
+
+  .tb-btn:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .tb-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .tb-label {
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    color: inherit;
+  }
+
+  /* ─── Transport picker ──────────────────────────────────────────────────── */
+
+  .tb-transport-options {
+    overflow: hidden;
+    max-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: max-height 0.2s ease;
+  }
+
+  .tb-transport.expanded .tb-transport-options {
+    max-height: 152px; /* 3 × ~48px */
+  }
+
+  .tb-transport-opt.active {
+    color: var(--color-accent-green);
+    background: rgba(0, 229, 160, 0.12);
+  }
+
+  /* Divider between current mode btn and options */
+  .tb-transport.expanded #tb-transport-current {
+    border-bottom: 1px solid rgba(68, 71, 91, 0.35);
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+  }
+
+  /* ─── Zones bottom sheet ────────────────────────────────────────────────── */
+
+  .zones-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 60vh;
+    background: var(--color-surface);
+    border-top: 1px solid rgba(68, 71, 91, 0.35);
+    border-radius: 16px 16px 0 0;
+    z-index: 1400;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .zones-sheet.open {
+    transform: translateY(0);
+  }
+
+  .zones-sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--color-border);
+    border-radius: 2px;
+    margin: 10px auto 4px;
+    flex-shrink: 0;
+  }
+
+  .zones-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 16px 10px;
+    border-bottom: 1px solid rgba(68, 71, 91, 0.2);
+    flex-shrink: 0;
+  }
+
+  .zones-sheet-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .zones-sheet-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  /* Move Leaflet zoom controls out of top-left (hamburger zone) */
+  .leaflet-top.leaflet-left {
+    top: auto !important;
+    bottom: 20px;
+  }
+
+  /* Segment toggle pill — compact */
+  .toggle-pill button {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  /* Right toolbar buttons — WCAG 44px touch targets */
+  .snap-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  /* Error toast — full width on small screens */
+  .error-toast {
+    max-width: calc(100vw - 32px);
+    left: 16px;
+    right: 16px;
+    transform: none;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+}
+
+/* ─── ≤ 480px : phone-specific tweaks ───────────────────────────────────── */
+
+@media (max-width: 480px) {
+
+  /* Sidebar takes full width on phones */
+  .sidebar {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  /* Modals — reduce padding, full width */
+  .lp-modal {
+    padding: 12px;
+  }
+
+  .lp-modal-card {
+    padding: 24px;
+    border-radius: 16px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .lp-modal-title {
+    font-size: 1.3rem;
+  }
+
+  /* Map hint — avoid overlapping bottom controls */
+  #map-hint {
+    bottom: 70px !important;
   }
 }
