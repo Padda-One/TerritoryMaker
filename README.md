@@ -44,6 +44,8 @@ Territory Maker has first-class support for **[New World Scheduler](https://neww
 - **Polygon simplification** — ⬡ reduce the number of vertices of a Zone using Douglas-Peucker; each click applies one pass with a progressively larger tolerance; a ↺ restore button appears to revert to the original coordinates; a global "Simplifier les zones" button simplifies all zones at once
 - **Dual map backend** — choose between **Google Maps** and **OpenStreetMap** (Leaflet) as the display layer; routing uses OpenRouteService (ORS) by default; Google Directions API is available as an opt-in option in settings
 - **App loads immediately in OSM+ORS mode** — no API key required by default; Google Maps display and/or Google Directions routing are opt-in via the ⚙ settings panel
+- **Automatic ORS → Google fallback** — if ORS becomes unavailable (quota or auth error) while Google Maps is active, routing silently switches to Google Directions and the picker updates automatically
+- **Runtime Google quota handling** — if the shared Google key hits its quota mid-session, a modal prompts for a personal API key; all drawn territories and imported polygons are preserved and restored automatically after the key change
 - **App themes** — switch between Dark, Light, and System (follows OS preference) — persisted in `localStorage`
 - **Map themes** — independently choose between Dark, Light, Satellite, and Terrain map styles
 - **Settings panel** — API key management and appearance settings accessible via the ⚙ button; shows only the key status (not the key itself) once a key is stored

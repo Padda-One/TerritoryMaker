@@ -14,6 +14,7 @@
 
 import * as ApiKeyManager from "./ApiKeyManager.ts";
 import { MapController } from "./MapController.ts";
+import type { MapSnapshot } from "./MapController.ts";
 import { buildKmlMulti, downloadKml, copyKml, getStats } from "./KmlExporter.ts";
 import { parseKmlFile } from "./KmlImporter.ts";
 import { parseNwsCsv, nwsDisplayName } from "./NwsCsvImporter.ts";
@@ -425,6 +426,13 @@ export class RouteUI {
       this.mapController.onError = (msg) => this.showError(msg);
       this.mapController.onLoadingChange = (loading) => this.showMapLoading(loading);
       this.mapController.onClosedChanged = (closed) => this.handleClosedChanged(closed);
+      this.mapController.onGoogleQuota = () => this.handleGoogleQuotaExceeded();
+      this.mapController.onOrsUnavailable = () => {
+        this.routingProvider = "google";
+        localStorage.setItem("tm_routing_provider", "google");
+        this.updateRoutingBtn("google");
+        this.showError("ORS indisponible — calcul d'itinéraires basculé automatiquement vers Google Maps.");
+      };
 
       const provider = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
       const rp = routingProvider ?? this.routingProvider;
@@ -1849,6 +1857,96 @@ export class RouteUI {
     const overlay = document.getElementById("map-loading");
     if (!overlay) return;
     overlay.style.display = visible ? "flex" : "none";
+  }
+
+  // ─── Google quota fallback ───────────────────────────────────────────────────
+
+  private handleGoogleQuotaExceeded(): void {
+    const snapshot: MapSnapshot = this.mapController!.captureState();
+
+    // Build modal overlay via DOM (no innerHTML — all content is static)
+    const overlay = document.createElement("div");
+    overlay.id = "quota-modal";
+    overlay.style.cssText = "position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;";
+
+    const box = document.createElement("div");
+    box.style.cssText = "background:var(--color-surface,#1e1e2e);border:1px solid var(--color-accent-yellow,#eed49f);border-radius:12px;padding:24px;max-width:480px;width:90%;box-sizing:border-box;";
+
+    const title = document.createElement("h2");
+    title.style.cssText = "font-size:1rem;margin:0 0 8px;color:var(--color-text);";
+    title.textContent = "⚠ Quota Google Directions atteint";
+
+    const desc = document.createElement("p");
+    desc.style.cssText = "font-size:0.84rem;color:var(--color-text-muted);margin:0 0 10px;line-height:1.5;";
+    desc.textContent = "La clé API partagée a épuisé son quota. Entrez votre propre clé Google Maps API pour continuer.";
+
+    const notice = document.createElement("p");
+    notice.style.cssText = "font-size:0.82rem;color:var(--color-accent-green,#a6e3a1);margin:0 0 16px;";
+    notice.textContent = "Vos données sont conservées et seront restaurées automatiquement.";
+
+    const kmlBtn = document.createElement("button");
+    kmlBtn.type = "button";
+    kmlBtn.style.cssText = "display:block;width:100%;margin-bottom:12px;padding:8px;background:transparent;border:1px solid var(--color-text-muted,#6c7086);border-radius:6px;color:var(--color-text);cursor:pointer;font-size:0.82rem;box-sizing:border-box;";
+    kmlBtn.textContent = "⬇ Télécharger KML (sauvegarde)";
+
+    const form = document.createElement("form");
+    form.noValidate = true;
+
+    const keyInput = document.createElement("input");
+    keyInput.type = "password";
+    keyInput.placeholder = "AIza…";
+    keyInput.autocomplete = "off";
+    keyInput.spellcheck = false;
+    keyInput.style.cssText = "display:block;width:100%;padding:8px 10px;background:var(--color-bg,#0f1117);border:1px solid var(--color-text-muted,#6c7086);border-radius:6px;color:var(--color-text);font-size:0.9rem;box-sizing:border-box;margin-bottom:10px;";
+
+    const errorEl = document.createElement("div");
+    errorEl.style.cssText = "display:none;font-size:0.8rem;color:var(--color-accent-red,#f38ba8);margin-bottom:8px;";
+
+    const submitBtn = document.createElement("button");
+    submitBtn.type = "submit";
+    submitBtn.style.cssText = "display:block;width:100%;padding:9px;background:var(--color-accent-blue,#89b4fa);border:none;border-radius:6px;color:#1e1e2e;font-weight:600;cursor:pointer;font-size:0.9rem;box-sizing:border-box;";
+    submitBtn.textContent = "Utiliser ma clé API";
+
+    const guide = document.createElement("a");
+    guide.href = "/documentation";
+    guide.style.cssText = "display:block;text-align:center;margin-top:12px;font-size:0.78rem;color:var(--color-accent-blue,#89b4fa);";
+    guide.textContent = "Comment obtenir une clé Google Maps API →";
+
+    form.append(keyInput, errorEl, submitBtn);
+    box.append(title, desc, notice, kmlBtn, form, guide);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    kmlBtn.addEventListener("click", () => {
+      const kml = this.getCurrentKml();
+      if (kml) downloadKml(kml);
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const key = keyInput.value.trim();
+      if (!key) return;
+
+      submitBtn.disabled = true;
+      errorEl.style.display = "none";
+
+      try {
+        await ApiKeyManager.saveKey(key);
+        overlay.remove();
+        this.sharedMode = false;
+        this.mapController?.destroy();
+        this.mapController = null;
+        this.isMapLoaded = false;
+        this.currentWaypoints = [];
+        this.currentSegments = [];
+        await this.initMap(key, snapshot.view ?? undefined, false, this.routingProvider);
+        (this.mapController as MapController | null)?.restoreState(snapshot);
+      } catch (err) {
+        errorEl.textContent = err instanceof Error ? err.message : "Clé invalide.";
+        errorEl.style.display = "block";
+        submitBtn.disabled = false;
+      }
+    });
   }
 
   private showError(message: string): void {

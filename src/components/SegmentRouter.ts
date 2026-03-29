@@ -84,7 +84,7 @@ export async function resolveSegment(
   if (!orsApiKey) {
     throw new RoutingError(
       "AUTH_ERROR",
-      "Clé API OpenRouteService manquante. Configure ta clé dans les paramètres du serveur.",
+      "Le service de calcul d'itinéraires est indisponible. Passez en mode Google Maps (paramètres) ou utilisez les segments en ligne droite.",
     );
   }
 
@@ -125,7 +125,13 @@ export async function resolveSegment(
     if (response.status === 401 || response.status === 403) {
       throw new RoutingError(
         "AUTH_ERROR",
-        "Clé API OpenRouteService invalide ou manquante. Configure ta clé dans les paramètres.",
+        "Le service de calcul d'itinéraires est indisponible. Passez en mode Google Maps (paramètres) ou utilisez les segments en ligne droite.",
+      );
+    }
+    if (response.status === 429) {
+      throw new RoutingError(
+        "ORS_RATE_LIMIT",
+        "Quota ORS dépassé pour aujourd'hui. Passez en mode Google Maps (paramètres) ou utilisez les segments en ligne droite.",
       );
     }
     throw new RoutingError(`ORS_${code}`, orsErrorMessage(code, message));
@@ -185,6 +191,11 @@ export async function resolveSegmentGoogle(
           resolve({ mode: "route", path });
         } else if (status === google.maps.DirectionsStatus.ZERO_RESULTS) {
           reject(new RoutingError("ZERO_RESULTS", "Aucun itinéraire trouvé entre ces deux points pour ce mode de transport."));
+        } else if (
+          status === google.maps.DirectionsStatus.OVER_QUERY_LIMIT ||
+          status === google.maps.DirectionsStatus.REQUEST_DENIED
+        ) {
+          reject(new RoutingError("GOOGLE_QUOTA", "La clé API Google Directions a atteint son quota."));
         } else {
           reject(new RoutingError(status as string, `Erreur de calcul d'itinéraire (${status}).`));
         }
