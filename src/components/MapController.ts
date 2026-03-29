@@ -19,6 +19,43 @@ export type { SegmentMode, TravelMode, Waypoint, ResolvedSegment, RoutingProvide
 export type { NWSData };
 export type MapProvider = "google" | "osm";
 
+// ─── State snapshot (for map reinit with key change) ─────────────────────────
+
+export interface WaypointSnapshot {
+  lat: number;
+  lng: number;
+  label: string;
+  segmentMode: SegmentMode;
+  segmentPath: { lat: number; lng: number }[] | null;
+}
+
+export interface DrawnPolygonSnapshot {
+  name: string;
+  color: string;
+  textColor: string;
+  waypoints: WaypointSnapshot[];
+  closingSegmentPath: { lat: number; lng: number }[] | null;
+  nwsData?: NWSData;
+}
+
+export interface ImportedPolygonSnapshot {
+  name: string;
+  coordinates: { lat: number; lng: number }[];
+  nwsData?: NWSData;
+}
+
+export interface ImportedGroupSnapshot {
+  name: string;
+  color: string;
+  polygons: ImportedPolygonSnapshot[];
+}
+
+export interface MapSnapshot {
+  view: { center: { lat: number; lng: number }; zoom: number } | null;
+  drawnPolygons: DrawnPolygonSnapshot[];
+  importedGroups: ImportedGroupSnapshot[];
+}
+
 // ─── Internal types ───────────────────────────────────────────────────────────
 
 type AnyMarker = google.maps.Marker | L.Marker;
@@ -304,6 +341,8 @@ export class MapController {
   public onError: ((message: string) => void) | null = null;
   public onLoadingChange: ((loading: boolean) => void) | null = null;
   public onClosedChanged: ((closed: boolean) => void) | null = null;
+  public onGoogleQuota: (() => void) | null = null;
+  public onOrsUnavailable: (() => void) | null = null;
 
   // ─── Map initialisation ────────────────────────────────────────────────────
 
@@ -351,9 +390,8 @@ export class MapController {
       // Validate auth with an off-screen element above the landing overlay (z-index:101).
       await this.validateGoogleAuth(authFailure);
 
-      if (routingProvider === "google") {
-        this.directionsService = new google.maps.DirectionsService();
-      }
+      // Always init DirectionsService when SDK is loaded — enables ORS→Google fallback
+      this.directionsService = new google.maps.DirectionsService();
 
       if (provider === "google") {
         this.createGoogleMap(mapEl, initialView);
@@ -616,7 +654,7 @@ export class MapController {
           pendingClose = setTimeout(() => {
             pendingClose = null;
             this.closePolygon().catch((err) => {
-              this.onError?.(err instanceof Error ? err.message : "Erreur lors de la fermeture du polygone.");
+              this.handleRoutingError(err, "Erreur lors de la fermeture du polygone.");
             });
           }, 250);
         }
@@ -647,8 +685,7 @@ export class MapController {
       } catch (err) {
         this.removeObj(marker);
         this.onLoadingChange?.(false);
-        if (err instanceof RoutingError) { this.onError?.(err.message); }
-        else { this.onError?.("Erreur inattendue lors du calcul d'itinéraire."); }
+        this.handleRoutingError(err, "Erreur inattendue lors du calcul d'itinéraire.");
         return;
       } finally {
         this.onLoadingChange?.(false);
@@ -690,7 +727,7 @@ export class MapController {
 
       this.onLoadingChange?.(true);
       try { await this.recalcAdjacentSegments(poly, wpIndex); }
-      catch (err) { this.onError?.(err instanceof Error ? err.message : "Erreur lors de la mise à jour du point."); }
+      catch (err) { this.handleRoutingError(err, "Erreur lors de la mise à jour du point."); }
       finally { this.onLoadingChange?.(false); }
 
       this.notifyChange();
@@ -777,7 +814,21 @@ export class MapController {
     if (this.routingProvider === "google" && this.directionsService) {
       return resolveSegmentGoogle(from, to, this.travelMode, this.directionsService);
     }
-    return resolveSegment(from, to, this.travelMode, this.orsApiKey);
+
+    try {
+      return await resolveSegment(from, to, this.travelMode, this.orsApiKey);
+    } catch (err) {
+      if (
+        err instanceof RoutingError &&
+        (err.code === "AUTH_ERROR" || err.code === "ORS_RATE_LIMIT") &&
+        this.directionsService
+      ) {
+        this.routingProvider = "google";
+        this.onOrsUnavailable?.();
+        return resolveSegmentGoogle(from, to, this.travelMode, this.directionsService);
+      }
+      throw err;
+    }
   }
 
   // ─── Polygon closure ───────────────────────────────────────────────────────
@@ -1708,6 +1759,139 @@ export class MapController {
 
   private notifyChange(): void { this.onWaypointsChanged?.(this.getWaypoints(), this.getSegments()); }
   private notifyPolygonsChanged(): void { this.onPolygonsChanged?.(this.getGroups()); }
+
+  // ─── Routing error helper ─────────────────────────────────────────────────
+
+  private handleRoutingError(err: unknown, fallbackMessage: string): void {
+    if (err instanceof RoutingError && err.code === "GOOGLE_QUOTA") {
+      this.onGoogleQuota?.();
+      return;
+    }
+    this.onError?.(err instanceof RoutingError ? err.message : fallbackMessage);
+  }
+
+  // ─── State capture / restore (used on Google API key change) ─────────────
+
+  captureState(): MapSnapshot {
+    const view = this.getViewState();
+    const drawnPolygons: DrawnPolygonSnapshot[] = [];
+    const importedGroupsMap = new Map<string, ImportedGroupSnapshot>();
+
+    for (const poly of this.polygons) {
+      if (!poly.isClosed) continue;
+
+      if (poly.kind === "drawn") {
+        const waypoints: WaypointSnapshot[] = poly.waypoints.map((wp) => ({
+          lat: wp.lat,
+          lng: wp.lng,
+          label: wp.label,
+          segmentMode: wp.segmentMode,
+          segmentPath: wp.segment ? [...wp.segment.path] : null,
+        }));
+        drawnPolygons.push({
+          name: poly.name,
+          color: poly.color,
+          textColor: poly.textColor,
+          waypoints,
+          closingSegmentPath: poly.closingSegment ? [...poly.closingSegment.path] : null,
+          nwsData: poly.nwsData,
+        });
+      } else {
+        const groupInfo = this.groups.find((g) => g.id === poly.groupId);
+        const groupName = groupInfo?.name ?? "Import";
+        if (!importedGroupsMap.has(poly.groupId)) {
+          importedGroupsMap.set(poly.groupId, { name: groupName, color: poly.color, polygons: [] });
+        }
+        importedGroupsMap.get(poly.groupId)!.polygons.push({
+          name: poly.name,
+          coordinates: poly.rawCoordinates ? [...poly.rawCoordinates] : [],
+          nwsData: poly.nwsData,
+        });
+      }
+    }
+
+    return { view, drawnPolygons, importedGroups: [...importedGroupsMap.values()] };
+  }
+
+  restoreState(snapshot: MapSnapshot): void {
+    // Restore drawn polygons
+    for (const pd of snapshot.drawnPolygons) {
+      const groupId = this.ensureDrawnGroup();
+      const id = crypto.randomUUID();
+      const poly: PolygonData = {
+        id,
+        name: pd.name,
+        color: pd.color,
+        textColor: pd.textColor,
+        fillColor: "#000000",
+        kind: "drawn",
+        groupId,
+        waypoints: [],
+        closingPolyline: null,
+        closingSegment: null,
+        fillPolygon: null,
+        isClosed: false,
+        nwsData: pd.nwsData,
+      };
+      this.polygons.push(poly);
+      this.activeIndex = this.polygons.length - 1;
+
+      for (const wp of pd.waypoints) {
+        const marker = this.makeMarker(wp.lat, wp.lng, wp.label, pd.color, pd.textColor);
+        let segment: ResolvedSegment | null = null;
+        let polyline: AnyPolyline | null = null;
+        if (wp.segmentPath) {
+          segment = { mode: "route", path: wp.segmentPath };
+          polyline = this.makePolyline(segment, pd.color);
+        }
+        poly.waypoints.push({ lat: wp.lat, lng: wp.lng, label: wp.label, segmentMode: wp.segmentMode, marker, segment, polyline });
+        this.setupMarkerDragEdit(poly, poly.waypoints.length - 1);
+      }
+
+      if (pd.closingSegmentPath && poly.waypoints.length >= 3) {
+        const closingSegment: ResolvedSegment = { mode: "route", path: pd.closingSegmentPath };
+        poly.closingPolyline = this.makePolyline(closingSegment, pd.color);
+        poly.closingSegment = closingSegment;
+        poly.fillPolygon = this.makeFillPolygon(this.buildFillPath(poly));
+        this.addFillClickHandler(poly.fillPolygon, poly.id);
+        poly.isClosed = true;
+      }
+    }
+
+    // Restore imported groups
+    for (const group of snapshot.importedGroups) {
+      if (group.polygons.length === 0) continue;
+      const groupId = this.createImportGroup(group.name);
+      for (const p of group.polygons) {
+        if (p.coordinates.length === 0) continue;
+        const id = crypto.randomUUID();
+        const { color, textColor } = polygonColor(this.polygons.length);
+        const path: [number, number][] = p.coordinates.map((c) => [c.lat, c.lng]);
+        const fillPolygon = this.makeFillPolygon(path);
+        this.addFillClickHandler(fillPolygon, id);
+        this.polygons.push({
+          id,
+          name: p.name,
+          color,
+          textColor,
+          fillColor: "#000000",
+          kind: "imported",
+          groupId,
+          waypoints: [],
+          closingPolyline: null,
+          closingSegment: null,
+          fillPolygon,
+          isClosed: true,
+          rawCoordinates: p.coordinates,
+          nwsData: p.nwsData,
+        });
+      }
+      this.recolorGroup(groupId, group.color);
+    }
+
+    this.notifyChange();
+    this.notifyPolygonsChanged();
+  }
 
   // ─── Cleanup ───────────────────────────────────────────────────────────────
 
