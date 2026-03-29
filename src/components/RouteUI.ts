@@ -95,6 +95,9 @@ export class RouteUI {
     // Always fetch config first (ORS key + shared Google Maps key)
     const config = await this.fetchConfig();
     this.orsApiKey = config.orsKey ?? "";
+    // Cache shared key unconditionally — needed if user later toggles to Google Maps
+    // while starting in OSM mode (the sharedMode branch below is never reached then).
+    if (config.mapsJsKey) this.sharedApiKey = config.mapsJsKey;
 
     const mapProvider = (localStorage.getItem("tm_map_provider") ?? "osm") as MapProvider;
     this.routingProvider = (localStorage.getItem("tm_routing_provider") ?? "ors") as RoutingProvider;
@@ -474,10 +477,9 @@ export class RouteUI {
       return;
     }
 
-    // Google key needed
-    const apiKey = (this.sharedMode && this.sharedApiKey)
-      ? this.sharedApiKey
-      : await ApiKeyManager.loadKey().catch(() => null);
+    // Google key needed — prefer shared key, fall back to personal key
+    const apiKey = this.sharedApiKey
+      ?? await ApiKeyManager.loadKey().catch(() => null);
 
     if (apiKey) {
       await this.initMap(apiKey, viewState);
@@ -1926,9 +1928,8 @@ export class RouteUI {
     this.currentWaypoints = [];
     this.currentSegments = [];
 
-    const apiKey = (this.sharedMode && this.sharedApiKey)
-      ? this.sharedApiKey
-      : await ApiKeyManager.loadKey().catch(() => null);
+    const apiKey = this.sharedApiKey
+      ?? await ApiKeyManager.loadKey().catch(() => null);
     if (apiKey) {
       await this.initMap(apiKey, viewState, false, routingProvider);
     } else {
