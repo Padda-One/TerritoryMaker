@@ -1174,6 +1174,15 @@ export class RouteUI {
     // Wire up polygon row clicks: select real item and close sheet
     sheetList.querySelectorAll<HTMLElement>(".polygon-layer-row[data-id]").forEach(clonedRow => {
       const polyId = clonedRow.dataset.id;
+      // Delegate btn-icon clicks (delete, KML, simplify…) to real buttons
+      clonedRow.querySelectorAll<HTMLButtonElement>(".btn-icon").forEach(clonedBtn => {
+        const btnTitle = clonedBtn.title;
+        clonedBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const realRow = sourceList.querySelector<HTMLElement>(`.polygon-layer-row[data-id="${polyId}"]`);
+          realRow?.querySelector<HTMLButtonElement>(`.btn-icon[title="${btnTitle}"]`)?.click();
+        });
+      });
       clonedRow.addEventListener("click", () => {
         const realRow = sourceList.querySelector<HTMLElement>(`.polygon-layer-row[data-id="${polyId}"]`);
         realRow?.click();
@@ -1184,6 +1193,15 @@ export class RouteUI {
     // Wire up group row clicks: collapse/expand via real row
     sheetList.querySelectorAll<HTMLElement>(".group-row[data-group-id]").forEach(clonedRow => {
       const groupId = clonedRow.dataset.groupId;
+      // Delegate btn-icon clicks (delete, KML export…) to real buttons
+      clonedRow.querySelectorAll<HTMLButtonElement>(".btn-icon").forEach(clonedBtn => {
+        const btnTitle = clonedBtn.title;
+        clonedBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const realRow = sourceList.querySelector<HTMLElement>(`[data-group-id="${groupId}"]`);
+          realRow?.querySelector<HTMLButtonElement>(`.btn-icon[title="${btnTitle}"]`)?.click();
+        });
+      });
       clonedRow.addEventListener("click", () => {
         const realRow = sourceList.querySelector<HTMLElement>(`[data-group-id="${groupId}"]`);
         realRow?.click();
