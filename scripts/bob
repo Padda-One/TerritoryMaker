@@ -1,0 +1,1005 @@
+#!/usr/bin/env python3
+"""bob — CLI interactive locale généraliste (Ollama / Nous-Hermes-2-Mixtral)
+Zéro dépendance externe. Stdlib Python uniquement.
+
+Usage :
+  bob                         # REPL interactif, nouvelle conversation
+  bob "question"              # One-shot, affiche la réponse, exit
+  bob --allow-read docs       # Autorise lecture du dossier docs/ sans prompt
+  bob --continue              # Reprend la dernière conversation
+  bob --list                  # Liste les 10 dernières conversations
+  bob --session <id>          # Reprend une conversation par ID
+  bob --model <nom>           # Surcharge le modèle Ollama
+
+Commandes in-REPL :
+  /analyze [sujet]            # Analyse structure / points clés
+  /review [fichier|texte]     # Revue généraliste (doc, idée, plan)
+  /debug [problème]           # Raisonnement structuré sur un problème
+  /chat                       # Conversation libre sans sections imposées
+  /clear                      # Nouvelle conversation
+  /history                    # 5 derniers échanges
+  /model [<nom>]              # Voir ou changer le modèle
+  /list                       # Conversations récentes
+  /help  /exit
+
+Saisie multi-ligne :
+  Enter                       # Soumet le prompt
+  Alt+Enter                   # Nouvelle ligne (prompt multi-ligne)
+
+Variables d'environnement :
+  BOB_MODEL             défaut: qwen3:30b-a3b-instruct-2507-q4_K_M
+  OLLAMA_HOST           défaut: http://localhost:11434
+"""
+import argparse, hashlib, json, os, readline, sqlite3, subprocess, sys, uuid
+from datetime import datetime, timezone
+from urllib import request
+
+# ── Configuration ─────────────────────────────────────────────────────────────
+
+BOB_MODEL        = os.environ.get("BOB_MODEL", "qwen3:30b-a3b-instruct-2507-q4_K_M")
+OLLAMA_URL       = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+DB_PATH          = os.path.expanduser(os.environ.get("BOB_DB", "~/.local/share/bob/history.db"))
+
+# Format Ollama uniquement
+_ACTIVE_URL: str = OLLAMA_URL
+_ACTIVE_FMT: str = "ollama"
+
+SYSTEM_BASE = (
+    "Tu es un assistant généraliste. "
+    "Produis des analyses structurées et actionnables. "
+    "Format Markdown strict. Factuel, précis, sans introduction ni conclusion.\n"
+    "Sections obligatoires par mode :\n"
+    "  /analyze : ## Structure · ## Points clés · ## Risques · ## Recommandations\n"
+    "  /review  : ## Points forts · ## Points faibles · ## Verdict\n"
+    "  /debug   : ## Cause probable · ## Diagnostic · ## Solution proposée · ## Validation"
+)
+
+C = "\033[96m"   # cyan
+B = "\033[1m"    # bold
+D = "\033[2m"    # dim
+Y = "\033[93m"   # yellow
+R = "\033[91m"   # red
+G = "\033[92m"   # green
+Z = "\033[0m"    # reset
+
+_HOME = os.path.expanduser("~")
+
+TOOLS = [
+    {"type": "function", "function": {
+        "name": "read_file",
+        "description": f"Lire le contenu d'un fichier. Chemins absolus ou relatifs. "
+                       f"Répertoire home de l'utilisateur : {_HOME}",
+        "parameters": {"type": "object",
+                       "properties": {"path": {"type": "string",
+                                               "description": "Chemin du fichier"}},
+                       "required": ["path"]},
+    }},
+    {"type": "function", "function": {
+        "name": "list_directory",
+        "description": f"Lister les fichiers et dossiers d'un répertoire. "
+                       f"Répertoire home de l'utilisateur : {_HOME}. "
+                       "Utilise pattern pour filtrer (ex: '*.md'). "
+                       "Utilise recursive=true pour chercher en profondeur.",
+        "parameters": {"type": "object",
+                       "properties": {
+                           "path": {"type": "string", "description": "Chemin du répertoire"},
+                           "pattern": {"type": "string", "description": "Filtre glob optionnel (ex: '*.md')"},
+                           "recursive": {"type": "boolean", "description": "Chercher récursivement"},
+                       },
+                       "required": ["path"]},
+    }},
+]
+
+
+# ── Permissions fichiers ──────────────────────────────────────────────────────
+
+class ReadPermissions:
+    """Garde-fou pour l'accès fichiers (tool calling)."""
+
+    def __init__(self, allowed_dirs=None, allow_all=True):
+        self.allow_all = allow_all
+        self.allowed = [os.path.realpath(d) for d in (allowed_dirs or [])]
+        self.session = set()   # dossiers autorisés en cours de session via 'a'
+
+    def ask(self, path):
+        """Vérifie la permission et lit le fichier. Retourne (ok, contenu_ou_raison)."""
+        real = os.path.realpath(os.path.expanduser(path))
+        if not os.path.exists(real):
+            return False, f"[Fichier introuvable : {path}]"
+        if not self.allow_all:
+            for d in self.allowed + list(self.session):
+                if real == d or real.startswith(d + os.sep):
+                    break
+            else:
+                try:
+                    ans = input(
+                        f"\n{Y}[bill veut lire]{Z} {path}"
+                        f"  {D}[y/N/a=autoriser ce dossier]{Z} "
+                    ).strip().lower()
+                except EOFError:
+                    ans = "n"
+                if ans == "a":
+                    self.session.add(os.path.dirname(real))
+                elif ans != "y":
+                    return False, "[Accès refusé par l'utilisateur]"
+        try:
+            with open(real, encoding="utf-8", errors="replace") as f:
+                content = f.read(32_000)
+            return True, content
+        except OSError as e:
+            return False, f"[Erreur lecture : {e}]"
+
+
+# ── Détection automatique de fichiers pertinents ─────────────────────────────
+
+def _find_scan_root(cwd):
+    """Retourne (root, is_git). root = git toplevel si dispo, sinon cwd."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=cwd, capture_output=True, text=True, timeout=3
+        )
+        if result.returncode == 0:
+            return result.stdout.strip(), True
+    except Exception:
+        pass
+    return cwd, False
+
+
+def find_relevant_files(question, perms, cwd=None):
+    """
+    Extrait les identifiants snake_case et chemins de la question,
+    grep les fichiers du projet, retourne les plus pertinents (max 3).
+    Scan borné au repo git courant (fallback : cwd, max 4 niveaux).
+    """
+    import re
+    if cwd is None:
+        cwd = os.getcwd()
+
+    scan_root, in_git_repo = _find_scan_root(cwd)
+    max_depth = 6 if in_git_repo else 3
+    max_files = 2000
+
+    tokens = set()
+    tokens.update(re.findall(r'\b\w+_\w+\b', question))
+    tokens.update(re.findall(r'[\w-]+\.\w{1,4}\b', question))
+    tokens.update(re.findall(r'(?:scripts|src|lib)/\S+', question))
+    tokens = {t for t in tokens if len(t) >= 4}
+    if not tokens:
+        return []
+
+    IGNORE = {'.git', '.claude', 'node_modules', '__pycache__', '.cache', 'dist', 'build',
+              '.astro', '.venv', 'venv', 'site-packages'}
+    SKIP_FILES = {'README.md', 'CONTEXT.md', 'BOB.md'}
+    SKIP_PREFIXES = ('PROMPT_', 'CHANGELOG', 'LICENSE')
+    TEXT_EXT = {'.py', '.sh', '.js', '.ts', '.md', '.json', '.yaml', '.yml', '.toml', ''}
+    scored = {}
+    seen_real = set()
+    files_scanned = 0
+
+    root_depth = scan_root.rstrip(os.sep).count(os.sep)
+    for root, dirs, files in os.walk(scan_root):
+        if files_scanned >= max_files:
+            dirs[:] = []
+            break
+        current_depth = root.rstrip(os.sep).count(os.sep) - root_depth
+        if current_depth >= max_depth:
+            dirs[:] = []
+            continue
+        dirs[:] = [d for d in dirs if d not in IGNORE]
+        for fname in files:
+            if files_scanned >= max_files:
+                break
+            if fname in SKIP_FILES or fname.startswith(SKIP_PREFIXES):
+                continue
+            if not any(fname.endswith(ext) for ext in TEXT_EXT):
+                continue
+            fpath = os.path.join(root, fname)
+            real = os.path.realpath(fpath)
+            if real in seen_real:
+                continue
+            seen_real.add(real)
+            files_scanned += 1
+            rel = os.path.relpath(real, scan_root)
+            try:
+                with open(real, encoding='utf-8', errors='ignore') as f:
+                    content = f.read(64_000)
+                score = sum(content.count(t) for t in tokens)
+                if score > 0:
+                    scored[rel] = (score, content[:32_000])
+            except OSError:
+                pass
+
+    top = sorted(scored.items(), key=lambda x: -x[1][0])[:3]
+    result = []
+    for rel, (_, content) in top:
+        ok, data = perms.ask(rel)
+        if ok:
+            result.append((rel, data))
+    return result
+
+
+def fetch_tldr_context(question, cwd=None):
+    """Appelle `tldr context <question>`. Retourne le texte ou None."""
+    try:
+        result = subprocess.run(
+            ["tldr", "context", question],
+            capture_output=True, text=True, timeout=15,
+            cwd=cwd or os.getcwd(),
+        )
+        if result.returncode == 0 and len(result.stdout.strip()) >= 300:
+            return result.stdout.strip()
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+        pass
+    return None
+
+
+def build_context_block(question, perms, cwd=None):
+    """Injecte le contexte dans un message user : tldr en priorité, sinon fichiers."""
+    tldr = fetch_tldr_context(question, cwd=cwd)
+    if tldr:
+        print(f"{D}[contexte tldr] {len(tldr)} chars{Z}")
+        return f"\n\nContexte du projet (extrait structuré) :\n{tldr}"
+    relevant = find_relevant_files(question, perms)
+    if not relevant:
+        return ""
+    print(f"{D}[contexte] {', '.join(p for p, _ in relevant)}{Z}")
+    block = "\n\nFichiers du projet :\n"
+    for path, content in relevant:
+        block += f"\n=== {path} ===\n{content}\n=== fin {path} ===\n"
+    return block
+
+
+def build_system():
+    """System prompt épuré — pas d'injection README/CONTEXT (géré par Obsidian)."""
+    return SYSTEM_BASE
+
+
+# ── Base de données conversations ─────────────────────────────────────────────
+
+def init_db():
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    db = sqlite3.connect(DB_PATH)
+    db.executescript("""
+        CREATE TABLE IF NOT EXISTS conversations (
+            id TEXT PRIMARY KEY, name TEXT, model TEXT, created_at TEXT);
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id TEXT REFERENCES conversations(id),
+            role TEXT, content TEXT, created_at TEXT);
+    """)
+    return db
+
+def _now(): return datetime.now(timezone.utc).isoformat()
+
+def new_conv(db, model):
+    cid = str(uuid.uuid4())[:8]
+    db.execute("INSERT INTO conversations VALUES (?,?,?,?)", (cid, "", model, _now()))
+    db.commit()
+    return cid
+
+def load_last_conv(db):
+    return db.execute(
+        "SELECT id, name, model FROM conversations ORDER BY created_at DESC LIMIT 1"
+    ).fetchone()
+
+def load_messages(db, cid):
+    rows = db.execute(
+        "SELECT role, content FROM messages WHERE conversation_id=? ORDER BY id", (cid,)
+    ).fetchall()
+    return [{"role": r, "content": c} for r, c in rows]
+
+def save_turn(db, cid, user, assistant):
+    t = _now()
+    db.executemany(
+        "INSERT INTO messages (conversation_id,role,content,created_at) VALUES (?,?,?,?)",
+        [(cid, "user", user, t), (cid, "assistant", assistant, t)]
+    )
+    db.commit()
+
+def set_name(db, cid, prompt):
+    db.execute("UPDATE conversations SET name=? WHERE id=?",
+               (" ".join(prompt.split()[:8]), cid))
+    db.commit()
+
+
+# ── Backend ───────────────────────────────────────────────────────────────────
+
+def check_backend():
+    """Vérifie qu'Ollama est disponible. Retourne True si prêt."""
+    try:
+        with request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=2):
+            return True
+    except Exception:
+        print(f"{R}[bob] Ollama inaccessible ({OLLAMA_URL}){Z}", file=sys.stderr)
+        return False
+
+def _default_model(override=None):
+    """Modèle actif, surchargeable via --model."""
+    return override if override else BOB_MODEL
+
+def available_models():
+    """Retourne la liste des modèles Ollama installés."""
+    try:
+        with request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=3) as resp:
+            data = json.loads(resp.read())
+            return [m["name"] for m in data.get("models", [])]
+    except Exception:
+        return []
+
+
+# ── Streaming ─────────────────────────────────────────────────────────────────
+
+def stream_chat(msgs, model, base_url=None, api_format=None):
+    """Générateur de chunks texte. Ollama uniquement."""
+    url = base_url or OLLAMA_URL
+    payload = json.dumps({
+        "model": model, "messages": msgs,
+        "stream": True, "think": False,
+    }).encode()
+    req = request.Request(
+        f"{url}/api/chat", data=payload,
+        headers={"Content-Type": "application/json"},
+    )
+    with request.urlopen(req, timeout=180) as resp:
+        for line in resp:
+            if not line.strip():
+                continue
+            chunk = json.loads(line)
+            content = chunk.get("message", {}).get("content", "")
+            if content:
+                yield content
+            if chunk.get("done"):
+                break
+
+
+def collect_stream(gen, label=None):
+    """Stream un générateur vers stdout, retourne le texte complet."""
+    from urllib.error import HTTPError
+    if label:
+        print(f"\n{D}{label}{Z}\n")
+    parts = []
+    first = True
+    print(f"{D}⟳{Z} ", end="", flush=True)
+    try:
+        for chunk in gen:
+            if first:
+                first = False
+                print(f"\r  \r", end="", flush=True)
+            print(chunk, end="", flush=True)
+            parts.append(chunk)
+    except KeyboardInterrupt:
+        print(f"\n{D}[interrompu]{Z}", end="")
+    except HTTPError as e:
+        print(f"\n{R}Erreur backend {e.code} : {e.reason}{Z}", end="")
+        if e.code == 404 and _ACTIVE_FMT == "ollama":
+            print(f"\n{Y}Modèle introuvable. Modèles disponibles :{Z}")
+            for m in available_models():
+                print(f"  {D}{m}{Z}")
+    except Exception as e:
+        print(f"\n{R}Erreur : {e}{Z}", end="")
+    finally:
+        print()
+    return "".join(parts)
+
+
+# ── Tool calling ──────────────────────────────────────────────────────────────
+
+def chat_with_tools(msgs, model, perms, max_calls=15):
+    """
+    Générateur avec tool calling (read_file). Ollama uniquement.
+    Si le modèle ne supporte pas les tools (400), fallback sur stream_chat.
+    Si perms est None, délègue directement à stream_chat.
+    """
+    from urllib.error import HTTPError
+    if perms is None:
+        yield from stream_chat(msgs, model)
+        return
+
+    history = list(msgs)
+    calls_done = 0
+
+    while calls_done < max_calls:
+        try:
+            payload = json.dumps({
+                "model": model, "messages": history,
+                "stream": False, "tools": TOOLS, "think": False,
+            }).encode()
+            req = request.Request(
+                f"{OLLAMA_URL}/api/chat", data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with request.urlopen(req, timeout=180) as resp:
+                data = json.loads(resp.read())
+            msg = data.get("message", {})
+            tool_calls = msg.get("tool_calls") or []
+            if not tool_calls:
+                yield msg.get("content", "")
+                return
+            history.append({"role": "assistant", "content": "", "tool_calls": tool_calls})
+            for tc in tool_calls:
+                fn = tc.get("function", {})
+                name = fn.get("name")
+                args = fn.get("arguments", {})
+                if name == "read_file":
+                    path = args.get("path", "")
+                    _, result = perms.ask(path)
+                    print(f"\n{D}[outil] read_file({path}) → {len(result)} chars{Z}")
+                elif name == "list_directory":
+                    path = os.path.expanduser(args.get("path", "."))
+                    pattern = args.get("pattern", "*")
+                    recursive = args.get("recursive", False)
+                    import glob as _glob
+                    if recursive:
+                        g = _glob.glob(os.path.join(path, "**", pattern), recursive=True)
+                    else:
+                        g = _glob.glob(os.path.join(path, pattern))
+                    entries = sorted(g)
+                    result = "\n".join(entries) if entries else "[Aucun fichier trouvé]"
+                    print(f"\n{D}[outil] list_directory({path}, {pattern}, recursive={recursive}) → {len(entries)} entrées{Z}")
+                else:
+                    result = f"[Outil inconnu : {fn.get('name')}]"
+                history.append({"role": "tool", "content": result})
+        except HTTPError as e:
+            if e.code == 400:
+                print(f"\n{Y}[bob] Tool calling non supporté — fallback streaming{Z}")
+                yield from stream_chat(history, model)
+                return
+            yield f"\n[Erreur HTTP {e.code} : {e.reason}]"
+            return
+        except Exception as e:
+            yield f"\n[Erreur tool calling : {e}]"
+            return
+
+        calls_done += 1
+
+    yield "[Max appels outils atteint]"
+
+
+# ── Utilitaires ───────────────────────────────────────────────────────────────
+
+def save_output(mode, key, content):
+    """Sauvegarde content dans /tmp/bob-<mode>-<hash>.md. Retourne le chemin."""
+    h = hashlib.md5(key.encode()).hexdigest()[:8]
+    path = f"/tmp/bob-{mode}-{h}.md"
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return path
+
+def _output_header(mode, label, model):
+    """Header standardisé pour les fichiers de sortie."""
+    return (
+        f"# bob-{mode} — {label}\n"
+        f"**Modèle:** {model}\n"
+        f"**Date:** {_now()}\n\n---\n\n"
+    )
+
+
+# ── Modes ─────────────────────────────────────────────────────────────────────
+
+def run_analyze(question, model, perms):
+    """Analyse architecture/structure."""
+    sys_prompt = (
+        "Tu es un architecte logiciel expert. "
+        "Analyse la structure, les patterns, les couplages et les points d'amélioration. "
+        "Sections obligatoires : ## Architecture · ## Couplages · ## Points critiques · ## Recommandations\n"
+        "Mentionne les fichiers concernés. Sois concis et factuel."
+    )
+    user_content = question + build_context_block(question, perms)
+    return collect_stream(
+        chat_with_tools(
+            [{"role": "system", "content": sys_prompt},
+             {"role": "user",   "content": user_content}],
+            model, perms,
+        ),
+        label=f"Analyse  [{model}]",
+    )
+
+
+def _resolve_review_source(arg, perms):
+    """Retourne (label, content) pour /review."""
+    MAX_FILE = 20_000
+    if arg and os.path.exists(arg):
+        ok, data = perms.ask(arg)
+        if not ok:
+            print(f"{R}Accès refusé : {arg}{Z}")
+            return None, None
+        truncated = len(data) > MAX_FILE
+        snippet = data[:MAX_FILE]
+        suffix = f"\n\n[... tronqué à {MAX_FILE} chars sur {len(data)} ...]" if truncated else ""
+        return arg, f"```\n{snippet}{suffix}\n```"
+    for cmd in [["git", "diff", "--staged"], ["git", "diff", "HEAD"]]:
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            if result.stdout.strip():
+                label = " ".join(cmd[1:])
+                return label, f"```diff\n{result.stdout[:30_000]}\n```"
+        except Exception:
+            pass
+    return None, None
+
+
+def run_analyze(question, model, perms):
+    """Analyse généraliste : structure, points clés, risques, recommandations."""
+    sys_prompt = (
+        "Tu es un assistant analytique. "
+        "Sections obligatoires :\n"
+        "## Structure\n"
+        "## Points clés\n"
+        "## Risques\n"
+        "## Recommandations\n"
+        "Sois concis et factuel."
+    )
+    user_content = question + build_context_block(question, perms)
+    return collect_stream(
+        chat_with_tools(
+            [{"role": "system", "content": sys_prompt},
+             {"role": "user",   "content": user_content}],
+            model, perms,
+        ),
+        label=f"Analyse  [{model}]",
+    )
+
+
+def run_review(arg, model, perms):
+    """Revue généraliste : document, plan, idée, ou fichier."""
+    label, source = _resolve_review_source(arg, perms)
+    if source is None:
+        # Pas de diff git — demander un texte libre
+        print(f"{D}Pas de fichier ni de diff git. Colle le texte à revoir (Ctrl+D pour terminer) :{Z}")
+        try:
+            source = sys.stdin.read()
+            label = "texte libre"
+        except Exception:
+            return ""
+    sys_prompt = (
+        "Tu es un assistant critique constructif. "
+        "Sections obligatoires :\n"
+        "## Points forts\n"
+        "## Points faibles\n"
+        "## Verdict\n"
+        "[SOLIDE|AMÉLIORABLE|À REVOIR] suivi d'un résumé en 1 phrase."
+    )
+    print(f"{D}[source] {label}{Z}")
+    return collect_stream(
+        stream_chat(
+            [{"role": "system", "content": sys_prompt},
+             {"role": "user",   "content": f"Revue :\n\n{source}"}],
+            model,
+        ),
+        label=f"Review  [{model}]",
+    )
+
+
+def run_debug(problem, model, perms):
+    """Raisonnement structuré sur un problème."""
+    sys_prompt = (
+        "Tu es un assistant analytique. "
+        "Sections obligatoires :\n"
+        "## Cause probable (hypothèses classées par probabilité)\n"
+        "## Diagnostic\n"
+        "## Solution proposée\n"
+        "## Validation (comment vérifier)\n"
+        "Sois bref et précis."
+    )
+    user_content = problem + build_context_block(problem, perms)
+    return collect_stream(
+        chat_with_tools(
+            [{"role": "system", "content": sys_prompt},
+             {"role": "user",   "content": user_content}],
+            model, perms,
+        ),
+        label=f"Debug  [{model}]",
+    )
+
+
+def run_chat(question, model, msgs_history):
+    """Conversation libre sans sections imposées."""
+    msgs = [{"role": "system", "content": "Tu es un assistant généraliste. Réponds naturellement."}]
+    msgs.extend(msgs_history)
+    msgs.append({"role": "user", "content": question})
+    return collect_stream(stream_chat(msgs, model))
+
+
+# ── Commandes in-REPL ─────────────────────────────────────────────────────────
+
+def cmd_history(db, cid, n=5):
+    rows = db.execute(
+        "SELECT role, content FROM messages WHERE conversation_id=? ORDER BY id DESC LIMIT ?",
+        (cid, n * 2),
+    ).fetchall()
+    for role, content in reversed(rows):
+        label = f"{C}bob>{Z} " if role == "assistant" else f"{B}vous>{Z} "
+        snippet = content[:300] + ("…" if len(content) > 300 else "")
+        print(f"\n{label} {snippet}")
+    print()
+
+def cmd_list(db):
+    rows = db.execute(
+        "SELECT id, name, model, created_at FROM conversations ORDER BY created_at DESC LIMIT 10"
+    ).fetchall()
+    if not rows:
+        print(f"{D}Aucune conversation.{Z}")
+        return
+    for cid, name, model, ts in rows:
+        print(f"  {D}{cid}{Z}  {name or '(sans titre)'}  {D}[{model}] {ts[:10]}{Z}")
+
+
+# ── Saisie multi-ligne ────────────────────────────────────────────────────────
+
+def read_multiline(prompt, cont_prompt="... "):
+    """
+    Saisie multi-ligne en mode raw (termios) avec bracketed paste.
+    - Enter        → soumet
+    - Alt+Enter    → insère un saut de ligne
+    - Ctrl+C       → KeyboardInterrupt
+    - Ctrl+D       → EOFError (si buffer vide)
+    - Backspace    → efface le dernier caractère
+    Fallback sur input() si stdin n'est pas un TTY.
+    """
+    import termios, tty as _tty
+
+    if not sys.stdin.isatty():
+        return input(prompt)
+
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+
+    sys.stdout.write(prompt)
+    sys.stdout.write('\x1b[?2004h')
+    sys.stdout.flush()
+
+    buf = []
+    line_len = 0
+    in_paste = False
+
+    def _newline():
+        nonlocal line_len
+        buf.append('\n')
+        line_len = 0
+        sys.stdout.write('\r\n' + cont_prompt)
+        sys.stdout.flush()
+
+    try:
+        _tty.setraw(fd)
+        while True:
+            ch = sys.stdin.read(1)
+            if not ch:
+                continue
+
+            if ch == '\x03':
+                sys.stdout.write('\r\n')
+                sys.stdout.flush()
+                raise KeyboardInterrupt
+
+            if ch == '\x04':
+                if not buf:
+                    sys.stdout.write('\r\n')
+                    sys.stdout.flush()
+                    raise EOFError
+                continue
+
+            if ch == '\x1b':
+                try:
+                    nxt = sys.stdin.read(1)
+                    if nxt == '\r':
+                        _newline()
+                    elif nxt in ('[', 'O'):
+                        seq = ''
+                        while True:
+                            c = sys.stdin.read(1)
+                            seq += c
+                            if c.isalpha() or c in ('~', '^', '$'):
+                                break
+                        if seq == '200~':
+                            in_paste = True
+                        elif seq == '201~':
+                            in_paste = False
+                except Exception:
+                    pass
+                continue
+
+            if ch in ('\r', '\n'):
+                if in_paste:
+                    _newline()
+                else:
+                    sys.stdout.write('\r\n')
+                    sys.stdout.flush()
+                    break
+                continue
+
+            if ch in ('\x7f', '\x08'):
+                if buf and line_len > 0:
+                    buf.pop()
+                    line_len -= 1
+                    sys.stdout.write('\b \b')
+                    sys.stdout.flush()
+                continue
+
+            buf.append(ch)
+            line_len += 1
+            sys.stdout.write(ch)
+            sys.stdout.flush()
+
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        sys.stdout.write('\x1b[?2004l')
+        sys.stdout.flush()
+
+    return ''.join(buf)
+
+
+# ── REPL ──────────────────────────────────────────────────────────────────────
+
+def repl(db, state, perms=None):
+    """state = {"cid": str, "model": str, "first": bool, "msgs": list}"""
+    print(f"\n{C}{B}bob{Z} {D}({state['model']} — Ollama){Z}"
+          f" — /help · Alt+Enter=nouvelle ligne · Enter=envoyer · Ctrl+D=quitter")
+
+    while True:
+        try:
+            user_input = read_multiline(f"\n{C}{B}bob>{Z} ").strip()
+        except EOFError:
+            print()
+            break
+        except KeyboardInterrupt:
+            print()
+            continue
+
+        if not user_input:
+            continue
+
+        if user_input.startswith("/"):
+            parts = user_input.split(None, 1)
+            cmd, arg = parts[0], (parts[1] if len(parts) > 1 else "")
+
+            if cmd in ("/exit", "/quit"):
+                break
+
+            elif cmd == "/analyze":
+                if not arg:
+                    print(f"{Y}Question (Alt+Enter=nl, Enter=envoyer) :{Z}")
+                    try:
+                        arg = read_multiline("analyze> ").strip()
+                    except (EOFError, KeyboardInterrupt):
+                        print()
+                        continue
+                if not arg:
+                    continue
+                result = run_analyze(arg, state["model"], perms)
+                if result:
+                    header = _output_header("analyze", arg[:60], state["model"])
+                    out = save_output("analyze", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+
+            elif cmd == "/review":
+                result = run_review(arg, state["model"], perms)
+                if result:
+                    key = arg or "diff"
+                    header = _output_header("review", key, state["model"])
+                    out = save_output("review", key, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+
+            elif cmd == "/debug":
+                if not arg:
+                    print(f"{Y}Problème (Alt+Enter=nl, Enter=envoyer) :{Z}")
+                    try:
+                        arg = read_multiline("debug> ").strip()
+                    except (EOFError, KeyboardInterrupt):
+                        print()
+                        continue
+                if not arg:
+                    continue
+                result = run_debug(arg, state["model"], perms)
+                if result:
+                    header = _output_header("debug", arg[:60], state["model"])
+                    out = save_output("debug", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+
+            elif cmd == "/chat":
+                if not arg:
+                    print(f"{Y}Message (Alt+Enter=nl, Enter=envoyer) :{Z}")
+                    try:
+                        arg = read_multiline("chat> ").strip()
+                    except (EOFError, KeyboardInterrupt):
+                        print()
+                        continue
+                if not arg:
+                    continue
+                run_chat(arg, state["model"], state["msgs"])
+
+            elif cmd == "/clear":
+                state["cid"] = new_conv(db, state["model"])
+                state["msgs"].clear()
+                state["first"] = True
+                print(f"{D}Nouvelle conversation ({state['cid']}){Z}")
+
+            elif cmd == "/history":
+                cmd_history(db, state["cid"])
+
+            elif cmd == "/model":
+                if arg:
+                    state["model"] = arg
+                    print(f"{D}Modèle : {state['model']}{Z}")
+                else:
+                    print(f"{D}Modèle : {state['model']}  Backend : {_ACTIVE_URL} ({_ACTIVE_FMT}){Z}")
+
+            elif cmd == "/list":
+                cmd_list(db)
+
+            elif cmd == "/help":
+                print(f"{D}"
+                      f"/analyze [sujet]     analyse structure / points clés\n"
+                      f"/review [fichier]    revue généraliste → ## Verdict\n"
+                      f"/debug [problème]    raisonnement structuré\n"
+                      f"/chat [message]      conversation libre\n"
+                      f"/clear               nouvelle conversation\n"
+                      f"/history             5 derniers échanges\n"
+                      f"/model [<nom>]       voir ou changer le modèle\n"
+                      f"/list                conversations récentes\n"
+                      f"/exit                quitter"
+                      f"{Z}")
+            else:
+                print(f"{Y}Commande inconnue. Tape /help.{Z}")
+            continue
+
+        # Réponse normale
+        enriched_input = user_input + build_context_block(user_input, perms)
+        prefix = [{"role": "system", "content": build_system()}] if state["first"] else []
+        to_send = prefix + state["msgs"] + [{"role": "user", "content": enriched_input}]
+
+        print()
+        chunks = []
+        try:
+            for chunk in stream_chat(to_send, state["model"]):
+                print(chunk, end="", flush=True)
+                chunks.append(chunk)
+        except KeyboardInterrupt:
+            print(f"\n{D}[interrompu]{Z}")
+        except Exception as e:
+            print(f"\n{R}Erreur : {e}{Z}")
+            continue
+        finally:
+            print()
+
+        if not chunks:
+            continue
+
+        response = "".join(chunks)
+        save_turn(db, state["cid"], user_input, response)
+        state["msgs"].extend([
+            {"role": "user",      "content": user_input},
+            {"role": "assistant", "content": response},
+        ])
+        if state["first"]:
+            set_name(db, state["cid"], user_input)
+            state["first"] = False
+
+
+# ── Point d'entrée ────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="bob — assistant généraliste local (Ollama / Nous-Hermes-2-Mixtral)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("question", nargs="*",
+                        help="Question ou /commande [arg] (ex: /analyze mon-projet)")
+    parser.add_argument("--continue", dest="resume", action="store_true",
+                        help="Reprendre la dernière conversation")
+    parser.add_argument("--list", action="store_true",
+                        help="Lister les 10 dernières conversations")
+    parser.add_argument("--session", metavar="ID",
+                        help="Reprendre une conversation par ID court")
+    parser.add_argument("--model", default=None,
+                        help="Surcharger le modèle (défaut selon le backend actif)")
+    parser.add_argument("--allow-read", metavar="DIR", action="append", default=[],
+                        dest="allow_read",
+                        help="Autoriser la lecture dans ce dossier sans prompt")
+    args = parser.parse_args()
+
+    git_root, in_git = _find_scan_root(os.getcwd())
+    auto_dirs = [git_root] if in_git else []
+    perms = ReadPermissions(args.allow_read + auto_dirs, allow_all=False)
+
+    if not check_backend():
+        print(f"{R}✗{Z} Ollama inaccessible ({OLLAMA_URL})", file=sys.stderr)
+        print(f"  Lancer Ollama : ollama serve", file=sys.stderr)
+        sys.exit(1)
+
+    model = _default_model(args.model)
+    db = init_db()
+
+    if args.list:
+        cmd_list(db)
+        db.close()
+        return
+
+    # Mode one-shot : question ou /commande [arg]
+    if args.question:
+        text = " ".join(args.question)
+
+        # /commande [arg] en one-shot
+        if text.startswith("/"):
+            parts = text.split(None, 1)
+            cmd, arg = parts[0], (parts[1] if len(parts) > 1 else "")
+            result = ""
+            if cmd == "/review":
+                result = run_review(arg, model, perms)
+                if result:
+                    key = arg or "diff"
+                    header = _output_header("review", key, model)
+                    out = save_output("review", key, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+            elif cmd == "/analyze":
+                result = run_analyze(arg, model, perms)
+                if result:
+                    header = _output_header("analyze", arg[:60], model)
+                    out = save_output("analyze", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+            elif cmd == "/debug":
+                result = run_debug(arg, model, perms)
+                if result:
+                    header = _output_header("debug", arg[:60], model)
+                    out = save_output("debug", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+            elif cmd == "/chat":
+                run_chat(arg, model, [])
+            else:
+                print(f"{Y}Commande inconnue : {cmd}  (disponibles : /review /analyze /debug /chat){Z}")
+            db.close()
+            return
+
+        # Question directe
+        cid = new_conv(db, model)
+        msgs = [
+            {"role": "system", "content": build_system()},
+            {"role": "user",   "content": text},
+        ]
+        chunks = []
+        try:
+            for chunk in stream_chat(msgs, model):
+                print(chunk, end="", flush=True)
+                chunks.append(chunk)
+            print()
+        except KeyboardInterrupt:
+            print()
+        if chunks:
+            save_turn(db, cid, text, "".join(chunks))
+            set_name(db, cid, text)
+        db.close()
+        return
+
+    # Mode REPL
+    state = {"model": model, "msgs": [], "first": True, "cid": None}
+
+    if args.session:
+        state["cid"] = args.session
+        state["msgs"] = load_messages(db, args.session)
+        state["first"] = len(state["msgs"]) == 0
+    elif args.resume:
+        row = load_last_conv(db)
+        if row:
+            state["cid"], name, state["model"] = row
+            if args.model:
+                state["model"] = args.model
+            state["msgs"] = load_messages(db, state["cid"])
+            state["first"] = False
+            print(f"{D}Reprise : {name or state['cid']} [{state['model']}]{Z}")
+        else:
+            state["cid"] = new_conv(db, state["model"])
+    else:
+        state["cid"] = new_conv(db, state["model"])
+
+    repl(db, state, perms)
+    db.close()
+
+
+if __name__ == "__main__":
+    main()

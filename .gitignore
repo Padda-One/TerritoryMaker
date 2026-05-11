@@ -50,3 +50,4 @@ scripts/ollama-review.sh
 
 # Vite/Astro cache
 .cache/
+SECURITY-REPORT.md

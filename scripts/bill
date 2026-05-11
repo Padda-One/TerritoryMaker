@@ -1,0 +1,1025 @@
+#!/usr/bin/env python3
+"""bill — CLI interactive locale spécialiste code (vLLM / Ollama fallback)
+Zéro dépendance externe. Stdlib Python uniquement.
+
+Usage :
+  bill                        # REPL interactif, nouvelle conversation
+  bill "question"             # One-shot, affiche la réponse, exit
+  bill --allow-read scripts   # Autorise lecture du dossier scripts/ sans prompt
+  bill --continue             # Reprend la dernière conversation
+  bill --list                 # Liste les 10 dernières conversations
+  bill --session <id>         # Reprend une conversation par ID
+  bill --model <nom>          # Surcharge le modèle
+
+Commandes in-REPL :
+  /analyze [question]         # Analyse architecture/structure
+  /review [fichier|diff]      # Code review (fichier ou git diff)
+  /debug [problème]           # Debug systématique
+  /clear                      # Nouvelle conversation
+  /history                    # 5 derniers échanges
+  /model [<nom>]              # Voir ou changer le modèle
+  /list                       # Conversations récentes
+  /help  /exit
+
+Saisie multi-ligne :
+  Enter                       # Soumet le prompt
+  Alt+Enter                   # Nouvelle ligne (prompt multi-ligne)
+
+Variables d'environnement :
+  BILL_BASE_URL         défaut: http://localhost:8000        (vLLM)
+  BILL_MODEL            défaut: btbtyler09/Qwen3-Coder-30B-A3B-Instruct-gptq-4bit
+  BILL_API_FORMAT       défaut: openai                       (vLLM: openai | Ollama: ollama)
+  OLLAMA_HOST           défaut: http://localhost:11434        (fallback)
+  BILL_OLLAMA_FALLBACK  défaut: qwen3:14b                    (modèle fallback Ollama)
+"""
+import argparse, hashlib, json, os, readline, sqlite3, subprocess, sys, time, uuid
+from datetime import datetime, timezone
+from urllib import request
+
+# ── Configuration ─────────────────────────────────────────────────────────────
+
+BILL_BASE_URL    = os.environ.get("BILL_BASE_URL",  os.environ.get("BOB_BASE_URL",  "http://localhost:8000"))
+BILL_MODEL       = os.environ.get("BILL_MODEL",     os.environ.get("BOB_MODEL",     "btbtyler09/Qwen3-Coder-30B-A3B-Instruct-gptq-4bit"))
+BILL_API_FORMAT  = os.environ.get("BILL_API_FORMAT",os.environ.get("BOB_API_FORMAT","openai"))  # "openai" | "ollama"
+OLLAMA_URL       = os.environ.get("OLLAMA_HOST",    "http://localhost:11434")
+OLLAMA_FALLBACK  = os.environ.get("BILL_OLLAMA_FALLBACK", "qwen3:14b")
+DB_PATH          = os.path.expanduser(os.environ.get("BILL_DB", "~/.local/share/bill/history.db"))
+VLLM_START       = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vllm-start.sh")
+
+# Backend actif — initialisé par check_backend() au démarrage
+_ACTIVE_URL: str = BILL_BASE_URL
+_ACTIVE_FMT: str = BILL_API_FORMAT
+
+SYSTEM_BASE = (
+    "Tu es un expert en analyse de code. "
+    "Produis des briefs structurés et actionnables. "
+    "Format Markdown strict. Factuel, précis, sans introduction ni conclusion.\n"
+    "Sections obligatoires par mode :\n"
+    "  /analyze : ## Architecture · ## Couplages · ## Points critiques · ## Recommandations\n"
+    "  /review  : ## Critique · ## Bugs potentiels · ## Améliorations · ## Verdict\n"
+    "  /debug   : ## Cause racine · ## Diagnostic · ## Fix proposé · ## Validation"
+)
+
+C = "\033[96m"   # cyan
+B = "\033[1m"    # bold
+D = "\033[2m"    # dim
+Y = "\033[93m"   # yellow
+R = "\033[91m"   # red
+G = "\033[92m"   # green
+Z = "\033[0m"    # reset
+
+TOOLS = [{"type": "function", "function": {
+    "name": "read_file",
+    "description": "Lire le contenu d'un fichier du projet. "
+                   "Utilise des chemins relatifs au répertoire courant.",
+    "parameters": {"type": "object",
+                   "properties": {"path": {"type": "string",
+                                           "description": "Chemin du fichier"}},
+                   "required": ["path"]},
+}}]
+
+
+# ── Permissions fichiers ──────────────────────────────────────────────────────
+
+class ReadPermissions:
+    """Garde-fou pour l'accès fichiers (tool calling)."""
+
+    def __init__(self, allowed_dirs=None, allow_all=True):
+        self.allow_all = allow_all
+        self.allowed = [os.path.realpath(d) for d in (allowed_dirs or [])]
+        self.session = set()   # dossiers autorisés en cours de session via 'a'
+
+    def ask(self, path):
+        """Vérifie la permission et lit le fichier. Retourne (ok, contenu_ou_raison)."""
+        real = os.path.realpath(path)
+        if not os.path.exists(real):
+            return False, f"[Fichier introuvable : {path}]"
+        if not self.allow_all:
+            for d in self.allowed + list(self.session):
+                if real == d or real.startswith(d + os.sep):
+                    break
+            else:
+                try:
+                    ans = input(
+                        f"\n{Y}[bill veut lire]{Z} {path}"
+                        f"  {D}[y/N/a=autoriser ce dossier]{Z} "
+                    ).strip().lower()
+                except EOFError:
+                    ans = "n"
+                if ans == "a":
+                    self.session.add(os.path.dirname(real))
+                elif ans != "y":
+                    return False, "[Accès refusé par l'utilisateur]"
+        try:
+            with open(real, encoding="utf-8", errors="replace") as f:
+                content = f.read(32_000)
+            return True, content
+        except OSError as e:
+            return False, f"[Erreur lecture : {e}]"
+
+
+# ── Détection automatique de fichiers pertinents ─────────────────────────────
+
+def _find_scan_root(cwd):
+    """Retourne (root, is_git). root = git toplevel si dispo, sinon cwd."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=cwd, capture_output=True, text=True, timeout=3
+        )
+        if result.returncode == 0:
+            return result.stdout.strip(), True
+    except Exception:
+        pass
+    return cwd, False
+
+
+def find_relevant_files(question, perms, cwd=None):
+    """
+    Extrait les identifiants snake_case et chemins de la question,
+    grep les fichiers du projet, retourne les plus pertinents (max 3).
+    Scan borné au repo git courant (fallback : cwd, max 4 niveaux).
+    """
+    import re
+    if cwd is None:
+        cwd = os.getcwd()
+
+    scan_root, in_git_repo = _find_scan_root(cwd)
+    max_depth = 6 if in_git_repo else 3
+    max_files = 2000
+
+    tokens = set()
+    tokens.update(re.findall(r'\b\w+_\w+\b', question))
+    tokens.update(re.findall(r'[\w-]+\.\w{1,4}\b', question))
+    tokens.update(re.findall(r'(?:scripts|src|lib)/\S+', question))
+    tokens = {t for t in tokens if len(t) >= 4}
+    if not tokens:
+        return []
+
+    IGNORE = {'.git', '.claude', 'node_modules', '__pycache__', '.cache', 'dist', 'build',
+              '.astro', '.venv', 'venv', 'site-packages'}
+    SKIP_FILES = {'README.md', 'CONTEXT.md', 'BOB.md'}
+    SKIP_PREFIXES = ('PROMPT_', 'CHANGELOG', 'LICENSE')
+    TEXT_EXT = {'.py', '.sh', '.js', '.ts', '.md', '.json', '.yaml', '.yml', '.toml', ''}
+    scored = {}
+    seen_real = set()
+    files_scanned = 0
+
+    root_depth = scan_root.rstrip(os.sep).count(os.sep)
+    for root, dirs, files in os.walk(scan_root):
+        if files_scanned >= max_files:
+            dirs[:] = []
+            break
+        current_depth = root.rstrip(os.sep).count(os.sep) - root_depth
+        if current_depth >= max_depth:
+            dirs[:] = []
+            continue
+        dirs[:] = [d for d in dirs if d not in IGNORE]
+        for fname in files:
+            if files_scanned >= max_files:
+                break
+            if fname in SKIP_FILES or fname.startswith(SKIP_PREFIXES):
+                continue
+            if not any(fname.endswith(ext) for ext in TEXT_EXT):
+                continue
+            fpath = os.path.join(root, fname)
+            real = os.path.realpath(fpath)
+            if real in seen_real:
+                continue
+            seen_real.add(real)
+            files_scanned += 1
+            rel = os.path.relpath(real, scan_root)
+            try:
+                with open(real, encoding='utf-8', errors='ignore') as f:
+                    content = f.read(64_000)
+                score = sum(content.count(t) for t in tokens)
+                if score > 0:
+                    scored[rel] = (score, content[:32_000])
+            except OSError:
+                pass
+
+    top = sorted(scored.items(), key=lambda x: -x[1][0])[:3]
+    result = []
+    for rel, (_, content) in top:
+        ok, data = perms.ask(rel)
+        if ok:
+            result.append((rel, data))
+    return result
+
+
+def fetch_tldr_context(question, cwd=None):
+    """Appelle `tldr context <question>`. Retourne le texte ou None."""
+    try:
+        result = subprocess.run(
+            ["tldr", "context", question],
+            capture_output=True, text=True, timeout=15,
+            cwd=cwd or os.getcwd(),
+        )
+        if result.returncode == 0 and len(result.stdout.strip()) >= 300:
+            return result.stdout.strip()
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+        pass
+    return None
+
+
+def build_context_block(question, perms, cwd=None):
+    """Injecte le contexte dans un message user : tldr en priorité, sinon fichiers."""
+    tldr = fetch_tldr_context(question, cwd=cwd)
+    if tldr:
+        print(f"{D}[contexte tldr] {len(tldr)} chars{Z}")
+        return f"\n\nContexte du projet (extrait structuré) :\n{tldr}"
+    relevant = find_relevant_files(question, perms)
+    if not relevant:
+        return ""
+    print(f"{D}[contexte] {', '.join(p for p, _ in relevant)}{Z}")
+    block = "\n\nFichiers du projet :\n"
+    for path, content in relevant:
+        block += f"\n=== {path} ===\n{content}\n=== fin {path} ===\n"
+    return block
+
+
+def build_system():
+    """System prompt épuré — pas d'injection README/CONTEXT (géré par Obsidian)."""
+    return SYSTEM_BASE
+
+
+# ── Base de données conversations ─────────────────────────────────────────────
+
+def init_db():
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    db = sqlite3.connect(DB_PATH)
+    db.executescript("""
+        CREATE TABLE IF NOT EXISTS conversations (
+            id TEXT PRIMARY KEY, name TEXT, model TEXT, created_at TEXT);
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id TEXT REFERENCES conversations(id),
+            role TEXT, content TEXT, created_at TEXT);
+    """)
+    return db
+
+def _now(): return datetime.now(timezone.utc).isoformat()
+
+def new_conv(db, model):
+    cid = str(uuid.uuid4())[:8]
+    db.execute("INSERT INTO conversations VALUES (?,?,?,?)", (cid, "", model, _now()))
+    db.commit()
+    return cid
+
+def load_last_conv(db):
+    return db.execute(
+        "SELECT id, name, model FROM conversations ORDER BY created_at DESC LIMIT 1"
+    ).fetchone()
+
+def load_messages(db, cid):
+    rows = db.execute(
+        "SELECT role, content FROM messages WHERE conversation_id=? ORDER BY id", (cid,)
+    ).fetchall()
+    return [{"role": r, "content": c} for r, c in rows]
+
+def save_turn(db, cid, user, assistant):
+    t = _now()
+    db.executemany(
+        "INSERT INTO messages (conversation_id,role,content,created_at) VALUES (?,?,?,?)",
+        [(cid, "user", user, t), (cid, "assistant", assistant, t)]
+    )
+    db.commit()
+
+def set_name(db, cid, prompt):
+    db.execute("UPDATE conversations SET name=? WHERE id=?",
+               (" ".join(prompt.split()[:8]), cid))
+    db.commit()
+
+
+# ── Backend ───────────────────────────────────────────────────────────────────
+
+def ensure_vllm():
+    """Si vLLM absent, ouvre Konsole avec vllm-start.sh et attend qu'il soit prêt."""
+    try:
+        with request.urlopen(f"{BILL_BASE_URL}/v1/models", timeout=2):
+            return  # Déjà actif
+    except Exception:
+        pass
+    print(f"{Y}[bill] vLLM off — ouverture Konsole pour les logs...{Z}")
+    subprocess.Popen(["konsole", "--hold", "-e", "bash", VLLM_START])
+    print(f"{Y}[bill] Attente vLLM (port 8000)", end="", flush=True)
+    for _ in range(90):
+        time.sleep(1)
+        print(".", end="", flush=True)
+        try:
+            with request.urlopen(f"{BILL_BASE_URL}/v1/models", timeout=2):
+                print(f"\n{G}[bill] vLLM prêt. Modèle : Qwen3-Coder-30B{Z}")
+                return
+        except Exception:
+            pass
+    print(f"\n{R}[bill] Timeout — vLLM n'a pas démarré en 90s{Z}")
+    sys.exit(1)
+
+
+def check_backend():
+    """
+    Détecte le backend actif (vLLM ou Ollama fallback).
+    Met à jour _ACTIVE_URL et _ACTIVE_FMT. Retourne True si un backend est dispo.
+    """
+    global _ACTIVE_URL, _ACTIVE_FMT
+    try:
+        with request.urlopen(f"{BILL_BASE_URL}/v1/models", timeout=2):
+            _ACTIVE_URL, _ACTIVE_FMT = BILL_BASE_URL, BILL_API_FORMAT
+            return True
+    except Exception:
+        pass
+    try:
+        with request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=2):
+            print(f"{Y}[bill] vLLM off — fallback Ollama ({OLLAMA_FALLBACK}){Z}")
+            _ACTIVE_URL, _ACTIVE_FMT = OLLAMA_URL, "ollama"
+            return True
+    except Exception:
+        pass
+    return False
+
+def _default_model(override=None):
+    """Modèle actif selon le backend, surchargeable via --model."""
+    if override:
+        return override
+    return OLLAMA_FALLBACK if _ACTIVE_URL == OLLAMA_URL else BILL_MODEL
+
+def available_models():
+    """Retourne la liste des modèles Ollama installés."""
+    try:
+        with request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=3) as resp:
+            data = json.loads(resp.read())
+            return [m["name"] for m in data.get("models", [])]
+    except Exception:
+        return []
+
+
+# ── Streaming ─────────────────────────────────────────────────────────────────
+
+def stream_chat(msgs, model, base_url=None, api_format=None):
+    """Générateur de chunks texte. Supporte openai (vLLM) et ollama."""
+    url = base_url or _ACTIVE_URL
+    fmt = api_format or _ACTIVE_FMT
+    if fmt == "openai":
+        payload = json.dumps({
+            "model": model, "messages": msgs,
+            "stream": True, "temperature": 0.1,
+        }).encode()
+        req = request.Request(
+            f"{url}/v1/chat/completions", data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with request.urlopen(req, timeout=180) as resp:
+            for raw in resp:
+                line = raw.decode().strip()
+                if not line.startswith("data:"):
+                    continue
+                chunk = line[5:].strip()
+                if chunk == "[DONE]":
+                    break
+                data = json.loads(chunk)
+                content = (data["choices"][0].get("delta") or {}).get("content") or ""
+                if content:
+                    yield content
+    else:
+        payload = json.dumps({
+            "model": model, "messages": msgs,
+            "stream": True, "think": False,
+        }).encode()
+        req = request.Request(
+            f"{url}/api/chat", data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with request.urlopen(req, timeout=180) as resp:
+            for line in resp:
+                if not line.strip():
+                    continue
+                chunk = json.loads(line)
+                content = chunk.get("message", {}).get("content", "")
+                if content:
+                    yield content
+                if chunk.get("done"):
+                    break
+
+
+def collect_stream(gen, label=None):
+    """Stream un générateur vers stdout, retourne le texte complet."""
+    from urllib.error import HTTPError
+    if label:
+        print(f"\n{D}{label}{Z}\n")
+    parts = []
+    first = True
+    print(f"{D}⟳{Z} ", end="", flush=True)
+    try:
+        for chunk in gen:
+            if first:
+                first = False
+                print(f"\r  \r", end="", flush=True)
+            print(chunk, end="", flush=True)
+            parts.append(chunk)
+    except KeyboardInterrupt:
+        print(f"\n{D}[interrompu]{Z}", end="")
+    except HTTPError as e:
+        print(f"\n{R}Erreur backend {e.code} : {e.reason}{Z}", end="")
+        if e.code == 404 and _ACTIVE_FMT == "ollama":
+            print(f"\n{Y}Modèle introuvable. Modèles disponibles :{Z}")
+            for m in available_models():
+                print(f"  {D}{m}{Z}")
+    except Exception as e:
+        print(f"\n{R}Erreur : {e}{Z}", end="")
+    finally:
+        print()
+    return "".join(parts)
+
+
+# ── Tool calling ──────────────────────────────────────────────────────────────
+
+def chat_with_tools(msgs, model, perms, max_calls=5):
+    """
+    Générateur avec tool calling (read_file). Lazy : le premier appel réseau
+    se fait au premier next(), ce qui permet à collect_stream d'afficher ⟳ avant.
+    Si perms est None, délègue directement à stream_chat (streaming).
+    """
+    if perms is None:
+        yield from stream_chat(msgs, model)
+        return
+
+    url = _ACTIVE_URL
+    fmt = _ACTIVE_FMT
+    history = list(msgs)
+    calls_done = 0
+
+    while calls_done < max_calls:
+        try:
+            if fmt == "openai":
+                payload = json.dumps({
+                    "model": model, "messages": history,
+                    "tools": TOOLS, "stream": False, "temperature": 0.1,
+                }).encode()
+                req = request.Request(
+                    f"{url}/v1/chat/completions", data=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                with request.urlopen(req, timeout=180) as resp:
+                    data = json.loads(resp.read())
+                msg = data["choices"][0]["message"]
+                tool_calls = msg.get("tool_calls") or []
+                if not tool_calls:
+                    yield msg.get("content", "")
+                    return
+                history.append({
+                    "role": "assistant",
+                    "content": msg.get("content", ""),
+                    "tool_calls": tool_calls,
+                })
+                for tc in tool_calls:
+                    fn = tc.get("function", {})
+                    if fn.get("name") == "read_file":
+                        args = json.loads(fn.get("arguments", "{}"))
+                        path = args.get("path", "")
+                        _, result = perms.ask(path)
+                        print(f"\n{D}[outil] read_file({path}) → {len(result)} chars{Z}")
+                    else:
+                        result = f"[Outil inconnu : {fn.get('name')}]"
+                    history.append({
+                        "role": "tool",
+                        "tool_call_id": tc.get("id", ""),
+                        "content": result,
+                    })
+            else:
+                payload = json.dumps({
+                    "model": model, "messages": history,
+                    "stream": False, "tools": TOOLS, "think": False,
+                }).encode()
+                req = request.Request(
+                    f"{url}/api/chat", data=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                with request.urlopen(req, timeout=180) as resp:
+                    data = json.loads(resp.read())
+                msg = data.get("message", {})
+                tool_calls = msg.get("tool_calls") or []
+                if not tool_calls:
+                    yield msg.get("content", "")
+                    return
+                history.append({"role": "assistant", "content": "", "tool_calls": tool_calls})
+                for tc in tool_calls:
+                    fn = tc.get("function", {})
+                    if fn.get("name") == "read_file":
+                        path = fn.get("arguments", {}).get("path", "")
+                        _, result = perms.ask(path)
+                        print(f"\n{D}[outil] read_file({path}) → {len(result)} chars{Z}")
+                    else:
+                        result = f"[Outil inconnu : {fn.get('name')}]"
+                    history.append({"role": "tool", "content": result})
+        except Exception as e:
+            yield f"\n[Erreur tool calling : {e}]"
+            return
+
+        calls_done += 1
+
+    yield "[Max appels outils atteint]"
+
+
+# ── Utilitaires ───────────────────────────────────────────────────────────────
+
+def save_output(mode, key, content):
+    """Sauvegarde content dans /tmp/bill-<mode>-<hash>.md. Retourne le chemin."""
+    h = hashlib.md5(key.encode()).hexdigest()[:8]
+    path = f"/tmp/bill-{mode}-{h}.md"
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return path
+
+def _output_header(mode, label, model):
+    """Header standardisé pour les fichiers de sortie."""
+    return (
+        f"# bill-{mode} — {label}\n"
+        f"**Modèle:** {model}\n"
+        f"**Date:** {_now()}\n\n---\n\n"
+    )
+
+
+# ── Modes ─────────────────────────────────────────────────────────────────────
+
+def run_analyze(question, model, perms):
+    """Analyse architecture/structure."""
+    sys_prompt = (
+        "Tu es un architecte logiciel expert. "
+        "Analyse la structure, les patterns, les couplages et les points d'amélioration. "
+        "Sections obligatoires : ## Architecture · ## Couplages · ## Points critiques · ## Recommandations\n"
+        "Mentionne les fichiers concernés. Sois concis et factuel."
+    )
+    user_content = question + build_context_block(question, perms)
+    return collect_stream(
+        chat_with_tools(
+            [{"role": "system", "content": sys_prompt},
+             {"role": "user",   "content": user_content}],
+            model, perms,
+        ),
+        label=f"Analyse  [{model}]",
+    )
+
+
+def _resolve_review_source(arg, perms):
+    """Retourne (label, content) pour /review."""
+    MAX_FILE = 20_000
+    if arg and os.path.exists(arg):
+        ok, data = perms.ask(arg)
+        if not ok:
+            print(f"{R}Accès refusé : {arg}{Z}")
+            return None, None
+        truncated = len(data) > MAX_FILE
+        snippet = data[:MAX_FILE]
+        suffix = f"\n\n[... tronqué à {MAX_FILE} chars sur {len(data)} ...]" if truncated else ""
+        return arg, f"```\n{snippet}{suffix}\n```"
+    for cmd in [["git", "diff", "--staged"], ["git", "diff", "HEAD"]]:
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            if result.stdout.strip():
+                label = " ".join(cmd[1:])
+                return label, f"```diff\n{result.stdout[:30_000]}\n```"
+        except Exception:
+            pass
+    return None, None
+
+
+def run_review(arg, model, perms):
+    """Code review (fichier ou git diff)."""
+    label, source = _resolve_review_source(arg, perms)
+    if source is None:
+        print(f"{Y}Aucun diff trouvé et fichier non spécifié.{Z}")
+        return ""
+    sys_prompt = (
+        "Tu es un expert code review. Tu fais de l'analyse statique — tu ne l'exécutes pas. "
+        "Sections obligatoires :\n"
+        "## Critique (bugs, sécurité, performances)\n"
+        "## Bugs potentiels\n"
+        "## Améliorations\n"
+        "## Verdict\n"
+        "[PROPRE|MINEUR|CRITIQUE] suivi d'un résumé en 1 phrase.\n"
+        "Référence les numéros de ligne quand pertinent."
+    )
+    print(f"{D}[source] {label}{Z}")
+    return collect_stream(
+        stream_chat(
+            [{"role": "system", "content": sys_prompt},
+             {"role": "user",   "content": f"Analyse statique :\n\n{source}"}],
+            model,
+        ),
+        label=f"Review  [{model}]",
+    )
+
+
+def run_debug(problem, model, perms):
+    """Debug systématique."""
+    sys_prompt = (
+        "Tu es un expert debugging. "
+        "Sections obligatoires :\n"
+        "## Cause racine (hypothèses classées par probabilité)\n"
+        "## Diagnostic (identification précise)\n"
+        "## Fix proposé (avec code)\n"
+        "## Validation (comment vérifier le fix)\n"
+        "Sois bref et précis."
+    )
+    user_content = problem + build_context_block(problem, perms)
+    return collect_stream(
+        chat_with_tools(
+            [{"role": "system", "content": sys_prompt},
+             {"role": "user",   "content": user_content}],
+            model, perms,
+        ),
+        label=f"Debug  [{model}]",
+    )
+
+
+# ── Commandes in-REPL ─────────────────────────────────────────────────────────
+
+def cmd_history(db, cid, n=5):
+    rows = db.execute(
+        "SELECT role, content FROM messages WHERE conversation_id=? ORDER BY id DESC LIMIT ?",
+        (cid, n * 2),
+    ).fetchall()
+    for role, content in reversed(rows):
+        label = f"{C}bill>{Z}" if role == "assistant" else f"{B}vous>{Z}"
+        snippet = content[:300] + ("…" if len(content) > 300 else "")
+        print(f"\n{label} {snippet}")
+    print()
+
+def cmd_list(db):
+    rows = db.execute(
+        "SELECT id, name, model, created_at FROM conversations ORDER BY created_at DESC LIMIT 10"
+    ).fetchall()
+    if not rows:
+        print(f"{D}Aucune conversation.{Z}")
+        return
+    for cid, name, model, ts in rows:
+        print(f"  {D}{cid}{Z}  {name or '(sans titre)'}  {D}[{model}] {ts[:10]}{Z}")
+
+
+# ── Saisie multi-ligne ────────────────────────────────────────────────────────
+
+def read_multiline(prompt, cont_prompt="... "):
+    """
+    Saisie multi-ligne en mode raw (termios) avec bracketed paste.
+    - Enter        → soumet
+    - Alt+Enter    → insère un saut de ligne
+    - Ctrl+C       → KeyboardInterrupt
+    - Ctrl+D       → EOFError (si buffer vide)
+    - Backspace    → efface le dernier caractère
+    Fallback sur input() si stdin n'est pas un TTY.
+    """
+    import termios, tty as _tty
+
+    if not sys.stdin.isatty():
+        return input(prompt)
+
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+
+    sys.stdout.write(prompt)
+    sys.stdout.write('\x1b[?2004h')
+    sys.stdout.flush()
+
+    buf = []
+    line_len = 0
+    in_paste = False
+
+    def _newline():
+        nonlocal line_len
+        buf.append('\n')
+        line_len = 0
+        sys.stdout.write('\r\n' + cont_prompt)
+        sys.stdout.flush()
+
+    try:
+        _tty.setraw(fd)
+        while True:
+            ch = sys.stdin.read(1)
+            if not ch:
+                continue
+
+            if ch == '\x03':
+                sys.stdout.write('\r\n')
+                sys.stdout.flush()
+                raise KeyboardInterrupt
+
+            if ch == '\x04':
+                if not buf:
+                    sys.stdout.write('\r\n')
+                    sys.stdout.flush()
+                    raise EOFError
+                continue
+
+            if ch == '\x1b':
+                try:
+                    nxt = sys.stdin.read(1)
+                    if nxt == '\r':
+                        _newline()
+                    elif nxt in ('[', 'O'):
+                        seq = ''
+                        while True:
+                            c = sys.stdin.read(1)
+                            seq += c
+                            if c.isalpha() or c in ('~', '^', '$'):
+                                break
+                        if seq == '200~':
+                            in_paste = True
+                        elif seq == '201~':
+                            in_paste = False
+                except Exception:
+                    pass
+                continue
+
+            if ch in ('\r', '\n'):
+                if in_paste:
+                    _newline()
+                else:
+                    sys.stdout.write('\r\n')
+                    sys.stdout.flush()
+                    break
+                continue
+
+            if ch in ('\x7f', '\x08'):
+                if buf and line_len > 0:
+                    buf.pop()
+                    line_len -= 1
+                    sys.stdout.write('\b \b')
+                    sys.stdout.flush()
+                continue
+
+            buf.append(ch)
+            line_len += 1
+            sys.stdout.write(ch)
+            sys.stdout.flush()
+
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        sys.stdout.write('\x1b[?2004l')
+        sys.stdout.flush()
+
+    return ''.join(buf)
+
+
+# ── REPL ──────────────────────────────────────────────────────────────────────
+
+def repl(db, state, perms=None):
+    """state = {"cid": str, "model": str, "first": bool, "msgs": list}"""
+    backend_hint = f"{D}({_ACTIVE_URL}){Z}" if _ACTIVE_URL != BILL_BASE_URL else ""
+    print(f"\n{C}{B}bill{Z} {D}({state['model']}){Z}{backend_hint}"
+          f" — /help · Alt+Enter=nouvelle ligne · Enter=envoyer · Ctrl+D=quitter")
+
+    while True:
+        try:
+            user_input = read_multiline(f"\n{C}{B}bill>{Z} ").strip()
+        except EOFError:
+            print()
+            break
+        except KeyboardInterrupt:
+            print()
+            continue
+
+        if not user_input:
+            continue
+
+        if user_input.startswith("/"):
+            parts = user_input.split(None, 1)
+            cmd, arg = parts[0], (parts[1] if len(parts) > 1 else "")
+
+            if cmd in ("/exit", "/quit"):
+                break
+
+            elif cmd == "/analyze":
+                if not arg:
+                    print(f"{Y}Question (Alt+Enter=nl, Enter=envoyer) :{Z}")
+                    try:
+                        arg = read_multiline("analyze> ").strip()
+                    except (EOFError, KeyboardInterrupt):
+                        print()
+                        continue
+                if not arg:
+                    continue
+                result = run_analyze(arg, state["model"], perms)
+                if result:
+                    header = _output_header("analyze", arg[:60], state["model"])
+                    out = save_output("analyze", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+
+            elif cmd == "/review":
+                result = run_review(arg, state["model"], perms)
+                if result:
+                    key = arg or "diff"
+                    header = _output_header("review", key, state["model"])
+                    out = save_output("review", key, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+
+            elif cmd == "/debug":
+                if not arg:
+                    print(f"{Y}Problème (Alt+Enter=nl, Enter=envoyer) :{Z}")
+                    try:
+                        arg = read_multiline("debug> ").strip()
+                    except (EOFError, KeyboardInterrupt):
+                        print()
+                        continue
+                if not arg:
+                    continue
+                result = run_debug(arg, state["model"], perms)
+                if result:
+                    header = _output_header("debug", arg[:60], state["model"])
+                    out = save_output("debug", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+
+            elif cmd == "/clear":
+                state["cid"] = new_conv(db, state["model"])
+                state["msgs"].clear()
+                state["first"] = True
+                print(f"{D}Nouvelle conversation ({state['cid']}){Z}")
+
+            elif cmd == "/history":
+                cmd_history(db, state["cid"])
+
+            elif cmd == "/model":
+                if arg:
+                    state["model"] = arg
+                    print(f"{D}Modèle : {state['model']}{Z}")
+                else:
+                    print(f"{D}Modèle : {state['model']}  Backend : {_ACTIVE_URL} ({_ACTIVE_FMT}){Z}")
+
+            elif cmd == "/list":
+                cmd_list(db)
+
+            elif cmd == "/help":
+                print(f"{D}"
+                      f"/analyze [question]  analyse architecture/structure\n"
+                      f"/review [fichier]    code review ou git diff → ## Verdict\n"
+                      f"/debug [problème]    debug systématique → ## Fix proposé\n"
+                      f"/clear               nouvelle conversation\n"
+                      f"/history             5 derniers échanges\n"
+                      f"/model [<nom>]       voir ou changer le modèle\n"
+                      f"/list                conversations récentes\n"
+                      f"/exit                quitter"
+                      f"{Z}")
+            else:
+                print(f"{Y}Commande inconnue. Tape /help.{Z}")
+            continue
+
+        # Réponse normale
+        enriched_input = user_input + build_context_block(user_input, perms)
+        prefix = [{"role": "system", "content": build_system()}] if state["first"] else []
+        to_send = prefix + state["msgs"] + [{"role": "user", "content": enriched_input}]
+
+        print()
+        chunks = []
+        try:
+            for chunk in stream_chat(to_send, state["model"]):
+                print(chunk, end="", flush=True)
+                chunks.append(chunk)
+        except KeyboardInterrupt:
+            print(f"\n{D}[interrompu]{Z}")
+        except Exception as e:
+            print(f"\n{R}Erreur : {e}{Z}")
+            continue
+        finally:
+            print()
+
+        if not chunks:
+            continue
+
+        response = "".join(chunks)
+        save_turn(db, state["cid"], user_input, response)
+        state["msgs"].extend([
+            {"role": "user",      "content": user_input},
+            {"role": "assistant", "content": response},
+        ])
+        if state["first"]:
+            set_name(db, state["cid"], user_input)
+            state["first"] = False
+
+
+# ── Point d'entrée ────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="bill — agent local de code spécialiste (vLLM / Ollama fallback)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("question", nargs="*",
+                        help="Question ou /commande [arg] (ex: /review scripts/bob)")
+    parser.add_argument("--continue", dest="resume", action="store_true",
+                        help="Reprendre la dernière conversation")
+    parser.add_argument("--list", action="store_true",
+                        help="Lister les 10 dernières conversations")
+    parser.add_argument("--session", metavar="ID",
+                        help="Reprendre une conversation par ID court")
+    parser.add_argument("--model", default=None,
+                        help="Surcharger le modèle (défaut selon le backend actif)")
+    parser.add_argument("--allow-read", metavar="DIR", action="append", default=[],
+                        dest="allow_read",
+                        help="Autoriser la lecture dans ce dossier sans prompt")
+    args = parser.parse_args()
+
+    git_root, in_git = _find_scan_root(os.getcwd())
+    auto_dirs = [git_root] if in_git else []
+    perms = ReadPermissions(args.allow_read + auto_dirs, allow_all=False)
+
+    ensure_vllm()
+
+    if not check_backend():
+        print(f"{R}✗{Z} Aucun backend disponible.", file=sys.stderr)
+        print(f"  vLLM attendu sur {BILL_BASE_URL}", file=sys.stderr)
+        print(f"  Ollama attendu sur {OLLAMA_URL}", file=sys.stderr)
+        sys.exit(1)
+
+    model = _default_model(args.model)
+    db = init_db()
+
+    if args.list:
+        cmd_list(db)
+        db.close()
+        return
+
+    # Mode one-shot : question ou /commande [arg]
+    if args.question:
+        text = " ".join(args.question)
+
+        # /commande [arg] en one-shot
+        if text.startswith("/"):
+            parts = text.split(None, 1)
+            cmd, arg = parts[0], (parts[1] if len(parts) > 1 else "")
+            result = ""
+            if cmd == "/review":
+                result = run_review(arg, model, perms)
+                if result:
+                    key = arg or "diff"
+                    header = _output_header("review", key, model)
+                    out = save_output("review", key, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+            elif cmd == "/analyze":
+                result = run_analyze(arg, model, perms)
+                if result:
+                    header = _output_header("analyze", arg[:60], model)
+                    out = save_output("analyze", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+            elif cmd == "/debug":
+                result = run_debug(arg, model, perms)
+                if result:
+                    header = _output_header("debug", arg[:60], model)
+                    out = save_output("debug", arg, header + result)
+                    print(f"\n{G}✓{Z} {D}Sauvegardé : {out}{Z}")
+                    print(f"{D}Pour Sonnet : cat {out}{Z}")
+            else:
+                print(f"{Y}Commande inconnue : {cmd}  (disponibles : /review /analyze /debug){Z}")
+            db.close()
+            return
+
+        # Question directe
+        cid = new_conv(db, model)
+        msgs = [
+            {"role": "system", "content": build_system()},
+            {"role": "user",   "content": text},
+        ]
+        chunks = []
+        try:
+            for chunk in stream_chat(msgs, model):
+                print(chunk, end="", flush=True)
+                chunks.append(chunk)
+            print()
+        except KeyboardInterrupt:
+            print()
+        if chunks:
+            save_turn(db, cid, text, "".join(chunks))
+            set_name(db, cid, text)
+        db.close()
+        return
+
+    # Mode REPL
+    state = {"model": model, "msgs": [], "first": True, "cid": None}
+
+    if args.session:
+        state["cid"] = args.session
+        state["msgs"] = load_messages(db, args.session)
+        state["first"] = len(state["msgs"]) == 0
+    elif args.resume:
+        row = load_last_conv(db)
+        if row:
+            state["cid"], name, state["model"] = row
+            if args.model:
+                state["model"] = args.model
+            state["msgs"] = load_messages(db, state["cid"])
+            state["first"] = False
+            print(f"{D}Reprise : {name or state['cid']} [{state['model']}]{Z}")
+        else:
+            state["cid"] = new_conv(db, state["model"])
+    else:
+        state["cid"] = new_conv(db, state["model"])
+
+    repl(db, state, perms)
+    db.close()
+
+
+if __name__ == "__main__":
+    main()
