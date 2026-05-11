@@ -46,3 +46,4 @@ scripts/handoff.sh
 
 # Vite/Astro cache
 .cache/
+SECURITY-REPORT.md
