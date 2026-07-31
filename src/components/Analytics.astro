@@ -1,0 +1,16 @@
+---
+/**
+ * Plausible Analytics v3 — proxy same-origin (norme `Tech/Plausible-Proxy.md`).
+ *
+ * - Script servi par la Pages Function `functions/s8b6hda/[[path]].ts`.
+ * - `?v=p7huMaOQ` = 8 premiers car. de l'id du script après `pa-` ; c'est la clé
+ *   d'invalidation du cache edge (cf. incident 2026-07-31 dans la norme).
+ * - `plausible.init({ endpoint })` est obligatoire en v3 : le script ne déduit
+ *   pas l'endpoint de son `src`.
+ */
+---
+<script is:inline async src="/s8b6hda/js/script.js?v=p7huMaOQ"></script>
+<script is:inline>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init({ endpoint: location.origin + '/s8b6hda/api/event' })
+</script>
