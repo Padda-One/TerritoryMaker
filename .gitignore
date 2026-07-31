@@ -27,7 +27,6 @@ yarn-error.log*
 
 # Package manager lock files (keep package-lock.json)
 yarn.lock
-pnpm-lock.yaml
 
 # Private documentation (not for public repo)
 private/
