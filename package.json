@@ -8,7 +8,7 @@
     "preview": "astro preview"
   },
   "engines": {
-    "node": ">=20.15.0"
+    "node": ">=22.12.0"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
