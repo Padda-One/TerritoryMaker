@@ -127,101 +127,6 @@ import Analytics from "../components/Analytics.astro";
       </div>
     </div>
 
-    <!-- ── Legal modal ────────────────────────────────────────────────────── -->
-    <div
-      id="legal-modal"
-      class="lp-modal"
-      style="display:none"
-      onclick="if(event.target===this)this.style.display='none'"
-    >
-      <div class="lp-modal-card">
-        <button
-          class="lp-modal-close"
-          onclick="document.getElementById('legal-modal').style.display='none'"
-          aria-label="Fermer"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            ><line x1="18" y1="6" x2="6" y2="18"></line><line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"></line></svg
-          >
-        </button>
-        <div class="lp-modal-body">
-          <h2 class="lp-modal-title">Protocole Légal</h2>
-          <div class="legal-section">
-            <h3 class="legal-section-title">Entité Éditrice</h3>
-            <p>
-              Plateforme opérée par <strong
-                style="color:var(--color-accent-blue)">Padda-One</strong
-              >.
-            </p>
-          </div>
-          <div class="legal-section">
-            <h3 class="legal-section-title">Infrastructures</h3>
-            <p>
-              Déploiement via infrastructure <strong
-                style="color:var(--color-accent-blue)">Cloudflare Pages</strong
-              >. Aucun serveur applicatif persistant.
-            </p>
-          </div>
-          <div class="legal-section">
-            <h3 class="legal-section-title">Données Personnelles</h3>
-            <p>
-              Aucune donnée personnelle n'est collectée, traitée ou transmise.
-              Les configurations sont encapsulées dans le périmètre local du
-              navigateur.
-            </p>
-          </div>
-          <div class="legal-section">
-            <h3 class="legal-section-title">Clé API</h3>
-            <p>
-              En mode clé partagée, la clé est gérée côté serveur. En mode clé
-              personnelle, votre clé est stockée uniquement dans votre
-              navigateur, chiffrée AES-GCM 256 bits. Elle n'est jamais transmise
-              à l'éditeur ni à un tiers.
-            </p>
-          </div>
-          <div class="legal-section">
-            <h3 class="legal-section-title">Cookies</h3>
-            <p>Aucun cookie d'aucune sorte.</p>
-          </div>
-          <div class="legal-section">
-            <h3 class="legal-section-title">Données Cartographiques</h3>
-            <p>
-              Tuiles fournies par Google Maps API et/ou OpenStreetMap. ©
-              Contributeurs OpenStreetMap, licence <a
-                href="https://opendatacommons.org/licenses/odbl/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="lp-inline-link">ODbL</a
-              >.
-            </p>
-          </div>
-          <div class="legal-section">
-            <h3 class="legal-section-title">Code Source</h3>
-            <p>
-              Public et auditable sur <a
-                href="https://github.com/Padda-One/TerritoryMaker"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="lp-inline-link"
-                >GitHub — https://github.com/Padda-One/TerritoryMaker</a
-              >.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- ═══════════════════════════════════════════════════════════════════════
          SIDEBAR
     ══════════════════════════════════════════════════════════════════════════ -->
@@ -448,11 +353,11 @@ import Analytics from "../components/Analytics.astro";
         <div
           style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--color-border);display:flex;flex-direction:column;gap:6px;"
         >
-          <button
+          <a
+            href="/mentions-legales/"
             class="lp-footer-link"
-            style="font-size:0.72rem;text-align:left;background:none;border:none;color:var(--color-text-muted);cursor:pointer;padding:0;"
-            onclick="document.getElementById('legal-modal').style.display='flex'"
-            >Mentions Légales</button
+            style="font-size:0.72rem;text-align:left;color:var(--color-text-muted);"
+            >Mentions Légales</a
           >
           <a
             href="https://github.com/Padda-One/TerritoryMaker"
