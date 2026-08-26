@@ -2529,28 +2529,6 @@ body.layer-list-resizing {
   border-bottom: 1px solid rgba(68, 71, 91, 0.3);
 }
 
-.legal-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.legal-section-title {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
-.legal-section p {
-  font-size: 0.875rem;
-  color: var(--color-text);
-  line-height: 1.6;
-  margin: 0;
-}
-
 /* ─── Landing transitions (used by RouteUI.ts) ────────────────────────────── */
 
 .landing--exit {

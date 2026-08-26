@@ -14,7 +14,7 @@ import Analytics from "../components/Analytics.astro";
     />
     <meta
       name="description"
-      content="Mentions légales de Territory Maker : éditeur, hébergeur, données personnelles, clé API, cookies, données cartographiques et code source."
+      content="Mentions légales et CGU de Territory Maker : éditeur, hébergeur, propriété intellectuelle, conditions d'utilisation, données personnelles, clé API, cookies, données cartographiques et code source."
     />
     <meta name="author" content="Paddaone" />
     <meta name="robots" content="index, follow" />
@@ -29,7 +29,7 @@ import Analytics from "../components/Analytics.astro";
     <meta property="og:title" content="Mentions légales — Territory Maker" />
     <meta
       property="og:description"
-      content="Mentions légales de Territory Maker : éditeur, hébergeur, données personnelles, clé API, cookies, données cartographiques."
+      content="Mentions légales et CGU de Territory Maker : éditeur, hébergeur, propriété intellectuelle, données personnelles, clé API, cookies, données cartographiques."
     />
     <meta
       property="og:image"
@@ -42,7 +42,7 @@ import Analytics from "../components/Analytics.astro";
     <meta name="twitter:title" content="Mentions légales — Territory Maker" />
     <meta
       name="twitter:description"
-      content="Mentions légales de Territory Maker : éditeur, hébergeur, données personnelles."
+      content="Mentions légales et CGU de Territory Maker : éditeur, hébergeur, propriété intellectuelle, données personnelles."
     />
     <meta
       name="twitter:image"
@@ -70,11 +70,100 @@ import Analytics from "../components/Analytics.astro";
           <img src="/logo-TerritoryMaker.svg" width="50" height="50" alt="" />
           <span>Territory Maker</span>
         </div>
+        <button
+          class="sidebar-mobile-btn"
+          id="sidebarToggle"
+          aria-label="Ouvrir la navigation"
+        >
+          ☰ Chapitres
+        </button>
       </div>
     </header>
 
+    <!-- Mobile backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <!-- Layout -->
     <div class="doc-layout">
+      <!-- Sidebar -->
+      <nav class="doc-sidebar" id="docSidebar" aria-label="Table des matières">
+        <div class="sidebar-label">Table des matières</div>
+        <ol class="sidebar-nav">
+          <li>
+            <a href="#ch1" class="sidebar-chapter-link">
+              <span class="sidebar-num">1</span>
+              <span>Entité éditrice</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch2" class="sidebar-chapter-link">
+              <span class="sidebar-num">2</span>
+              <span>Hébergeur</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch3" class="sidebar-chapter-link">
+              <span class="sidebar-num">3</span>
+              <span>Propriété intellectuelle</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch4" class="sidebar-chapter-link">
+              <span class="sidebar-num">4</span>
+              <span>Marques et logos</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch5" class="sidebar-chapter-link">
+              <span class="sidebar-num">5</span>
+              <span>CGU</span>
+            </a>
+            <ol class="sidebar-sub-list">
+              <li><a href="#ch5-1" class="sidebar-sub-link">Objet et acceptation</a></li>
+              <li><a href="#ch5-2" class="sidebar-sub-link">Services proposés</a></li>
+              <li><a href="#ch5-3" class="sidebar-sub-link">Accès et disponibilité</a></li>
+              <li><a href="#ch5-4" class="sidebar-sub-link">Obligations de l'utilisateur</a></li>
+              <li><a href="#ch5-5" class="sidebar-sub-link">Utilisation des contenus</a></li>
+              <li><a href="#ch5-6" class="sidebar-sub-link">Responsabilité</a></li>
+              <li><a href="#ch5-7" class="sidebar-sub-link">Modification des CGU</a></li>
+              <li><a href="#ch5-8" class="sidebar-sub-link">Droit applicable</a></li>
+              <li><a href="#ch5-9" class="sidebar-sub-link">Contact</a></li>
+            </ol>
+          </li>
+          <li>
+            <a href="#ch6" class="sidebar-chapter-link">
+              <span class="sidebar-num">6</span>
+              <span>Données personnelles</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch7" class="sidebar-chapter-link">
+              <span class="sidebar-num">7</span>
+              <span>Clé API</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch8" class="sidebar-chapter-link">
+              <span class="sidebar-num">8</span>
+              <span>Cookies</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch9" class="sidebar-chapter-link">
+              <span class="sidebar-num">9</span>
+              <span>Données cartographiques</span>
+            </a>
+          </li>
+          <li>
+            <a href="#ch10" class="sidebar-chapter-link">
+              <span class="sidebar-num">10</span>
+              <span>Code source</span>
+            </a>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Content -->
       <main class="doc-content">
         <!-- Title -->
         <div style="margin-bottom:40px;">
@@ -86,170 +175,952 @@ import Analytics from "../components/Analytics.astro";
           <h1
             style="font-size:1.75rem;font-weight:800;color:#e2e8f0;margin:0 0 12px;line-height:1.2;"
           >
-            Protocole légal
+            Mentions légales et CGU
           </h1>
           <p
             style="font-size:0.95rem;color:#94a3b8;margin:0;line-height:1.6;"
           >
-            Informations légales relatives au site
-            <strong>territory.paddaone.com</strong>, édité par Padda-One.
+            Informations légales et conditions générales d'utilisation relatives
+            au site <strong>territory.paddaone.com</strong>, édité par Padda-One.
           </p>
         </div>
 
-        <!-- ─── Section 1 : Entité Éditrice ─── -->
-        <section id="editeur" style="margin-bottom:40px;">
+        <!-- ─── CHAPITRE 1 : Entité éditrice ─── -->
+        <section id="ch1" style="margin-bottom:56px;">
           <div class="chapter-header">
             <div class="chapter-number">1</div>
             <h2 class="chapter-title">Entité éditrice</h2>
           </div>
-          <div class="doc-section">
-            <div class="legal-section">
-              <h3 class="legal-section-title">Dénomination et forme juridique</h3>
-              <p>
-                Le site <strong>territory.paddaone.com</strong> est édité par
-                <strong style="color:var(--color-accent-blue)">EI Olivier
-                DUPONT</strong> — entreprise individuelle
-                (micro-entreprise).
-              </p>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <div class="legal-info-list">
+                  <div class="legal-info-item">
+                    <span class="legal-info-label">Dénomination</span>
+                    <span class="legal-info-value">
+                      <strong style="color:var(--color-accent-blue)">EI Olivier
+                      DUPONT</strong> — entreprise individuelle
+                      (micro-entreprise)
+                    </span>
+                  </div>
+                  <div class="legal-info-item">
+                    <span class="legal-info-label">RCS</span>
+                    <span class="legal-info-value">524448537</span>
+                  </div>
+                  <div class="legal-info-item">
+                    <span class="legal-info-label">Adresse du siège</span>
+                    <span class="legal-info-value">
+                      13 Av. Jean Sillard, 53100 Châtil<!--x-->lon-sur-Colmont,
+                      France
+                    </span>
+                  </div>
+                  <div class="legal-info-item">
+                    <span class="legal-info-label">E-mail</span>
+                    <span class="legal-info-value">olivier@padda<!--x-->one.com</span>
+                  </div>
+                  <div class="legal-info-item">
+                    <span class="legal-info-label">Téléphone</span>
+                    <span class="legal-info-value">07 45 0<!--x-->7 50 11</span>
+                  </div>
+                  <div class="legal-info-item">
+                    <span class="legal-info-label">Directeur de publication</span>
+                    <span class="legal-info-value">
+                      DUPONT Olivier, responsable légal de l'entreprise.
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="legal-section">
-              <h3 class="legal-section-title">RCS</h3>
-              <p>524448537</p>
-            </div>
-            <div class="legal-section">
-              <h3 class="legal-section-title">Adresse du siège</h3>
-              <p>
-                13 Av. Jean Sillard, 53100 Châtil<!--x-->lon-sur-Colmont,
-                France
-              </p>
-            </div>
-            <div class="legal-section">
-              <h3 class="legal-section-title">E-mail</h3>
-              <p>olivier@padda<!--x-->one.com</p>
-            </div>
-            <div class="legal-section">
-              <h3 class="legal-section-title">Téléphone</h3>
-              <p>07 45 0<!--x-->7 50 11</p>
-            </div>
-            <div class="legal-section">
-              <h3 class="legal-section-title">Directeur de publication</h3>
-              <p>
-                DUPONT Olivier, responsable légal de l'entreprise.
-              </p>
-            </div>
-          </div>
+          </section>
         </section>
 
-        <!-- ─── Section 2 : Infrastructures / Hébergeur ─── -->
-        <section id="hebergeur" style="margin-bottom:40px;">
+        <!-- ─── CHAPITRE 2 : Hébergeur ─── -->
+        <section id="ch2" style="margin-bottom:56px;">
           <div class="chapter-header">
             <div class="chapter-number">2</div>
-            <h2 class="chapter-title">Infrastructures et hébergeur</h2>
+            <h2 class="chapter-title">Hébergeur</h2>
           </div>
-          <div class="doc-section">
-            <div class="legal-section">
-              <h3 class="legal-section-title">Hébergeur</h3>
-              <p>
-                Le site est hébergé par <strong
-                  style="color:var(--color-accent-blue)">Cloudflare
-                  Pages</strong
-                > — Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107,
-                États-Unis. Aucun serveur applicatif persistant.
-              </p>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Le site est hébergé par <strong
+                    style="color:var(--color-accent-blue)">Cloudflare
+                    Pages</strong
+                  > — Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107,
+                  États-Unis. Aucun serveur applicatif persistant.
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
         </section>
 
-        <!-- ─── Section 3 : Données Personnelles ─── -->
-        <section id="donnees-personnelles" style="margin-bottom:40px;">
+        <!-- ─── CHAPITRE 3 : Propriété intellectuelle ─── -->
+        <section id="ch3" style="margin-bottom:56px;">
           <div class="chapter-header">
             <div class="chapter-number">3</div>
-            <h2 class="chapter-title">Données personnelles</h2>
+            <h2 class="chapter-title">Propriété intellectuelle</h2>
           </div>
-          <div class="doc-section">
-            <div class="legal-section">
-              <p>
-                Aucune donnée personnelle n'est collectée, traitée ou
-                transmise. Les configurations sont encapsulées dans le
-                périmètre local du navigateur.
-              </p>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Territory Maker est un logiciel <strong>open source</strong>
+                  publié sous licence MIT. Le code source est librement
+                  accessible et auditable (voir chapitre 10).
+                </p>
+                <p>
+                  L'ensemble des éléments constituant le site
+                  <strong>territory.paddaone.com</strong> (structure, design,
+                  textes, graphismes, logos) est la propriété exclusive d'EI
+                  Olivier DUPONT, à l'exception des éléments couverts par la
+                  licence MIT et des contenus appartenant à des tiers (données
+                  cartographiques OpenStreetMap, tuiles Google Maps).
+                </p>
+                <p>
+                  Ces éléments sont protégés par le droit français et
+                  international de la propriété intellectuelle. Ils ne peuvent
+                  être reproduits ou représentés sans l'autorisation expresse
+                  d'EI Olivier DUPONT, sous peine de poursuites judiciaires.
+                </p>
+                <p>
+                  L'utilisation de liens hypertextes vers le site
+                  territory.paddaone.com est autorisée sous réserve qu'ils
+                  soient clairement mentionnés comme tels et qu'ils permettent
+                  l'identification de leur provenance.
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
         </section>
 
-        <!-- ─── Section 4 : Clé API ─── -->
-        <section id="cle-api" style="margin-bottom:40px;">
+        <!-- ─── CHAPITRE 4 : Marques et logos ─── -->
+        <section id="ch4" style="margin-bottom:56px;">
           <div class="chapter-header">
             <div class="chapter-number">4</div>
-            <h2 class="chapter-title">Clé API</h2>
+            <h2 class="chapter-title">Marques et logos</h2>
           </div>
-          <div class="doc-section">
-            <div class="legal-section">
-              <p>
-                En mode clé partagée, la clé est gérée côté serveur. En mode
-                clé personnelle, votre clé Google Maps API est stockée
-                uniquement dans votre navigateur, chiffrée AES-GCM 256 bits.
-                Elle n'est jamais transmise à l'éditeur ni à un tiers.
-              </p>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  «&nbsp;Territory Maker&nbsp;», «&nbsp;Padda-One&nbsp;», le logo
+                  et les signes distinctifs reproduits sur le site sont des
+                  marques déposées ou en cours de dépôt d'EI Olivier DUPONT.
+                  Toute reproduction non autorisée de ces éléments constitue
+                  une contrefaçon sanctionnée par les articles L.335-2 et
+                  suivants du Code de la propriété intellectuelle.
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
         </section>
 
-        <!-- ─── Section 5 : Cookies ─── -->
-        <section id="cookies" style="margin-bottom:40px;">
+        <!-- ─── CHAPITRE 5 : CGU ─── -->
+        <section id="ch5" style="margin-bottom:56px;">
           <div class="chapter-header">
             <div class="chapter-number">5</div>
-            <h2 class="chapter-title">Cookies</h2>
+            <h2 class="chapter-title">Conditions générales d'utilisation</h2>
           </div>
-          <div class="doc-section">
-            <div class="legal-section">
-              <p>Aucun cookie d'aucune sorte.</p>
+
+          <section id="ch5-1" class="doc-section">
+            <h3 class="section-title">5.1 Objet et acceptation</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Les présentes conditions générales d'utilisation (CGU)
+                  régissent l'accès et l'utilisation du site
+                  <strong>territory.paddaone.com</strong> édité par EI Olivier
+                  DUPONT. L'accès au site implique l'acceptation pleine et
+                  entière des présentes CGU par l'utilisateur.
+                </p>
+                <p>
+                  Ces CGU s'appliquent à tous les visiteurs et utilisateurs du
+                  site, qu'ils soient particuliers ou professionnels.
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
+
+          <section id="ch5-2" class="doc-section">
+            <h3 class="section-title">5.2 Services proposés</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Territory Maker est un outil de cartographie <strong>gratuit
+                  et open source</strong> permettant à l'utilisateur de&nbsp;:
+                </p>
+                <ul class="step-list">
+                  <li>
+                    Tracer des territoires géographiques sur une carte
+                    interactive
+                  </li>
+                  <li>
+                    Gérer plusieurs calques et polygones simultanément
+                  </li>
+                  <li>
+                    Importer et exporter des fichiers KML (Google Earth, Google
+                    My Maps, QGIS)
+                  </li>
+                  <li>
+                    Importer et exporter des fichiers CSV au format NWS
+                  </li>
+                  <li>
+                    Découper (Split) et fusionner (Merge) des polygones
+                  </li>
+                  <li>
+                    Simplifier les coordonnées d'une zone (algorithme
+                    Douglas-Peucker)
+                  </li>
+                </ul>
+                <p>
+                  L'utilisation de Google Maps comme fond de carte ou comme
+                  moteur de routage nécessite une clé Google Maps API fournie
+                  par l'utilisateur (voir chapitre 7). En l'absence de clé
+                  personnelle, les fournisseurs OpenStreetMap et
+                  OpenRouteService sont utilisés gratuitement.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-3" class="doc-section">
+            <h3 class="section-title">5.3 Accès au site et disponibilité</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Le site est accessible 24h/24 et 7j/7, sous réserve des
+                  opérations de maintenance et des mises à jour nécessaires à
+                  son bon fonctionnement. EI Olivier DUPONT se réserve le droit
+                  d'interrompre temporairement l'accès au site pour des raisons
+                  techniques ou administratives.
+                </p>
+                <p>
+                  L'accès au site se fait via une infrastructure de diffusion de
+                  contenu statique sécurisée (Cloudflare Pages). L'utilisateur
+                  est responsable de la qualité de sa connexion internet et de
+                  la compatibilité de son navigateur.
+                </p>
+                <p>
+                  Les services de routage OpenRouteService et Google Directions
+                  sont soumis à des quotas d'utilisation qui peuvent être
+                  temporairement épuisés en cas d'usage intensif. Voir la
+                  documentation pour les alternatives disponibles.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-4" class="doc-section">
+            <h3 class="section-title">5.4 Obligations et responsabilités de l'utilisateur</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>L'utilisateur s'engage à&nbsp;:</p>
+                <ul class="step-list">
+                  <li>
+                    Utiliser l'outil conformément à sa destination et aux lois
+                    en vigueur
+                  </li>
+                  <li>
+                    Ne pas porter atteinte aux droits de propriété intellectuelle
+                    de l'éditeur ou des tiers (notamment les contributeurs
+                    OpenStreetMap)
+                  </li>
+                  <li>
+                    Ne pas introduire de fichiers KML ou CSV malveillants
+                    susceptibles de saturer la mémoire du navigateur
+                  </li>
+                  <li>
+                    Ne pas tenter de perturber le fonctionnement du site ou
+                    d'en accéder au code source par des moyens détournés
+                  </li>
+                  <li>
+                    Protéger sa clé Google Maps API personnelle et en limiter
+                    l'usage à son propre domaine (voir documentation)
+                  </li>
+                  <li>
+                    Respecter les conditions d'utilisation des fournisseurs de
+                    données tiers (Google Maps, OpenStreetMap,
+                    OpenRouteService)
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-5" class="doc-section">
+            <h3 class="section-title">5.5 Utilisation des contenus</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Les territoires dessinés et les fichiers exportés par
+                  l'utilisateur lui appartiennent. Territory Maker ne stocke
+                  aucune donnée côté serveur&nbsp;: toutes les configurations et
+                  polygones sont conservés localement dans le navigateur de
+                  l'utilisateur.
+                </p>
+                <p>
+                  Le code source de l'application est librement réutilisable
+                  sous les termes de la licence MIT. Les données
+                  cartographiques OpenStreetMap sont soumises à la licence
+                  ODbL (voir chapitre 9).
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-6" class="doc-section">
+            <h3 class="section-title">5.6 Responsabilité et limitation</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Territory Maker est fourni <strong>gratuitement, tel quel,
+                  sans aucune garantie</strong> d'aptitude à un usage
+                  particulier. EI Olivier DUPONT s'efforce de maintenir la
+                  qualité et l'exactitude de l'outil, mais ne peut garantir
+                  l'absence d'erreurs, de bugs ou l'exactitude des calculs
+                  d'itinéraires fournis par les services tiers.
+                </p>
+                <p>
+                  La responsabilité d'EI Olivier DUPONT ne peut être engagée en
+                  cas de dommages directs ou indirects résultant de
+                  l'utilisation du site, d'interruptions de service, de la
+                  perte de données (stockées localement), ou de problèmes
+                  techniques indépendants de sa volonté.
+                </p>
+                <p>
+                  L'utilisateur est seul responsable de la sauvegarde de ses
+                  données (export KML régulier) et de l'utilisation de sa clé
+                  Google Maps API personnelle, notamment des coûts générés par
+                  son utilisation.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-7" class="doc-section">
+            <h3 class="section-title">5.7 Modification des CGU</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  EI Olivier DUPONT se réserve le droit de modifier les
+                  présentes CGU à tout moment. Les modifications prennent effet
+                  dès leur publication sur le site. L'utilisateur est invité à
+                  consulter régulièrement cette page pour prendre connaissance
+                  des éventuelles modifications.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-8" class="doc-section">
+            <h3 class="section-title">5.8 Droit applicable et juridiction</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Les présentes CGU sont soumises au droit français. En cas de
+                  litige, les parties s'efforceront de trouver une solution
+                  amiable. À défaut, les tribunaux français seront seuls
+                  compétents, nonobstant pluralité de défendeurs ou appel en
+                  garantie.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ch5-9" class="doc-section">
+            <h3 class="section-title">5.9 Contact</h3>
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Pour toute question relative aux présentes CGU ou au
+                  fonctionnement de l'application, vous pouvez ouvrir une issue
+                  sur le dépôt GitHub&nbsp;:
+                </p>
+                <a
+                  href="https://github.com/Padda-One/TerritoryMaker/issues"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-secondary"
+                  style="display:inline-flex;text-decoration:none;padding:8px 20px;font-size:0.85rem;"
+                >
+                  Ouvrir une issue sur GitHub →
+                </a>
+                <p style="margin-top:14px;">
+                  Les coordonnées de l'éditeur sont disponibles au chapitre 1.
+                </p>
+              </div>
+            </div>
+          </section>
         </section>
 
-        <!-- ─── Section 6 : Données Cartographiques ─── -->
-        <section id="donnees-cartographiques" style="margin-bottom:40px;">
+        <!-- ─── CHAPITRE 6 : Données personnelles ─── -->
+        <section id="ch6" style="margin-bottom:56px;">
           <div class="chapter-header">
             <div class="chapter-number">6</div>
-            <h2 class="chapter-title">Données cartographiques</h2>
+            <h2 class="chapter-title">Données personnelles</h2>
           </div>
-          <div class="doc-section">
-            <div class="legal-section">
-              <p>
-                Tuiles fournies par Google Maps API et/ou OpenStreetMap. ©
-                Contributeurs OpenStreetMap, licence <a
-                  href="https://opendatacommons.org/licenses/odbl/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="lp-inline-link">ODbL</a
-                >.
-              </p>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Aucune donnée personnelle n'est collectée, traitée ou
+                  transmise. Les configurations sont encapsulées dans le
+                  périmètre local du navigateur.
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
         </section>
 
-        <!-- ─── Section 7 : Code Source ─── -->
-        <section id="code-source" style="margin-bottom:40px;">
+        <!-- ─── CHAPITRE 7 : Clé API ─── -->
+        <section id="ch7" style="margin-bottom:56px;">
           <div class="chapter-header">
             <div class="chapter-number">7</div>
+            <h2 class="chapter-title">Clé API</h2>
+          </div>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  En mode clé partagée, la clé est gérée côté serveur. En mode
+                  clé personnelle, votre clé Google Maps API est stockée
+                  uniquement dans votre navigateur, chiffrée AES-GCM 256 bits.
+                  Elle n'est jamais transmise à l'éditeur ni à un tiers.
+                </p>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 8 : Cookies ─── -->
+        <section id="ch8" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">8</div>
+            <h2 class="chapter-title">Cookies</h2>
+          </div>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>Aucun cookie d'aucune sorte.</p>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 9 : Données cartographiques ─── -->
+        <section id="ch9" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">9</div>
+            <h2 class="chapter-title">Données cartographiques</h2>
+          </div>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Tuiles fournies par Google Maps API et/ou OpenStreetMap. ©
+                  Contributeurs OpenStreetMap, licence <a
+                    href="https://opendatacommons.org/licenses/odbl/"
+                    target="_blank"
+                    rel="noopener noreferrer">ODbL</a
+                  >.
+                </p>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── CHAPITRE 10 : Code source ─── -->
+        <section id="ch10" style="margin-bottom:56px;">
+          <div class="chapter-header">
+            <div class="chapter-number">10</div>
             <h2 class="chapter-title">Code source</h2>
           </div>
-          <div class="doc-section">
-            <div class="legal-section">
-              <p>
-                Public et auditable sur <a
-                  href="https://github.com/Padda-One/TerritoryMaker"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="lp-inline-link"
-                  >GitHub — https://github.com/Padda-One/TerritoryMaker</a
-                >.
-              </p>
+
+          <section class="doc-section">
+            <div class="step-card">
+              <div class="step-body">
+                <p>
+                  Public et auditable sur <a
+                    href="https://github.com/Padda-One/TerritoryMaker"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >GitHub — https://github.com/Padda-One/TerritoryMaker</a
+                  >.
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
         </section>
+
+        <!-- Footer CTA -->
+        <div
+          style="margin-top:16px;padding:24px;background:#1a1d27;border:1px solid #2d3148;border-radius:12px;text-align:center;"
+        >
+          <p style="font-size:0.9rem;color:#94a3b8;margin:0 0 16px;">
+            Retourner à l'application.
+          </p>
+          <a
+            href="/"
+            class="btn btn-primary"
+            style="display:inline-flex;text-decoration:none;padding:10px 28px;font-size:0.9rem;"
+          >
+            Utiliser Territory Maker →
+          </a>
+        </div>
       </main>
     </div>
   </body>
 </html>
+
+<script>
+  // ── Active section tracking ──────────────────────────────────────────────
+  function updateActiveSection() {
+    const scrollPos = window.scrollY + 80;
+    const sections = [...document.querySelectorAll('section[id^="ch"]')];
+
+    let current = sections[0]?.id ?? null;
+    for (const section of sections) {
+      if ((section as HTMLElement).offsetTop <= scrollPos) {
+        current = section.id;
+      }
+    }
+
+    document
+      .querySelectorAll(".sidebar-nav a.is-active")
+      .forEach((el) => el.classList.remove("is-active"));
+
+    if (current) {
+      const link = document.querySelector(`.sidebar-nav a[href="#${current}"]`);
+      if (link) link.classList.add("is-active");
+
+      // Also highlight parent chapter when a subsection is active
+      const chapterId = current.includes("-") ? current.split("-")[0] : null;
+      if (chapterId) {
+        const chapterLink = document.querySelector(
+          `.sidebar-nav a[href="#${chapterId}"]`,
+        );
+        if (chapterLink) chapterLink.classList.add("is-active");
+      }
+    }
+  }
+
+  window.addEventListener("scroll", updateActiveSection, { passive: true });
+  updateActiveSection();
+
+  // ── Mobile sidebar ───────────────────────────────────────────────────────
+  const sidebarToggle = document.getElementById("sidebarToggle")!;
+  const docSidebar = document.getElementById("docSidebar")!;
+  const sidebarBackdrop = document.getElementById("sidebarBackdrop")!;
+
+  function openSidebar() {
+    docSidebar.classList.add("is-open");
+    sidebarBackdrop.classList.add("is-visible");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSidebar() {
+    docSidebar.classList.remove("is-open");
+    sidebarBackdrop.classList.remove("is-visible");
+    document.body.style.overflow = "";
+  }
+
+  sidebarToggle.addEventListener("click", () => {
+    docSidebar.classList.contains("is-open") ? closeSidebar() : openSidebar();
+  });
+
+  sidebarBackdrop.addEventListener("click", closeSidebar);
+
+  docSidebar.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+</script>
+
+<style is:global>
+  /* ── Base ─────────────────────────────────────────────────────────────── */
+  /* Surcharge height:100% de global.css — nécessaire pour position:sticky */
+  html,
+  body {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* ── Header ───────────────────────────────────────────────────────────── */
+  .doc-header {
+    border-bottom: 1px solid #2d3148;
+    background: #1a1d27;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .doc-header-inner {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .doc-back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    transition: color 0.15s;
+  }
+
+  .doc-back-link:hover {
+    color: #e2e8f0;
+  }
+
+  .doc-header-divider {
+    color: #2d3148;
+  }
+
+  .doc-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  .doc-layout {
+    display: flex;
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 24px;
+    gap: 48px;
+    align-items: flex-start;
+  }
+
+  /* ── Sidebar ──────────────────────────────────────────────────────────── */
+  .doc-sidebar {
+    width: 220px;
+    min-width: 220px;
+    position: sticky;
+    top: 50px;
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+    padding: 28px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #2d3148 transparent;
+  }
+
+  .doc-sidebar::-webkit-scrollbar {
+    width: 3px;
+  }
+  .doc-sidebar::-webkit-scrollbar-thumb {
+    background: #2d3148;
+    border-radius: 2px;
+  }
+
+  .sidebar-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #8892a4;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+    padding-left: 4px;
+  }
+
+  .sidebar-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .sidebar-chapter-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #a5adcb;
+    font-size: 0.83rem;
+    font-weight: 600;
+    padding: 5px 4px;
+    border-radius: 6px;
+    transition: color 0.15s;
+    line-height: 1.3;
+  }
+
+  .sidebar-chapter-link:hover {
+    color: #e2e8f0;
+  }
+
+  .sidebar-chapter-link.is-active {
+    color: #00e5a0;
+  }
+
+  .sidebar-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border-radius: 5px;
+    background: rgba(0, 229, 160, 0.07);
+    border: 1px solid rgba(0, 229, 160, 0.18);
+    color: #00e5a0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .sidebar-chapter-link.is-active .sidebar-num {
+    background: rgba(0, 229, 160, 0.16);
+    border-color: rgba(0, 229, 160, 0.4);
+  }
+
+  .sidebar-sub-list {
+    list-style: none;
+    margin: 2px 0 6px 28px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-sub-link {
+    display: block;
+    text-decoration: none;
+    color: #a5adcb;
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-left: 2px solid #2d3148;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
+    line-height: 1.45;
+  }
+
+  .sidebar-sub-link:hover {
+    color: #cad3f5;
+    border-left-color: #44475b;
+  }
+
+  .sidebar-sub-link.is-active {
+    color: #a6da95;
+    border-left-color: #a6da95;
+  }
+
+  /* ── Content ──────────────────────────────────────────────────────────── */
+  .doc-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 700px;
+    padding: 40px 0 80px;
+  }
+
+  /* ── Mobile ───────────────────────────────────────────────────────────── */
+  .sidebar-mobile-btn {
+    display: none;
+    margin-left: auto;
+    background: rgba(0, 229, 160, 0.08);
+    border: 1px solid rgba(0, 229, 160, 0.25);
+    color: #00e5a0;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+
+  .sidebar-mobile-btn:hover {
+    background: rgba(0, 229, 160, 0.14);
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 30;
+  }
+
+  .sidebar-backdrop.is-visible {
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar-mobile-btn {
+      display: block;
+    }
+
+    .doc-layout {
+      padding: 0 16px;
+    }
+
+    .doc-sidebar {
+      position: fixed;
+      left: -270px;
+      top: 0;
+      height: 100vh;
+      width: 260px;
+      min-width: 260px;
+      max-height: 100vh;
+      background: #1a1d27;
+      border-right: 1px solid #2d3148;
+      padding: 24px 20px;
+      z-index: 40;
+      transition: left 0.28s ease;
+    }
+
+    .doc-sidebar.is-open {
+      left: 0;
+    }
+  }
+
+  /* ── Chapter headers ──────────────────────────────────────────────────── */
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #2d3148;
+  }
+
+  .chapter-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: rgba(0, 229, 160, 0.1);
+    border: 1px solid rgba(0, 229, 160, 0.3);
+    color: #00e5a0;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .chapter-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  /* ── Section headings ─────────────────────────────────────────────────── */
+  .doc-section {
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin: 0 0 10px;
+  }
+
+  /* ── Step cards ───────────────────────────────────────────────────────── */
+  .step-card {
+    background: #1a1d27;
+    border: 1px solid #2d3148;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .step-body {
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+
+  .step-body p {
+    margin: 0 0 12px;
+  }
+  .step-body p:last-child {
+    margin-bottom: 0;
+  }
+  .step-body strong {
+    color: #e2e8f0;
+  }
+  .step-body a {
+    color: #818cf8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .step-body a:hover {
+    color: #a5b4fc;
+  }
+
+  .step-body code {
+    background: #0d0f18;
+    border: 1px solid #2d3148;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 0.82rem;
+    color: #00e5a0;
+  }
+
+  .step-list {
+    margin: 0 0 12px;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .step-list:last-child {
+    margin-bottom: 0;
+  }
+  .step-list li {
+    padding-left: 4px;
+  }
+
+  /* ── Legal info list (editor contact card) ────────────────────────────── */
+  .legal-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .legal-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .legal-info-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #8892a4;
+  }
+
+  .legal-info-value {
+    font-size: 0.875rem;
+    color: #cad3f5;
+    line-height: 1.6;
+  }
+</style>
