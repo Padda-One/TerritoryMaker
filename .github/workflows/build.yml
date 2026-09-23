@@ -30,3 +30,6 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Check CSP hashes
+        run: node scripts/check-csp-hashes.mjs
