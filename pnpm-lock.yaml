@@ -41,8 +41,8 @@ importers:
         specifier: ^3.7.4
         version: 3.7.4
       '@cloudflare/workers-types':
-        specifier: ^4.20260702.1
-        version: 4.20260702.1
+        specifier: ^5.20260923.1
+        version: 5.20260923.1
       '@dendronhq/safe-npm':
         specifier: ^0.1.0
         version: 0.1.0(debug@4.4.3)
@@ -221,8 +221,8 @@ packages:
     resolution: {integrity: sha512-dlT1m5e/0yUL0kRNcQn7yGLVThkgbB0Ga/1AmfDDC/8ik6AIiSf2QLQO2zPYvefsHP0aFgxO93cVLCCfDp7kzQ==}
     engines: {node: '>= 20.12.0'}
 
-  '@cloudflare/workers-types@4.20260702.1':
-    resolution: {integrity: sha512-mOhf5TUEB1m2vPrxtqoIGfz0fUC9xyxRDx5gWHy5s+OCo6dcV+g7wI1R7gYCMFohhqF/2y2xeKVwMwCJjfn/WA==}
+  '@cloudflare/workers-types@5.20260923.1':
+    resolution: {integrity: sha512-zuOqyxfhzhN2LlxxcpnAS79aGVm9ku3ZcWKyvVLHyjPV6oHsuHSFidzSHhHE9ho9UTcUxU1IdtpdVuFXluKB+g==}
 
   '@dendronhq/safe-npm@0.1.0':
     resolution: {integrity: sha512-vR3y0kdR26lKdVW2oK/IQssIlLVqHKfio+fX3OLXEjNfZ0DT59xp5kw9NKMSiW6z65ozgEKS4cmPfNNdNlfJdA==}
@@ -1967,7 +1967,7 @@ snapshots:
       fast-wrap-ansi: 0.2.2
       sisteransi: 1.0.5
 
-  '@cloudflare/workers-types@4.20260702.1': {}
+  '@cloudflare/workers-types@5.20260923.1': {}
 
   '@dendronhq/safe-npm@0.1.0(debug@4.4.3)':
     dependencies:
