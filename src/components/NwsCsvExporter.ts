@@ -7,7 +7,7 @@ import type { NWSData } from "./NwsCsvImporter.ts";
 import { nwsDisplayName } from "./NwsCsvImporter.ts";
 import type { PolygonExportData } from "./MapController.ts";
 import writeXlsxFile from "write-excel-file/browser";
-import type { Row } from "write-excel-file/browser";
+import type { Row, Sheet } from "write-excel-file/browser";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -242,35 +242,32 @@ export async function buildSuppressionsXlsx(
   aFaire: SuppressionAFaire[],
   aControler: SuppressionAControler[],
 ): Promise<Blob> {
-  const sheets: Row[][] = [];
-  const sheetNames: string[] = [];
+  const sheets: Sheet<Blob>[] = [];
 
   if (aFaire.length > 0) {
-    sheets.push(buildSheet(
+    sheets.push({ sheet: "Suppressions à faire", data: buildSheet(
       ["TerritoryID","CategoryCode","Category","Number","Suffix","Area","Type",
        "Link1","Link2","CustomNotes1","CustomNotes2","MergedInto_TerritoryID","Instructions_MyMaps"],
       aFaire as unknown as Record<string, string>[],
-    ));
-    sheetNames.push("Suppressions à faire");
+    ) });
   }
 
   if (aControler.length > 0) {
-    sheets.push(buildSheet(
+    sheets.push({ sheet: "À contrôler dans NWS", data: buildSheet(
       ["TerritoryID_new","CategoryCode_new","Category_new","Number_new","Suffix_new",
        "Area_new","Type_new","Link1_new","Link2_new","CustomNotes1_new","CustomNotes2_new",
        "TerritoryID_old","CategoryCode_old","Category_old","Number_old","Suffix_old",
        "Area_old","Type_old","Link1_old","Link2_old","CustomNotes1_old","CustomNotes2_old",
        "Instructions"],
       aControler as unknown as Record<string, string>[],
-    ));
-    sheetNames.push("À contrôler dans NWS");
+    ) });
   }
 
   if (sheets.length === 0) {
     return new Blob([], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   }
 
-  return writeXlsxFile(sheets, { sheets: sheetNames });
+  return writeXlsxFile(sheets).toBlob();
 }
 
 // ─── File download helper ─────────────────────────────────────────────────────
