@@ -962,7 +962,8 @@ import Analytics from "../components/Analytics.astro";
   // choix et ne se ferme pas au clic sur le fond.
   for (const id of ["simplify-confirm-modal", "modal-nws-access", "modal-nws-suppressions"]) {
     const modal = document.getElementById(id);
-    modal?.addEventListener("click", (e) => {
+    if (!modal) continue;
+    modal.addEventListener("click", (e) => {
       if (e.target === modal) modal.style.display = "none";
     });
   }
