@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feat/**']
   pull_request:
     branches: [main]
 
@@ -31,5 +31,5 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Check CSP hashes
-        run: node scripts/check-csp-hashes.mjs
+      - name: Check CSP nonce
+        run: node scripts/check-csp-nonce.mjs

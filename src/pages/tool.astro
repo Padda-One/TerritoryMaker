@@ -750,12 +750,10 @@ import Analytics from "../components/Analytics.astro";
       id="simplify-confirm-modal"
       class="lp-modal"
       style="display:none"
-      onclick="if(event.target===this)this.style.display='none'"
     >
       <div class="lp-modal-card" style="max-width:420px;">
         <button
           class="lp-modal-close"
-          onclick="document.getElementById('simplify-confirm-modal').style.display='none'"
           aria-label="Fermer"
         >
           <svg
@@ -804,12 +802,10 @@ import Analytics from "../components/Analytics.astro";
       id="modal-nws-access"
       class="lp-modal"
       style="display:none"
-      onclick="if(event.target===this)this.style.display='none'"
     >
       <div class="lp-modal-card" style="max-width:480px;">
         <button
           class="lp-modal-close"
-          onclick="document.getElementById('modal-nws-access').style.display='none'"
           aria-label="Fermer"
         >
           <svg
@@ -882,12 +878,10 @@ import Analytics from "../components/Analytics.astro";
       id="modal-nws-suppressions"
       class="lp-modal"
       style="display:none"
-      onclick="if(event.target===this)this.style.display='none'"
     >
       <div class="lp-modal-card" style="max-width:900px;">
         <button
           class="lp-modal-close"
-          onclick="document.getElementById('modal-nws-suppressions').style.display='none'"
           aria-label="Fermer"
         >
           <svg
@@ -929,7 +923,7 @@ import Analytics from "../components/Analytics.astro";
               id="btn-suppressions-print"
               class="btn btn-secondary"
               style="font-size:0.82rem;"
-              onclick="window.print()">🖨 Imprimer / PDF</button
+             >🖨 Imprimer / PDF</button
             >
             <button
               id="btn-suppressions-continue"
@@ -961,4 +955,20 @@ import Analytics from "../components/Analytics.astro";
 
   const ui = new RouteUI();
   ui.init().catch(console.error);
+
+  // Fermeture des modals : clic sur le fond ou sur le bouton ×, et impression
+  // des suppressions — remplace les attributs onclick (bloqués par la CSP).
+  for (const modal of document.querySelectorAll<HTMLElement>(".lp-modal")) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.style.display = "none";
+    });
+  }
+  for (const btn of document.querySelectorAll(".lp-modal .lp-modal-close")) {
+    btn.addEventListener("click", () => {
+      btn.closest<HTMLElement>(".lp-modal")!.style.display = "none";
+    });
+  }
+  document
+    .getElementById("btn-suppressions-print")
+    ?.addEventListener("click", () => window.print());
 </script>
