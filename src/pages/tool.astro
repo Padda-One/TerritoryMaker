@@ -958,8 +958,11 @@ import Analytics from "../components/Analytics.astro";
 
   // Fermeture des modals : clic sur le fond ou sur le bouton ×, et impression
   // des suppressions — remplace les attributs onclick (bloqués par la CSP).
-  for (const modal of document.querySelectorAll<HTMLElement>(".lp-modal")) {
-    modal.addEventListener("click", (e) => {
+  // Fond cliquable seulement pour ces trois modals : modal-nws-keep impose un
+  // choix et ne se ferme pas au clic sur le fond.
+  for (const id of ["simplify-confirm-modal", "modal-nws-access", "modal-nws-suppressions"]) {
+    const modal = document.getElementById(id);
+    modal?.addEventListener("click", (e) => {
       if (e.target === modal) modal.style.display = "none";
     });
   }
