@@ -1,3 +1,9 @@
+# Chaîne d'approvisionnement — https://pnpm.io/supply-chain-security
+# (pnpm >= 11 ne lit plus dans .npmrc que l'authentification et le registre)
+engineStrict: true
+minimumReleaseAge: 4320 # 3 jours, en minutes
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
 allowBuilds:
   esbuild: true
   sharp: true
