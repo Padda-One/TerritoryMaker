@@ -2,13 +2,15 @@
   "name": "territory-maker",
   "version": "2.0.0",
   "private": true,
+  "packageManager": "pnpm@12.6.0",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.12.0",
+    "pnpm": ">=12.0.0"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
