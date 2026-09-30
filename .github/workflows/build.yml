@@ -29,5 +29,8 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit && pnpm exec tsc --noEmit -p functions/tsconfig.json
+
       - name: Check CSP nonce
         run: node scripts/check-csp-nonce.mjs
