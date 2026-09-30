@@ -242,7 +242,7 @@ function gStraightPolylineOptions(color: string, opacity = 1): google.maps.Polyl
 
 // ─── OSM tile providers ───────────────────────────────────────────────────────
 
-const TILE_LAYERS = {
+const TILE_LAYERS: Record<"dark" | "light" | "satellite" | "terrain", { url: string; attribution: string; maxNativeZoom?: number }> = {
   dark: { url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors", maxNativeZoom: 16 },
   light: { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
   satellite: { url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attribution: "Tiles &copy; Esri" },
@@ -435,7 +435,7 @@ export class MapController {
     this.gMap = new google.maps.Map(mapEl, {
       center: initialView?.center ?? { lat: 46.603354, lng: 1.888334 },
       zoom: initialView?.zoom ?? 6,
-      styles: DARK_MAP_STYLES,
+      styles: [],
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
@@ -455,7 +455,7 @@ export class MapController {
       ? [initialView.center.lat, initialView.center.lng]
       : [46.603354, 1.888334];
     this.lMap = L.map(mapEl, { center, zoom: initialView?.zoom ?? 6, zoomControl: true });
-    const { url, attribution, maxNativeZoom } = TILE_LAYERS.dark;
+    const { url, attribution, maxNativeZoom } = TILE_LAYERS.light;
     this.lTileLayer = L.tileLayer(url, { attribution, maxZoom: 19, maxNativeZoom }).addTo(this.lMap);
     this.lMap.getContainer().style.cursor = "crosshair";
     this.lClickHandler = (e: L.LeafletMouseEvent) => {
@@ -2397,7 +2397,7 @@ export class MapController {
       }
     } else if (this.isOsm && this.lMap && this.lTileLayer) {
       this.lTileLayer.remove();
-      const { url, attribution, maxNativeZoom } = TILE_LAYERS[theme] as { url: string; attribution: string; maxNativeZoom?: number };
+      const { url, attribution, maxNativeZoom } = TILE_LAYERS[theme];
       this.lTileLayer = L.tileLayer(url, { attribution, maxZoom: 19, maxNativeZoom }).addTo(this.lMap);
     }
   }

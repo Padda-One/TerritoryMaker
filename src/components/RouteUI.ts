@@ -320,7 +320,7 @@ export class RouteUI {
 
   private initThemes(): void {
     const savedAppTheme = (localStorage.getItem("tm_app_theme") ?? "dark") as AppTheme;
-    const savedMapTheme = (localStorage.getItem("tm_map_theme") ?? "dark") as MapTheme;
+    const savedMapTheme = (localStorage.getItem("tm_map_theme") ?? "light") as MapTheme;
     this.applyAppTheme(savedAppTheme);
     this.setActiveThemeBtn("app-theme-picker", savedAppTheme);
     this.setActiveThemeBtn("map-theme-picker", savedMapTheme);
@@ -342,7 +342,7 @@ export class RouteUI {
       ?.querySelectorAll<HTMLButtonElement>(".theme-btn")
       .forEach((btn) => {
         btn.addEventListener("click", () => {
-          const theme = (btn.dataset.value ?? "dark") as MapTheme;
+          const theme = (btn.dataset.value ?? "light") as MapTheme;
           localStorage.setItem("tm_map_theme", theme);
           this.setActiveThemeBtn("map-theme-picker", theme);
           this.mapController?.setMapTheme(theme);
@@ -438,8 +438,8 @@ export class RouteUI {
       this.mapController.setOrsApiKey(this.orsApiKey);
 
       // Apply saved map theme
-      const savedMapTheme = (localStorage.getItem("tm_map_theme") ?? "dark") as MapTheme;
-      if (savedMapTheme !== "dark") {
+      const savedMapTheme = (localStorage.getItem("tm_map_theme") ?? "light") as MapTheme;
+      if (savedMapTheme !== "light") {
         this.mapController.setMapTheme(savedMapTheme);
       }
 
