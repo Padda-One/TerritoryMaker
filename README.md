@@ -237,35 +237,29 @@ Before exporting the CSV, if any merges were performed, a modal shows the list o
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or later
+- [Node.js](https://nodejs.org/) 22.12 or later (see `engines` in `package.json`)
+- [pnpm](https://pnpm.io/) 12 — pinned by `packageManager: pnpm@12.6.0` (enable via [Corepack](https://nodejs.org/api/corepack.html))
 - No API key required for default OSM+ORS mode. A Google Maps API key (**Maps JavaScript API**) is only needed if you want to use Google Maps as the display layer or Google Directions for routing.
-- [`safe-npm`](https://github.com/kevinslin/safe-npm) — recommended to protect against supply-chain attacks
-
-### Install safe-npm (one-time, global)
-
-```bash
-npm install -g @dendronhq/safe-npm
-```
-
-> **What is safe-npm?** A security wrapper around `npm install` that only installs package versions publicly available for at least 90 days — protecting against freshly published malicious packages.
 
 ### Install & run
 
 ```bash
 git clone https://github.com/Padda-One/TerritoryMaker.git
 cd territory-maker
-safe-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
+
+> **Supply-chain protection** is handled natively by pnpm through `pnpm-workspace.yaml`: `minimumReleaseAge: 4320` only installs versions published for at least 3 days, `blockExoticSubdeps` rejects non-registry sub-dependencies, `trustPolicy: no-downgrade` prevents silent downgrades, and `engineStrict` enforces the `engines` requirements.
 
 Open [http://localhost:4321](http://localhost:4321) in your browser. The app loads immediately in OSM+ORS mode — no API key is required to start using it.
 
 ### Build for production
 
 ```bash
-npm run build
+pnpm build
 # Static files are output to dist/
-npm run preview  # preview the production build locally
+pnpm preview  # preview the production build locally
 ```
 
 ---
@@ -284,10 +278,10 @@ Territory Maker is a fully static site (Astro SSG) and deploys to Cloudflare Pag
    | Setting | Value |
    |---|---|
    | **Framework preset** | None (or Astro) |
-   | **Build command** | `npm run build` |
-   | **Install command** | `npm install -g @dendronhq/safe-npm && safe-npm install` |
+   | **Build command** | `pnpm build` |
+   | **Install command** | `pnpm install` |
    | **Build output directory** | `dist` |
-   | **Node.js version** | 18 (or later) |
+   | **Node.js version** | 22 (or later) |
 
 5. Click **Save and Deploy**.
 
@@ -374,7 +368,7 @@ public/
 | Excel export | [SheetJS](https://sheetjs.com/) (`xlsx`) — suppression report for NWS merge operations |
 | Crypto | Web Crypto API (built-in browser API) |
 | Bundler | Vite (via Astro) |
-| Package install | [`safe-npm`](https://github.com/kevinslin/safe-npm) (`@dendronhq/safe-npm`) |
+| Package manager | [pnpm](https://pnpm.io/) 12 — pinned via `packageManager`, with supply-chain rules in `pnpm-workspace.yaml` |
 | Deployment | Cloudflare Pages (static) |
 
 ---
