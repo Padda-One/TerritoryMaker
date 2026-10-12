@@ -23,6 +23,7 @@
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
+    "@astrojs/check": "0.9.3",
     "@astrojs/sitemap": "^3.7.4",
     "@cloudflare/workers-types": "^5.20260923.1",
     "@types/google.maps": "^3.66.3",
