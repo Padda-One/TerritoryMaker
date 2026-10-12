@@ -341,7 +341,7 @@ src/
     KmlExporter.ts        KML Polygon XML construction + multi-polygon export + download
     KmlImporter.ts        KML 2.2 parsing (chunked, Douglas-Peucker simplification)
     NwsCsvImporter.ts     NWS CSV parsing (TerritoryID, Category, Number, Suffix, Boundary)
-    NwsCsvExporter.ts     NWS CSV generation + suppression report (CSV + Excel via SheetJS)
+    NwsCsvExporter.ts     NWS CSV generation + suppression report (CSV + Excel via write-excel-file)
     RouteUI.ts            Application orchestrator (UI, state, tree-view layer panel, sidebar resize, context menu)
   styles/
     global.css            Tailwind v4 + CSS variables (dark & light themes)
@@ -358,14 +358,14 @@ public/
 
 | Layer | Technology |
 |---|---|
-| Framework | [Astro](https://astro.build/) 6 (SSG) |
+| Framework | [Astro](https://astro.build/) 7 (SSG) |
 | Styling | [Tailwind CSS](https://tailwindcss.com/) v4 via `@tailwindcss/vite` |
 | Language | TypeScript (strict) |
 | Maps display | Google Maps JavaScript API v3 **or** [Leaflet](https://leafletjs.com/) + OpenStreetMap |
 | Routing | [OpenRouteService](https://openrouteservice.org/) (ORS) — default; Google Directions API — opt-in |
 | Geometry | Haversine formula (local implementation) |
 | Polygon geometry | [`@turf/union`](https://turfjs.org/) v7 — polygon union for the Merge operation |
-| Excel export | [SheetJS](https://sheetjs.com/) (`xlsx`) — suppression report for NWS merge operations |
+| Excel export | [write-excel-file](https://gitlab.com/catamphetamine/write-excel-file) — suppression report for NWS merge operations |
 | Crypto | Web Crypto API (built-in browser API) |
 | Bundler | Vite (via Astro) |
 | Package manager | [pnpm](https://pnpm.io/) 12 — pinned via `packageManager`, with supply-chain rules in `pnpm-workspace.yaml` |
