@@ -262,6 +262,16 @@ pnpm build
 pnpm preview  # preview the production build locally
 ```
 
+### Tests
+
+```bash
+pnpm install
+pnpm test        # vitest run — no network access, no browser
+pnpm exec vitest # watch mode
+```
+
+Tests live in `tests/` and cover the NWS CSV export (`NwsCsvExporter.ts`), the Pages Functions handlers in `functions/api/` (called directly with a fabricated `Request` and an in-memory KV; `fetch` is stubbed to throw), and the pure helpers exported by `MapController.ts`. Known bugs are kept as `it.fails` tests, each with a one-line explanation, until a fix is decided.
+
 ---
 
 ## Deploying to Cloudflare Pages
