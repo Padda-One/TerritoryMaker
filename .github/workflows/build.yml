@@ -32,5 +32,8 @@ jobs:
       - name: Typecheck
         run: pnpm exec tsc --noEmit && pnpm exec tsc --noEmit -p functions/tsconfig.json && pnpm exec astro check
 
+      - name: Test
+        run: pnpm test
+
       - name: Check CSP nonce
         run: node scripts/check-csp-nonce.mjs
