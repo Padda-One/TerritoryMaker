@@ -154,9 +154,7 @@ describe("POST /api/webhook", () => {
     expect(kv.put).not.toHaveBeenCalled();
   });
 
-  // BOGUE : `null` est un JSON valide ; `body.reset` lève alors un TypeError non
-  // rattrapé (réponse 500 côté Pages) au lieu d'un 400 ou d'un 200 neutre.
-  it.fails("corps JSON `null` : réponse maîtrisée, pas d'exception", async () => {
+  it("corps JSON `null` : réponse maîtrisée, pas d'exception", async () => {
     const res = await call(webhookModule.onRequestPost, post("null"), env());
     expect([200, 400]).toContain(res.status);
   });

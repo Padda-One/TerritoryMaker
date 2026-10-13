@@ -119,9 +119,7 @@ describe("buildNwsCsv — échappement", () => {
     expect(lastCell(cell("ligne1\r\nligne2"))).toContain(',"ligne1\r\nligne2",');
   });
 
-  // BOGUE : csvEscape ne teste que "\n" ; un CR isolé sort non cité, ce que
-  // RFC 4180 interdit et que la plupart des lecteurs prennent pour une fin de ligne.
-  it.fails("cite un champ contenant un CR isolé (RFC 4180)", () => {
+  it("cite un champ contenant un CR isolé (RFC 4180)", () => {
     expect(lastCell(cell("ligne1\rligne2"))).toContain(',"ligne1\rligne2",');
   });
 
@@ -139,10 +137,7 @@ describe("buildNwsCsv — échappement", () => {
     expect(rows[0]!.name).toBe("12-A");
   });
 
-  // BOGUE (paire export/import) : l'export cite correctement un retour ligne, mais
-  // parseNwsCsv découpe le fichier par lignes avant de lire les guillemets ; une
-  // note multiligne exportée ne se réimporte pas.
-  it.fails("aller-retour avec un retour ligne dans CustomNotes1", () => {
+  it("aller-retour avec un retour ligne dans CustomNotes1", () => {
     const data = nws({ CustomNotes1: "porte 1\nporte 2" });
     const rows = parseNwsCsv(buildNwsCsv([poly({ nwsData: data })]));
     expect(rows[0]!.nwsData.CustomNotes1).toBe("porte 1\nporte 2");

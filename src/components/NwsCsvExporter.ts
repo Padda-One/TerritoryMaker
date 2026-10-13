@@ -61,7 +61,7 @@ function buildBoundary(coords: { lat: number; lng: number }[]): string {
 
 function csvEscape(value: string): string {
   // Wrap in quotes if the value contains comma, quote, or newline
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+  if (value.includes(",") || value.includes('"') || value.includes("\n") || value.includes("\r")) {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;

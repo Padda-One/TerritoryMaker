@@ -58,7 +58,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   let body: BudgetAlertPayload & { reset?: boolean } = {};
   try {
-    body = (await request.json()) as typeof body;
+    const parsed: unknown = await request.json();
+    if (parsed === null || typeof parsed !== "object") {
+      return new Response("Invalid JSON", { status: 400 });
+    }
+    body = parsed as typeof body;
   } catch {
     return new Response("Invalid JSON", { status: 400 });
   }

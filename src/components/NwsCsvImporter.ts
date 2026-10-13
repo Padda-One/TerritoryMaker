@@ -35,20 +35,23 @@ export interface NWSRow {
 // ─── CSV tokeniser ────────────────────────────────────────────────────────────
 
 /**
- * Split a single CSV line into fields, respecting double-quoted fields
- * (which may contain commas and escaped quotes "").
+ * Split CSV text into records, each record being a list of fields.
+ * Respects double-quoted fields, which may contain commas, escaped
+ * quotes ("") and line breaks. Record separators are CRLF, LF or CR
+ * outside quotes.
  */
-function splitCsvLine(line: string): string[] {
-  const fields: string[] = [];
+function splitCsvRecords(text: string): string[][] {
+  const records: string[][] = [];
+  let fields: string[] = [];
   let current = "";
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]!;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
 
     if (inQuotes) {
       if (ch === '"') {
-        if (line[i + 1] === '"') {
+        if (text[i + 1] === '"') {
           // Escaped quote inside quoted field
           current += '"';
           i++;
@@ -58,19 +61,24 @@ function splitCsvLine(line: string): string[] {
       } else {
         current += ch;
       }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      fields.push(current);
+      current = "";
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      fields.push(current);
+      records.push(fields);
+      fields = [];
+      current = "";
     } else {
-      if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ',') {
-        fields.push(current);
-        current = "";
-      } else {
-        current += ch;
-      }
+      current += ch;
     }
   }
   fields.push(current);
-  return fields;
+  records.push(fields);
+  return records;
 }
 
 // ─── Boundary parser ──────────────────────────────────────────────────────────
@@ -129,11 +137,10 @@ export function parseNwsCsv(content: string): NWSRow[] {
   // Strip UTF-8 BOM
   const text = content.startsWith("\uFEFF") ? content.slice(1) : content;
 
-  const lines = text.split(/\r?\n/);
-  if (lines.length < 2) throw new Error("Le fichier CSV est vide ou ne contient pas d'en-tête.");
+  const records = splitCsvRecords(text);
+  if (records.length < 2) throw new Error("Le fichier CSV est vide ou ne contient pas d'en-tête.");
 
-  const headerLine = lines[0]!;
-  const headers = splitCsvLine(headerLine).map(h => h.trim());
+  const headers = records[0]!.map(h => h.trim());
 
   // Validate required columns
   const required = ([...NWS_COLUMNS, "Boundary"] as string[]);
@@ -148,11 +155,9 @@ export function parseNwsCsv(content: string): NWSRow[] {
 
   const rows: NWSRow[] = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i]!.trim();
-    if (!line) continue;
-
-    const fields = splitCsvLine(line);
+  for (let i = 1; i < records.length; i++) {
+    const fields = records[i]!;
+    if (fields.every(f => !f.trim())) continue;
     const get = (name: string): string => (fields[colIndex(name)] ?? "").trim();
 
     const nwsData: NWSData = {
