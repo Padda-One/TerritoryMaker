@@ -126,8 +126,8 @@ describe("GET …/js/script.js", () => {
     expect(cache.match).toHaveBeenCalledTimes(2);
   });
 
-  it.fails(
-    "défaut connu : une erreur amont ne doit ni être cachée ni porter max-age=86400",
+  it(
+    "une erreur amont n'est ni cachée ni annoncée max-age=86400",
     async () => {
       vi.mocked(fetch).mockResolvedValue(
         new Response("upstream indisponible", { status: 503 }),
