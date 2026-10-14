@@ -27,16 +27,22 @@ export const onRequest: PagesFunction = async (context) => {
     if (!response) {
       const upstream = await fetch(PLAUSIBLE_HOST + SCRIPT_PATH);
       // En-têtes explicites : recopier ceux de l'upstream laisse passer son
-      // `max-age=31536000` (un an), qui prime sur le TTL voulu ici.
+      // `max-age=31536000` (un an), qui prime sur le TTL voulu ici. Une erreur
+      // amont n'est ni rangée en cache ni annoncée 24 h : elle serait sinon
+      // servie jusqu'au lendemain alors que l'amont est rétabli.
       response = new Response(upstream.body, {
         status: upstream.status,
         headers: {
           "content-type":
             upstream.headers.get("content-type") ?? "application/javascript",
-          "cache-control": "public, max-age=86400, must-revalidate",
+          "cache-control": upstream.ok
+            ? "public, max-age=86400, must-revalidate"
+            : "no-store",
         },
       });
-      context.waitUntil(cache.put(cacheKey, response.clone()));
+      if (upstream.ok) {
+        context.waitUntil(cache.put(cacheKey, response.clone()));
+      }
     }
     return response;
   }
