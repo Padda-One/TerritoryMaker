@@ -50,6 +50,13 @@ export const onRequest: PagesFunction = async (context) => {
   if (request.method === "POST" && pathname.endsWith("/api/event")) {
     const forwarded = new Request(PLAUSIBLE_HOST + "/api/event", request);
     forwarded.headers.delete("cookie");
+    // IP du visiteur : sans ça, Plausible voit l'adresse de sortie de Cloudflare (pays,
+    // visiteurs uniques faussés). Doc Plausible, Events API, en-tête X-Forwarded-For.
+    const ip = request.headers.get("CF-Connecting-IP");
+    if (ip) {
+      forwarded.headers.set("X-Forwarded-For", ip);
+      forwarded.headers.set("CF-Connecting-IP", ip);
+    }
     return fetch(forwarded);
   }
 
